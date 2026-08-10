@@ -63,7 +63,7 @@ export function ultimaExecucao(exercicioId: string, antesDe?: string): SerieRegi
 // ===== Sessões (iniciar/terminar treino) =====
 // Um dia pode ter mais de um treino (ex.: Legs de manhã, Push à noite), por isso é uma lista por dia.
 
-function getSessoesPorDia(): Record<string, RegistroSessao[]> {
+export function getTodasSessoes(): Record<string, RegistroSessao[]> {
   if (typeof window === "undefined") return {};
   try {
     const raw = window.localStorage.getItem(KEY_SESSOES);
@@ -78,7 +78,7 @@ function saveSessoesPorDia(map: Record<string, RegistroSessao[]>) {
 }
 
 export function getSessoesDoDia(data: string): RegistroSessao[] {
-  return getSessoesPorDia()[data] ?? [];
+  return getTodasSessoes()[data] ?? [];
 }
 
 export function getSessaoAtiva(data: string, sessaoTipo: SessaoTreino): RegistroSessao | null {
@@ -86,7 +86,7 @@ export function getSessaoAtiva(data: string, sessaoTipo: SessaoTreino): Registro
 }
 
 export function iniciarSessao(data: string, sessaoTipo: SessaoTreino, bloco: number) {
-  const map = getSessoesPorDia();
+  const map = getTodasSessoes();
   const lista = map[data] ?? [];
   const idx = lista.findIndex((r) => r.sessaoTipo === sessaoTipo);
   const novo: RegistroSessao = { data, sessaoTipo, bloco, inicioISO: new Date().toISOString(), fimISO: null };
@@ -97,7 +97,7 @@ export function iniciarSessao(data: string, sessaoTipo: SessaoTreino, bloco: num
 }
 
 export function terminarSessao(data: string, sessaoTipo: SessaoTreino) {
-  const map = getSessoesPorDia();
+  const map = getTodasSessoes();
   const lista = map[data] ?? [];
   const atual = lista.find((r) => r.sessaoTipo === sessaoTipo);
   if (atual) {
@@ -107,7 +107,7 @@ export function terminarSessao(data: string, sessaoTipo: SessaoTreino) {
 }
 
 export function reabrirSessao(data: string, sessaoTipo: SessaoTreino) {
-  const map = getSessoesPorDia();
+  const map = getTodasSessoes();
   const lista = map[data] ?? [];
   const atual = lista.find((r) => r.sessaoTipo === sessaoTipo);
   if (atual) {
@@ -185,7 +185,7 @@ export function diasTreinadosPorTipo(tipo: SessaoTreino): string[] {
     const exercicio = getExercicio(s.exercicioId);
     if (exercicio?.sessao === tipo) dias.add(s.data);
   }
-  for (const lista of Object.values(getSessoesPorDia())) {
+  for (const lista of Object.values(getTodasSessoes())) {
     for (const sessao of lista) {
       if (sessao.sessaoTipo === tipo && sessao.fimISO) dias.add(sessao.data);
     }
@@ -195,7 +195,7 @@ export function diasTreinadosPorTipo(tipo: SessaoTreino): string[] {
 
 export function diasTreinadosUnicos(): string[] {
   const dias = new Set(getLog().map((s) => s.data));
-  for (const lista of Object.values(getSessoesPorDia())) {
+  for (const lista of Object.values(getTodasSessoes())) {
     for (const sessao of lista) {
       if (sessao.fimISO) dias.add(sessao.data);
     }
