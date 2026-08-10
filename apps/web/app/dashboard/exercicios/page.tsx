@@ -145,11 +145,8 @@ export default function ExerciciosPage() {
           return (
             <Card key={ex.id} className="overflow-hidden p-0">
               {thumb ? (
-                <a href={ex.videoUrl ?? "#"} target="_blank" rel="noreferrer" className="group relative block">
+                <a href={ex.videoUrl ?? "#"} target="_blank" rel="noreferrer" className="block">
                   <img src={thumb} alt={ex.nome} className="aspect-video w-full object-cover" />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity group-hover:opacity-100">
-                    <span className="rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-white">▶ Ver vídeo</span>
-                  </div>
                 </a>
               ) : (
                 <div className="flex aspect-video w-full items-center justify-center bg-base-700 text-xs text-ink-faint">
