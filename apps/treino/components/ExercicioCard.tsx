@@ -91,18 +91,13 @@ export function ExercicioCard({ exercicio, data }: { exercicio: Exercicio; data:
           aria-label={efetivo.youtubeId ? `Ver vídeo de ${efetivo.nome}` : efetivo.nome}
         >
           {efetivo.youtubeId && imgOk ? (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`https://img.youtube.com/vi/${efetivo.youtubeId}/mqdefault.jpg`}
-                alt={efetivo.nome}
-                className="h-full w-full object-cover"
-                onError={() => setImgOk(false)}
-              />
-              <span className="absolute inset-0 flex items-center justify-center bg-black/25">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[10px] text-ink">▶</span>
-              </span>
-            </>
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={`https://img.youtube.com/vi/${efetivo.youtubeId}/mqdefault.jpg`}
+              alt={efetivo.nome}
+              className="h-full w-full object-cover"
+              onError={() => setImgOk(false)}
+            />
           ) : (
             <FallbackIcon grupo={efetivo.grupoMuscular} />
           )}
