@@ -8,3 +8,6 @@ apps/api/prisma/dev.db-journal
 .env.local
 .expo/
 .turbo/
+
+.vercel
+.env*
