@@ -10,7 +10,9 @@ import { ExercicioCard } from "@/components/ExercicioCard";
 import { GuiaModal, dataInicioPadrao } from "@/components/GuiaModal";
 import { SeletorSessao } from "@/components/SeletorSessao";
 import { TreinoTimer } from "@/components/TreinoTimer";
+import { BikeIndoorCard } from "@/components/BikeIndoorCard";
 import type { EscolhaDoDia } from "@/lib/tipos";
+
 
 const DIAS_SEMANA_LABEL = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
@@ -71,7 +73,10 @@ export default function HojePage() {
 
       <SeletorSessao hojeISO={hojeISO} sessaoSugerida={sessaoSugerida} valorAtual={escolha} onEscolher={escolher} />
 
+      <BikeIndoorCard hojeISO={hojeISO} />
+
       {sessaoEfetiva && status && <TreinoTimer hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} bloco={blocoAtivo} />}
+
 
       {status && !status.isDeload && sessaoEfetiva && (
         <p className="mb-4 text-xs text-ink-faint">

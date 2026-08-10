@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { calcularVolumePorGrupo, totalSeriesNoPeriodo, type VolumeGrupo } from "@/lib/relatorio";
+import { getTodosBikeIndoor } from "@/lib/storage";
 import { Heatmap } from "@/components/Heatmap";
 import { cn } from "@/lib/cn";
 
@@ -14,9 +15,30 @@ const PERIODOS: { label: string; valor: number | "tudo" }[] = [
 export default function RelatorioPage() {
   const [periodo, setPeriodo] = useState<number | "tudo">(7);
   const [volumes, setVolumes] = useState<VolumeGrupo[] | null>(null);
+  const [totalMinutosBike, setTotalMinutosBike] = useState<number>(0);
+  const [sessoesBikeCount, setSessoesBikeCount] = useState<number>(0);
 
   useEffect(() => {
     setVolumes(calcularVolumePorGrupo(periodo));
+
+    const bikeData = getTodosBikeIndoor();
+    const agora = new Date();
+    let minSum = 0;
+    let count = 0;
+
+    Object.values(bikeData).forEach((item) => {
+      if (!item.concluido) return;
+      if (periodo !== "tudo") {
+        const itemData = new Date(item.data + "T00:00:00");
+        const diffDias = (agora.getTime() - itemData.getTime()) / (1000 * 3600 * 24);
+        if (diffDias > periodo) return;
+      }
+      minSum += item.tempoMinutos;
+      count += 1;
+    });
+
+    setTotalMinutosBike(minSum);
+    setSessoesBikeCount(count);
   }, [periodo]);
 
   return (
@@ -42,6 +64,22 @@ export default function RelatorioPage() {
         ))}
       </div>
 
+      <div className="mb-4 rounded-xl border border-line bg-base-800 p-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-soft text-xl">
+            🚴‍♂️
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-ink">Bike Indoor (Cardio)</h3>
+            <p className="text-xs text-ink-muted">
+              {sessoesBikeCount > 0
+                ? `${sessoesBikeCount} sessão(ões) · Total de ${totalMinutosBike} min`
+                : "Nenhuma sessão registrada no período"}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {volumes && (
         <>
           <Heatmap volumes={volumes} />
@@ -51,3 +89,4 @@ export default function RelatorioPage() {
     </div>
   );
 }
+

@@ -45,3 +45,11 @@ export interface RegistroSessao {
   inicioISO: string;
   fimISO: string | null;
 }
+
+export interface RegistroBikeIndoor {
+  data: string; // YYYY-MM-DD
+  tempoMinutos: number;
+  concluido: boolean;
+  registradoEm: string; // ISO timestamp
+}
+

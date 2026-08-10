@@ -1,4 +1,4 @@
-import type { EscolhaDoDia, RegistroSessao, SerieRegistrada, SessaoTreino } from "./tipos";
+import type { EscolhaDoDia, RegistroBikeIndoor, RegistroSessao, SerieRegistrada, SessaoTreino } from "./tipos";
 import { getExercicio } from "./exercicios";
 
 const KEY_LOG = "treino:log";
@@ -6,6 +6,8 @@ const KEY_INICIO = "treino:dataInicio";
 const KEY_SESSOES = "treino:sessoesPorDia";
 const KEY_ESCOLHAS = "treino:escolhaPorDia";
 const KEY_SUBSTITUICOES = "treino:substituicoes";
+const KEY_BIKE = "treino:bikeIndoor";
+
 
 export function getDataInicio(): string | null {
   if (typeof window === "undefined") return null;
@@ -200,3 +202,51 @@ export function diasTreinadosUnicos(): string[] {
   }
   return Array.from(dias).sort();
 }
+
+// ===== Bike Indoor =====
+
+export function getBikeIndoor(data: string): RegistroBikeIndoor | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(KEY_BIKE);
+    const map = raw ? (JSON.parse(raw) as Record<string, RegistroBikeIndoor>) : {};
+    return map[data] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveBikeIndoor(entry: RegistroBikeIndoor) {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(KEY_BIKE);
+    const map = raw ? (JSON.parse(raw) as Record<string, RegistroBikeIndoor>) : {};
+    map[entry.data] = entry;
+    window.localStorage.setItem(KEY_BIKE, JSON.stringify(map));
+  } catch {
+    // ignore
+  }
+}
+
+export function removerBikeIndoor(data: string) {
+  if (typeof window === "undefined") return;
+  try {
+    const raw = window.localStorage.getItem(KEY_BIKE);
+    const map = raw ? (JSON.parse(raw) as Record<string, RegistroBikeIndoor>) : {};
+    delete map[data];
+    window.localStorage.setItem(KEY_BIKE, JSON.stringify(map));
+  } catch {
+    // ignore
+  }
+}
+
+export function getTodosBikeIndoor(): Record<string, RegistroBikeIndoor> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(KEY_BIKE);
+    return raw ? (JSON.parse(raw) as Record<string, RegistroBikeIndoor>) : {};
+  } catch {
+    return {};
+  }
+}
+
