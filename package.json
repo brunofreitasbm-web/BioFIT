@@ -1,0 +1,28 @@
+{
+  "name": "biofit",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w @biofit/api",
+    "dev:web": "npm run dev -w @biofit/web",
+    "dev:mobile": "npm run start -w @biofit/mobile",
+    "build:shared": "npm run build -w @biofit/shared"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  },
+  "overrides": {
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "allowScripts": {
+    "@prisma/client@5.22.0": true,
+    "@prisma/engines@5.22.0": true,
+    "esbuild@0.28.1": true,
+    "esbuild@0.21.5": true,
+    "prisma@5.22.0": true
+  }
+}

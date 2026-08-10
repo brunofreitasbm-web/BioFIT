@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "BioFIT",
+    "slug": "biofit-aluno",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": ["**/*"],
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
