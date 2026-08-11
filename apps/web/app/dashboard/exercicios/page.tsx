@@ -4,12 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { GRUPOS_MUSCULARES, type GrupoMuscular } from "@biofit/shared";
 import { api } from "@/lib/api";
 import { youtubeThumbnail } from "@/lib/youtube";
+import { buscarExerciseDb, type ExerciseDbEntry, exerciseDbImageUrl } from "@/lib/exercisedb";
 import { Banner, Button, Card, EmptyState, GrupoBadge, Input, Select, Skeleton } from "@/components/ui";
 
 interface Exercicio {
   id: string;
   nome: string;
   grupoMuscular: string;
+  midiaUrl: string | null;
   videoUrl: string | null;
 }
 
@@ -18,9 +20,24 @@ export default function ExerciciosPage() {
   const [nome, setNome] = useState("");
   const [grupoMuscular, setGrupoMuscular] = useState<GrupoMuscular>("PEITO");
   const [videoUrl, setVideoUrl] = useState("");
+  const [buscaImagem, setBuscaImagem] = useState("");
+  const [resultadosImagem, setResultadosImagem] = useState<ExerciseDbEntry[]>([]);
+  const [midiaUrl, setMidiaUrl] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<GrupoMuscular | "TODOS">("TODOS");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const termo = buscaImagem.trim();
+    if (termo.length < 2) {
+      setResultadosImagem([]);
+      return;
+    }
+    const timeout = setTimeout(() => {
+      buscarExerciseDb(termo).then(setResultadosImagem).catch(() => setResultadosImagem([]));
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [buscaImagem]);
 
   async function load() {
     setExercicios(await api<Exercicio[]>("/exercicios"));
@@ -35,9 +52,15 @@ export default function ExerciciosPage() {
     setError(null);
     setSaving(true);
     try {
-      await api("/exercicios", { method: "POST", body: { nome, grupoMuscular, videoUrl: videoUrl || undefined } });
+      await api("/exercicios", {
+        method: "POST",
+        body: { nome, grupoMuscular, videoUrl: videoUrl || undefined, midiaUrl: midiaUrl ?? undefined },
+      });
       setNome("");
       setVideoUrl("");
+      setBuscaImagem("");
+      setResultadosImagem([]);
+      setMidiaUrl(null);
       await load();
     } catch (err) {
       setError((err as Error).message);
@@ -94,6 +117,56 @@ export default function ExerciciosPage() {
             Adicionar
           </Button>
         </form>
+
+        <div className="mt-3 flex items-start gap-3">
+          {midiaUrl ? (
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-line bg-base-700">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={midiaUrl} alt="Imagem selecionada" className="h-full w-full object-cover" />
+              <button
+                type="button"
+                onClick={() => setMidiaUrl(null)}
+                className="absolute right-0 top-0 rounded-bl bg-base-900/80 px-1 text-[10px] text-ink"
+                aria-label="Remover imagem selecionada"
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-dashed border-line text-[10px] text-ink-faint">
+              Sem imagem
+            </div>
+          )}
+          <div className="flex-1">
+            <Input
+              label="Buscar imagem no ExerciseDB (opcional)"
+              placeholder="ex.: bench press, squat, curl..."
+              value={buscaImagem}
+              onChange={(e) => setBuscaImagem(e.target.value)}
+            />
+            {resultadosImagem.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {resultadosImagem.map((r) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => {
+                      setMidiaUrl(exerciseDbImageUrl(r.id));
+                      setBuscaImagem("");
+                      setResultadosImagem([]);
+                    }}
+                    title={r.name}
+                    className="h-12 w-12 shrink-0 overflow-hidden rounded-md border border-line bg-base-700"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={exerciseDbImageUrl(r.id)} alt={r.name} className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
         {error && (
           <div className="mt-3">
             <Banner variant="error">{error}</Banner>
@@ -141,16 +214,22 @@ export default function ExerciciosPage() {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {filtrados.map((ex) => {
-          const thumb = ex.videoUrl ? youtubeThumbnail(ex.videoUrl) : null;
+          const imagem = ex.midiaUrl ?? (ex.videoUrl ? youtubeThumbnail(ex.videoUrl) : null);
           return (
             <Card key={ex.id} className="overflow-hidden p-0">
-              {thumb ? (
-                <a href={ex.videoUrl ?? "#"} target="_blank" rel="noreferrer" className="block">
-                  <img src={thumb} alt={ex.nome} className="aspect-video w-full object-cover" />
-                </a>
+              {imagem ? (
+                ex.videoUrl ? (
+                  <a href={ex.videoUrl} target="_blank" rel="noreferrer" className="block">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={imagem} alt={ex.nome} className="aspect-video w-full object-cover" />
+                  </a>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={imagem} alt={ex.nome} className="aspect-video w-full object-cover" />
+                )
               ) : (
                 <div className="flex aspect-video w-full items-center justify-center bg-base-700 text-xs text-ink-faint">
-                  Sem vídeo
+                  Sem imagem
                 </div>
               )}
               <div className="flex items-center justify-between gap-2 p-3">

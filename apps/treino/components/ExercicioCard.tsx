@@ -14,6 +14,7 @@ import {
   upsertSerie,
 } from "@/lib/storage";
 import { getExercicio } from "@/lib/exercicios";
+import { exerciseDbImageUrl } from "@/lib/exercisedb";
 
 function FallbackIcon({ grupo }: { grupo: string }) {
   return (
@@ -45,6 +46,7 @@ export function ExercicioCard({ exercicio, data }: { exercicio: Exercicio; data:
   useEffect(() => {
     setSeries(seriesDoExercicioNaData(efetivo.id, data));
     setUltima(ultimaExecucao(efetivo.id, data));
+    setImgOk(true);
   }, [efetivo.id, data]);
 
   const feitas = series.filter((s) => s.cargaKg !== null || s.reps !== null).length;
@@ -90,10 +92,10 @@ export function ExercicioCard({ exercicio, data }: { exercicio: Exercicio; data:
           className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-line bg-base-700"
           aria-label={efetivo.youtubeId ? `Ver vídeo de ${efetivo.nome}` : efetivo.nome}
         >
-          {efetivo.youtubeId && imgOk ? (
+          {efetivo.exercicioDbId && imgOk ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
-              src={`https://img.youtube.com/vi/${efetivo.youtubeId}/mqdefault.jpg`}
+              src={exerciseDbImageUrl(efetivo.exercicioDbId)}
               alt={efetivo.nome}
               className="h-full w-full object-cover"
               onError={() => setImgOk(false)}

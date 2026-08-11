@@ -2,6 +2,7 @@
 
 import type { Exercicio } from "@/lib/tipos";
 import { alternativasParaExercicio } from "@/lib/exercicios";
+import { exerciseDbImageUrl } from "@/lib/exercisedb";
 import { GrupoBadge } from "./GrupoBadge";
 
 export function SeletorExercicio({
@@ -62,10 +63,10 @@ export function SeletorExercicio({
                 }`}
               >
                 <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-base-600">
-                  {alt.youtubeId && (
+                  {alt.exercicioDbId && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={`https://img.youtube.com/vi/${alt.youtubeId}/default.jpg`}
+                      src={exerciseDbImageUrl(alt.exercicioDbId)}
                       alt=""
                       className="h-full w-full object-cover"
                     />
