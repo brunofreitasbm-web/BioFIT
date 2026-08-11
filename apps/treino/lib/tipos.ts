@@ -26,6 +26,7 @@ export interface Exercicio {
   cadencia?: string;
   notas: string;
   youtubeId: string | null;
+  exercicioDbId?: string | null; // id no free-exercise-db, usado para a miniatura
 }
 
 export interface SerieRegistrada {
