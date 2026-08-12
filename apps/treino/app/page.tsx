@@ -95,7 +95,7 @@ export default function HojePage() {
               onClick={() => setPostural((v) => !v)}
               className="mb-2 flex w-full items-center justify-between text-sm font-medium text-ink-muted"
             >
-              <span>Bloco postural diário (6-8 min, antes do treino)</span>
+              <span>Bloco postural diário (em casa, fora da academia)</span>
               <span>{postural ? "▲" : "▼"}</span>
             </button>
             {postural && (

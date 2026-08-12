@@ -135,7 +135,7 @@ export function ExercicioCard({ exercicio, data }: { exercicio: Exercicio; data:
 
       {aberto && (
         <div className="border-t border-line p-3 pt-2">
-          {efetivo.cadencia && <p className="mb-1 text-[11px] text-ink-muted">Cadência: {efetivo.cadencia}</p>}
+          {efetivo.cadencia && <p className="mb-1 text-[11px] text-ink-muted">Execução: {efetivo.cadencia}</p>}
           <p className="mb-3 text-sm text-ink-muted">{efetivo.notas}</p>
           {ultimaResumo && <p className="mb-2 text-[11px] text-brand">{ultimaResumo}</p>}
 

@@ -59,8 +59,14 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
 
             <div className="space-y-3 text-sm text-ink-muted">
               <p>
-                <strong className="text-ink">Estrutura:</strong> Push / Pull / Legs 2x por semana (Seg-Sáb, Dom off). Cada
-                sessão: aquecimento + bloco postural (6-8 min) + 5 exercícios × 3 séries.
+                <strong className="text-ink">Estrutura:</strong> Push / Pull / Legs 2x por semana (Seg-Sáb, Dom off). A sessão
+                de academia é 100% musculação: 5 exercícios × 3 séries (~45-50 min). O bloco postural NÃO ocupa tempo de
+                academia — é feito em casa.
+              </p>
+              <p>
+                <strong className="text-ink">Séries de aproximação:</strong> 1º exercício (composto pesado): 2-3 aproximações
+                subindo até a carga de trabalho (ex.: 50%×8, 70%×5, 85%×2). 2º exercício: 1 aproximação. Do 3º em diante:
+                nenhuma. Não contam no volume.
               </p>
               <p>
                 <strong className="text-ink">Rotação:</strong> 4 blocos de 15 dias. A cada bloco os exercícios mudam, mas o
@@ -69,19 +75,26 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
               <p>
                 <strong className="text-ink">Progressão:</strong> Exposição 1 = RIR 3 · Exp. 2 = RIR 2-3 · Exp. 3 = RIR 2 ·
                 Exp. 4 = RIR 1-2. Ao fechar o topo da faixa de reps no RIR alvo em todas as séries, suba 2,5% (superiores) ou
-                5% (inferiores) na exposição seguinte.
+                5% (inferiores) na exposição seguinte. Ao trocar de bloco, comece o exercício novo com carga conservadora
+                (RIR 3-4).
               </p>
               <p>
                 <strong className="text-ink">Ciclo completo:</strong> Blocos 1→2→3→4 (8 semanas) → semana 9 = deload (metade
                 das séries, RIR 4, cargas do Bloco 4 reduzidas em 10%) → reinicia no Bloco 1.
               </p>
               <p>
-                <strong className="text-ink">Cadência:</strong> Compostos: excêntrica 2-3 s. Acessórios e postural:
-                excêntrica 3-4 s. Sem balanço, sem encurtar amplitude para subir carga.
+                <strong className="text-ink">Execução:</strong> Sem cadência numérica prescrita — subir com intenção de força
+                máxima, descer sem largar o peso. Atenção extra em 3 casos: posição alongada (sem impulso na virada), remadas
+                (1 s de pausa na contração) e bloco postural (controle total).
               </p>
               <p>
-                <strong className="text-ink">Postura (cifose):</strong> Bloco postural diário fixo (não rotaciona) + razão
-                puxar:empurrar ~1,5:1 + cues de retração escapular. Melhora realista em 8-16 semanas.
+                <strong className="text-ink">Postura (cifose):</strong> Bloco Postural em casa, 7 dias/semana (o exercício 5,
+                de força para os extensores torácicos, é 3-4x/semana) + razão puxar:empurrar ~1,5:1 + cues de retração
+                escapular. Melhora realista em 8-12 semanas.
+              </p>
+              <p>
+                <strong className="text-ink">Lombar:</strong> Terra romeno, stiff e good morning foram removidos por dor
+                lombar relatada — o slot 2 de perna agora é trabalho de posterior/glúteo sem carga axial na coluna.
               </p>
               <p>
                 <strong className="text-ink">Cardio Zona 2:</strong> 2-3x/semana, 30-40 min a 60-70% FCmáx, longe dos dias de
