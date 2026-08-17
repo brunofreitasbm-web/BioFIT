@@ -2,9 +2,11 @@ import type { VolumeGrupo } from "@/lib/relatorio";
 import type { GrupoMuscular } from "@/lib/tipos";
 import { corCalor } from "@/lib/cor";
 
-// Silhueta simplificada (frente + costas) com uma região por grupo muscular. Cada região
-// é tingida pela mesma escala de calor do Heatmap (frio->quente conforme % relativo ao
-// grupo mais treinado), então o mapa e a lista de números abaixo sempre contam a mesma história.
+// Silhueta simplificada (frente + costas), com os segmentos encostados para ler como um
+// corpo sólido em vez de blocos soltos. Tronco e core dividem a mesma região (o valor de
+// cada grupo aparece completo na lista abaixo); cada região é tingida pela mesma escala de
+// calor do Heatmap (frio->quente conforme % relativo ao grupo mais treinado), então o mapa
+// e a lista de números sempre contam a mesma história.
 const CINZA_NEUTRO = "#c7cbd3"; // antebraços/pés — não são grupo rastreado
 
 function corDoGrupo(porGrupo: Record<string, VolumeGrupo>, maxSeries: number, grupo: GrupoMuscular): string {
@@ -25,42 +27,40 @@ function Corpo({
   const cor = (g: GrupoMuscular) => corDoGrupo(porGrupo, maxSeries, g);
   const ombros = cor("Deltoides");
   const panturrilha = cor("Panturrilha");
+  const postura = cor("Postura");
+  const tronco = cor(variante === "frente" ? "Peito" : "Costas");
+  const pernaSuperior = cor(variante === "frente" ? "Quadríceps" : "Posterior");
+  const bracoSuperior = cor(variante === "frente" ? "Bíceps" : "Tríceps");
 
+  // Segmentos encostados uns nos outros (sem vãos de fundo entre eles), para o corpo ler
+  // como uma silhueta sólida e definida em vez de blocos soltos.
   return (
     <svg viewBox="0 0 120 280" className="h-full w-full" role="img" aria-label={`Corpo (${variante})`}>
       {/* pés */}
-      <ellipse cx={40} cy={274} rx={9} ry={5} fill={CINZA_NEUTRO} />
-      <ellipse cx={80} cy={274} rx={9} ry={5} fill={CINZA_NEUTRO} />
+      <ellipse cx={38} cy={274} rx={10} ry={5} fill={CINZA_NEUTRO} />
+      <ellipse cx={82} cy={274} rx={10} ry={5} fill={CINZA_NEUTRO} />
       {/* panturrilhas */}
-      <rect x={31} y={206} width={20} height={62} rx={10} fill={panturrilha} />
-      <rect x={69} y={206} width={20} height={62} rx={10} fill={panturrilha} />
-      {/* coxas */}
-      <rect x={30} y={134} width={26} height={74} rx={13} fill={cor(variante === "frente" ? "Quadríceps" : "Posterior")} />
-      <rect x={64} y={134} width={26} height={74} rx={13} fill={cor(variante === "frente" ? "Quadríceps" : "Posterior")} />
+      <rect x={28} y={220} width={22} height={58} rx={11} fill={panturrilha} />
+      <rect x={70} y={220} width={22} height={58} rx={11} fill={panturrilha} />
+      {/* coxas, encostadas no tronco (sem vão no quadril) */}
+      <rect x={26} y={150} width={30} height={80} rx={15} fill={pernaSuperior} />
+      <rect x={64} y={150} width={30} height={80} rx={15} fill={pernaSuperior} />
       {/* antebraços */}
-      <rect x={6} y={122} width={16} height={56} rx={8} fill={CINZA_NEUTRO} />
-      <rect x={98} y={122} width={16} height={56} rx={8} fill={CINZA_NEUTRO} />
+      <rect x={3} y={116} width={18} height={60} rx={9} fill={CINZA_NEUTRO} />
+      <rect x={99} y={116} width={18} height={60} rx={9} fill={CINZA_NEUTRO} />
       {/* braços (bíceps na frente, tríceps nas costas) */}
-      <rect x={7} y={62} width={19} height={62} rx={9.5} fill={cor(variante === "frente" ? "Bíceps" : "Tríceps")} />
-      <rect x={94} y={62} width={19} height={62} rx={9.5} fill={cor(variante === "frente" ? "Bíceps" : "Tríceps")} />
-      {/* tronco: costas mostra trapézio (Postura) em cima de costas (Costas); frente mostra peito em cima do core */}
-      {variante === "frente" ? (
-        <>
-          <rect x={38} y={126} width={44} height={44} rx={10} fill={cor("Core")} />
-          <rect x={28} y={44} width={64} height={44} rx={16} fill={cor("Peito")} />
-        </>
-      ) : (
-        <>
-          <rect x={28} y={66} width={64} height={70} rx={16} fill={cor("Costas")} />
-          <rect x={32} y={44} width={56} height={22} rx={10} fill={cor("Postura")} />
-        </>
-      )}
-      {/* ombros */}
-      <ellipse cx={22} cy={54} rx={15} ry={17} fill={ombros} />
-      <ellipse cx={98} cy={54} rx={15} ry={17} fill={ombros} />
+      <rect x={2} y={56} width={22} height={66} rx={11} fill={bracoSuperior} />
+      <rect x={96} y={56} width={22} height={66} rx={11} fill={bracoSuperior} />
+      {/* tronco: um único bloco contínuo até o quadril, sem quebra visual entre peito/core (ou costas) */}
+      <rect x={26} y={56} width={68} height={102} rx={18} fill={tronco} />
+      {/* trapézio/postura, visível por trás do pescoço em ambas as vistas */}
+      <rect x={34} y={40} width={52} height={26} rx={13} fill={postura} />
+      {/* ombros, por cima do tronco e do trapézio para fechar a silhueta */}
+      <ellipse cx={20} cy={56} rx={17} ry={19} fill={ombros} />
+      <ellipse cx={100} cy={56} rx={17} ry={19} fill={ombros} />
       {/* pescoço + cabeça */}
-      <rect x={52} y={34} width={16} height={12} rx={4} fill={CINZA_NEUTRO} />
-      <circle cx={60} cy={20} r={17} fill={CINZA_NEUTRO} />
+      <rect x={51} y={30} width={18} height={14} rx={5} fill={CINZA_NEUTRO} />
+      <circle cx={60} cy={19} r={18} fill={CINZA_NEUTRO} />
       <text x={60} y={295} textAnchor="middle" className="fill-ink-faint text-[10px]">
         {variante === "frente" ? "Frente" : "Costas"}
       </text>

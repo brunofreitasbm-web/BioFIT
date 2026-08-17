@@ -45,6 +45,8 @@ export function ExercicioCard({
   const [trocaAberta, setTrocaAberta] = useState(false);
   const [substitutoId, setSubstitutoId] = useState<string | null>(null);
   const [descansoRestante, setDescansoRestante] = useState<number | null>(null);
+  const [dicasAbertas, setDicasAbertas] = useState(false);
+  const [seriesIndividuais, setSeriesIndividuais] = useState(false);
 
   useEffect(() => {
     setSubstitutoId(getSubstituicao(data, exercicio.id));
@@ -56,6 +58,10 @@ export function ExercicioCard({
     setSeries(seriesDoExercicioNaData(efetivo.id, data));
     setUltima(ultimaExecucao(efetivo.id, data));
     setDescansoRestante(null);
+    // Recolhida sempre que o card muda de exercício (troca ou dia novo), para não vazar o
+    // estado "aberto" de um exercício para o próximo.
+    setDicasAbertas(false);
+    setSeriesIndividuais(false);
   }, [efetivo.id, data]);
 
   const feitas = series.filter((s) => s.cargaKg !== null || s.reps !== null).length;
@@ -82,6 +88,25 @@ export function ExercicioCard({
       registradoEm: new Date().toISOString(),
     };
     upsertSerie(entry);
+    setSeries(seriesDoExercicioNaData(efetivo.id, data));
+    const segundos = parseDescansoSegundos(efetivo.descanso);
+    if (segundos) setDescansoRestante(segundos);
+  }
+
+  // Replica a mesma carga/reps para todas as séries do exercício de uma vez, já que na
+  // prática a maioria é feita com o mesmo peso — evita repetir os mesmos números 4x.
+  function confirmarTodas(kgStr: string, repsStr: string) {
+    const agora = new Date().toISOString();
+    for (let n = 1; n <= efetivo.series; n++) {
+      upsertSerie({
+        exercicioId: efetivo.id,
+        data,
+        serieNumero: n,
+        cargaKg: kgStr === "" ? null : Number(kgStr),
+        reps: repsStr === "" ? null : Number(repsStr),
+        registradoEm: agora,
+      });
+    }
     setSeries(seriesDoExercicioNaData(efetivo.id, data));
     const segundos = parseDescansoSegundos(efetivo.descanso);
     if (segundos) setDescansoRestante(segundos);
@@ -148,8 +173,25 @@ export function ExercicioCard({
 
       {expandido && (
         <div className="border-t border-line p-3 pt-2">
-          {efetivo.cadencia && <p className="mb-1 text-[11px] text-ink-muted">Execução: {efetivo.cadencia}</p>}
-          <p className="mb-3 text-sm text-ink-muted">{efetivo.notas}</p>
+          {(efetivo.cadencia || efetivo.notas) && (
+            <div className="mb-3">
+              <button
+                type="button"
+                onClick={() => setDicasAbertas((v) => !v)}
+                className="flex items-center gap-1 text-[11px] text-ink-faint"
+                aria-expanded={dicasAbertas}
+              >
+                <span>{dicasAbertas ? "▲" : "▼"}</span>
+                💡 Dicas e execução
+              </button>
+              {dicasAbertas && (
+                <div className="mt-1.5">
+                  {efetivo.cadencia && <p className="mb-1 text-[11px] text-ink-muted">Execução: {efetivo.cadencia}</p>}
+                  <p className="text-sm text-ink-muted">{efetivo.notas}</p>
+                </div>
+              )}
+            </div>
+          )}
           {ultimaResumo && <p className="mb-2 text-[11px] text-brand">{ultimaResumo}</p>}
 
           {descansoRestante !== null && descansoRestante > 0 && (
@@ -161,25 +203,47 @@ export function ExercicioCard({
             </div>
           )}
 
-          <div className="grid grid-cols-[auto_1fr_1fr_auto] items-center gap-x-2 gap-y-1.5 text-xs">
-            <span className="text-ink-faint">Série</span>
-            <span className="text-ink-faint">Carga (kg)</span>
-            <span className="text-ink-faint">Reps</span>
-            <span />
-            {Array.from({ length: efetivo.series }, (_, i) => i + 1).map((n) => {
-              const s = series.find((x) => x.serieNumero === n);
-              const ultimaValor = ultima.find((x) => x.serieNumero === n);
-              return (
-                <FragmentoLinha
-                  key={n}
-                  n={n}
-                  s={s}
-                  ultimaValor={ultimaValor}
-                  onConfirmar={(kg, reps) => confirmarSerie(n, kg, reps)}
-                />
-              );
-            })}
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-[11px] text-ink-faint">{feitas}/{efetivo.series} séries</span>
+            <button
+              type="button"
+              onClick={() => setSeriesIndividuais((v) => !v)}
+              className="text-[11px] text-ink-faint underline"
+            >
+              {seriesIndividuais ? "Usar 1 campo para todas" : "Ajustar série por série"}
+            </button>
           </div>
+
+          {seriesIndividuais ? (
+            <div className="grid grid-cols-[auto_1fr_1fr_auto] items-center gap-x-2 gap-y-1.5 text-xs">
+              <span className="text-ink-faint">Série</span>
+              <span className="text-ink-faint">Carga (kg)</span>
+              <span className="text-ink-faint">Reps</span>
+              <span />
+              {Array.from({ length: efetivo.series }, (_, i) => i + 1).map((n) => {
+                const s = series.find((x) => x.serieNumero === n);
+                const ultimaValor = ultima.find((x) => x.serieNumero === n);
+                return (
+                  <FragmentoLinha
+                    key={n}
+                    n={n}
+                    s={s}
+                    ultimaValor={ultimaValor}
+                    onConfirmar={(kg, reps) => confirmarSerie(n, kg, reps)}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div className="grid grid-cols-[1fr_1fr_auto] items-center gap-x-2 text-xs">
+              <LinhaReplicada
+                totalSeries={efetivo.series}
+                series={series}
+                ultima={ultima}
+                onConfirmarTodas={confirmarTodas}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -196,6 +260,66 @@ export function ExercicioCard({
         />
       )}
     </div>
+  );
+}
+
+// Campo único que confirma as `totalSeries` séries de uma vez, todas com a mesma carga/reps.
+// As séries em si continuam existindo (e ficam acessíveis via "Ajustar série por série");
+// aqui só entra o valor uma vez e o check aplica pra todas.
+function LinhaReplicada({
+  totalSeries,
+  series,
+  ultima,
+  onConfirmarTodas,
+}: {
+  totalSeries: number;
+  series: SerieRegistrada[];
+  ultima: SerieRegistrada[];
+  onConfirmarTodas: (kg: string, reps: string) => void;
+}) {
+  const primeira = series.find((s) => s.serieNumero === 1);
+  const ultimaPrimeira = ultima.find((s) => s.serieNumero === 1);
+  const [kg, setKg] = useState(() => (primeira?.cargaKg ?? ultimaPrimeira?.cargaKg ?? "").toString());
+  const [reps, setReps] = useState(() => (primeira?.reps ?? ultimaPrimeira?.reps ?? "").toString());
+  const todasFeitas =
+    series.filter((s) => s.cargaKg !== null || s.reps !== null).length >= totalSeries && totalSeries > 0;
+
+  useEffect(() => {
+    setKg((primeira?.cargaKg ?? ultimaPrimeira?.cargaKg ?? "").toString());
+    setReps((primeira?.reps ?? ultimaPrimeira?.reps ?? "").toString());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [primeira?.cargaKg, primeira?.reps, ultimaPrimeira?.cargaKg, ultimaPrimeira?.reps]);
+
+  return (
+    <>
+      <input
+        type="number"
+        inputMode="decimal"
+        placeholder="kg"
+        value={kg}
+        onChange={(e) => setKg(e.target.value)}
+        className="w-full rounded-lg border border-line bg-base-700 px-2 py-1.5 text-ink"
+      />
+      <input
+        type="number"
+        inputMode="numeric"
+        placeholder="reps"
+        value={reps}
+        onChange={(e) => setReps(e.target.value)}
+        className="w-full rounded-lg border border-line bg-base-700 px-2 py-1.5 text-ink"
+      />
+      <button
+        type="button"
+        onClick={() => onConfirmarTodas(kg, reps)}
+        className={cn(
+          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold transition-colors",
+          todasFeitas ? "border-accent bg-accent-soft text-accent" : "border-line bg-base-700 text-ink-faint",
+        )}
+        aria-label={`Confirmar as ${totalSeries} séries`}
+      >
+        ✓
+      </button>
+    </>
   );
 }
 
