@@ -47,6 +47,7 @@ export function ExercicioCard({
   const [descansoRestante, setDescansoRestante] = useState<number | null>(null);
   const [dicasAbertas, setDicasAbertas] = useState(false);
   const [seriesIndividuais, setSeriesIndividuais] = useState(false);
+  const [erroSalvar, setErroSalvar] = useState(false);
 
   useEffect(() => {
     setSubstitutoId(getSubstituicao(data, exercicio.id));
@@ -87,18 +88,22 @@ export function ExercicioCard({
       reps: repsStr === "" ? null : Number(repsStr),
       registradoEm: new Date().toISOString(),
     };
-    upsertSerie(entry);
+    const salvou = upsertSerie(entry);
+    setErroSalvar(!salvou);
     setSeries(seriesDoExercicioNaData(efetivo.id, data));
-    const segundos = parseDescansoSegundos(efetivo.descanso);
-    if (segundos) setDescansoRestante(segundos);
+    if (salvou) {
+      const segundos = parseDescansoSegundos(efetivo.descanso);
+      if (segundos) setDescansoRestante(segundos);
+    }
   }
 
   // Replica a mesma carga/reps para todas as séries do exercício de uma vez, já que na
   // prática a maioria é feita com o mesmo peso — evita repetir os mesmos números 4x.
   function confirmarTodas(kgStr: string, repsStr: string) {
     const agora = new Date().toISOString();
+    let salvouTudo = true;
     for (let n = 1; n <= efetivo.series; n++) {
-      upsertSerie({
+      const salvou = upsertSerie({
         exercicioId: efetivo.id,
         data,
         serieNumero: n,
@@ -106,10 +111,14 @@ export function ExercicioCard({
         reps: repsStr === "" ? null : Number(repsStr),
         registradoEm: agora,
       });
+      salvouTudo = salvouTudo && salvou;
     }
+    setErroSalvar(!salvouTudo);
     setSeries(seriesDoExercicioNaData(efetivo.id, data));
-    const segundos = parseDescansoSegundos(efetivo.descanso);
-    if (segundos) setDescansoRestante(segundos);
+    if (salvouTudo) {
+      const segundos = parseDescansoSegundos(efetivo.descanso);
+      if (segundos) setDescansoRestante(segundos);
+    }
   }
 
   function trocarPara(novoId: string | null) {
@@ -141,7 +150,7 @@ export function ExercicioCard({
               {substitutoId && <span className="text-[11px] text-brand">trocado</span>}
             </div>
           </div>
-          <span className="text-ink-faint">{expandido ? "▲" : "▼"}</span>
+          <span className="text-ink-faint" aria-hidden="true">{expandido ? "▲" : "▼"}</span>
         </button>
 
         {efetivo.youtubeId && (
@@ -151,10 +160,10 @@ export function ExercicioCard({
               e.stopPropagation();
               setVideoAberto(true);
             }}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-base-700 text-base"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-base-700 text-base"
             aria-label={`Ver vídeo de ${efetivo.nome}`}
           >
-            🎬
+            <span aria-hidden="true">🎬</span>
           </button>
         )}
 
@@ -164,25 +173,30 @@ export function ExercicioCard({
             e.stopPropagation();
             setTrocaAberta(true);
           }}
-          className="shrink-0 self-start rounded-full border border-line bg-base-700 px-2 py-1 text-[11px] text-ink-muted"
+          className="flex min-h-11 shrink-0 items-center gap-1 self-start rounded-full border border-line bg-base-700 px-3 py-2 text-[11px] text-ink-muted"
           aria-label={`Mudar exercício: ${exercicio.nome}`}
         >
-          🔄 Mudar
+          <span aria-hidden="true">🔄</span> Mudar
         </button>
       </div>
 
       {expandido && (
         <div className="border-t border-line p-3 pt-2">
+          {erroSalvar && (
+            <p role="alert" className="mb-2 text-[11px] font-medium text-danger">
+              Não foi possível salvar a série no dispositivo. Tente novamente.
+            </p>
+          )}
           {(efetivo.cadencia || efetivo.notas) && (
             <div className="mb-3">
               <button
                 type="button"
                 onClick={() => setDicasAbertas((v) => !v)}
-                className="flex items-center gap-1 text-[11px] text-ink-faint"
+                className="flex min-h-11 items-center gap-1 text-[11px] text-ink-faint"
                 aria-expanded={dicasAbertas}
               >
-                <span>{dicasAbertas ? "▲" : "▼"}</span>
-                💡 Dicas e execução
+                <span aria-hidden="true">{dicasAbertas ? "▲" : "▼"}</span>
+                <span aria-hidden="true">💡</span> Dicas e execução
               </button>
               {dicasAbertas && (
                 <div className="mt-1.5">
@@ -196,8 +210,14 @@ export function ExercicioCard({
 
           {descansoRestante !== null && descansoRestante > 0 && (
             <div className="mb-3 flex items-center justify-between rounded-lg border border-brand/30 bg-brand-soft px-3 py-2">
-              <span className="text-xs font-medium text-brand">⏱ Descanso: {formatarDescanso(descansoRestante)}</span>
-              <button type="button" onClick={() => setDescansoRestante(null)} className="text-[11px] text-brand underline">
+              <span className="text-xs font-medium text-brand">
+                <span aria-hidden="true">⏱</span> Descanso: {formatarDescanso(descansoRestante)}
+              </span>
+              <button
+                type="button"
+                onClick={() => setDescansoRestante(null)}
+                className="min-h-11 px-2 text-[11px] font-medium text-brand underline"
+              >
                 pular
               </button>
             </div>
@@ -296,28 +316,30 @@ function LinhaReplicada({
         type="number"
         inputMode="decimal"
         placeholder="kg"
+        aria-label="Carga em quilos, todas as séries"
         value={kg}
         onChange={(e) => setKg(e.target.value)}
-        className="w-full rounded-lg border border-line bg-base-700 px-2 py-1.5 text-ink"
+        className="w-full rounded-lg border border-line bg-base-700 px-2 py-2.5 text-ink"
       />
       <input
         type="number"
         inputMode="numeric"
         placeholder="reps"
+        aria-label="Repetições, todas as séries"
         value={reps}
         onChange={(e) => setReps(e.target.value)}
-        className="w-full rounded-lg border border-line bg-base-700 px-2 py-1.5 text-ink"
+        className="w-full rounded-lg border border-line bg-base-700 px-2 py-2.5 text-ink"
       />
       <button
         type="button"
         onClick={() => onConfirmarTodas(kg, reps)}
         className={cn(
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold transition-colors",
+          "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-base font-semibold transition-colors",
           todasFeitas ? "border-accent bg-accent-soft text-accent" : "border-line bg-base-700 text-ink-faint",
         )}
         aria-label={`Confirmar as ${totalSeries} séries`}
       >
-        ✓
+        <span aria-hidden="true">✓</span>
       </button>
     </>
   );
@@ -352,28 +374,30 @@ function FragmentoLinha({
         type="number"
         inputMode="decimal"
         placeholder="kg"
+        aria-label={`Carga em quilos, série ${n}`}
         value={kg}
         onChange={(e) => setKg(e.target.value)}
-        className="w-full rounded-lg border border-line bg-base-700 px-2 py-1.5 text-ink"
+        className="w-full rounded-lg border border-line bg-base-700 px-2 py-2.5 text-ink"
       />
       <input
         type="number"
         inputMode="numeric"
         placeholder="reps"
+        aria-label={`Repetições, série ${n}`}
         value={reps}
         onChange={(e) => setReps(e.target.value)}
-        className="w-full rounded-lg border border-line bg-base-700 px-2 py-1.5 text-ink"
+        className="w-full rounded-lg border border-line bg-base-700 px-2 py-2.5 text-ink"
       />
       <button
         type="button"
         onClick={() => onConfirmar(kg, reps)}
         className={cn(
-          "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold transition-colors",
+          "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-base font-semibold transition-colors",
           feita ? "border-accent bg-accent-soft text-accent" : "border-line bg-base-700 text-ink-faint",
         )}
         aria-label={`Confirmar série ${n}`}
       >
-        ✓
+        <span aria-hidden="true">✓</span>
       </button>
     </>
   );

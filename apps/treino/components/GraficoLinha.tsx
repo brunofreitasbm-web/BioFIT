@@ -1,4 +1,5 @@
 import { formatarDataBR } from "@/lib/bioimpedancia";
+import { CHART_COLORS } from "@/lib/colors";
 
 export interface PontoGrafico {
   data: string; // YYYY-MM-DD
@@ -12,7 +13,7 @@ export function GraficoLinha({
   pontos,
   unidade = "",
   decimais = 1,
-  cor = "#3d63e0",
+  cor = CHART_COLORS.brand,
   corPositivaQuandoCai = false,
 }: {
   titulo: string;

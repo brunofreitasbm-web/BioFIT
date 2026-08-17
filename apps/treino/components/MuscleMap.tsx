@@ -84,7 +84,7 @@ function Corpo({
 
   return (
     <svg
-      viewBox="0 0 120 280"
+      viewBox="0 0 120 300"
       className="h-full w-full"
       role="img"
       aria-label={`Corpo (${variante})`}

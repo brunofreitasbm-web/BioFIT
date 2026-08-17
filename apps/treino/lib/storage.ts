@@ -23,8 +23,13 @@ export function getDataInicio(): string | null {
   return window.localStorage.getItem(KEY_INICIO);
 }
 
-export function setDataInicio(iso: string) {
-  window.localStorage.setItem(KEY_INICIO, iso);
+export function setDataInicio(iso: string): boolean {
+  try {
+    window.localStorage.setItem(KEY_INICIO, iso);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function getLog(): SerieRegistrada[] {
@@ -37,23 +42,28 @@ export function getLog(): SerieRegistrada[] {
   }
 }
 
-function saveLog(log: SerieRegistrada[]) {
-  window.localStorage.setItem(KEY_LOG, JSON.stringify(log));
+function saveLog(log: SerieRegistrada[]): boolean {
+  try {
+    window.localStorage.setItem(KEY_LOG, JSON.stringify(log));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-export function upsertSerie(entry: SerieRegistrada) {
+export function upsertSerie(entry: SerieRegistrada): boolean {
   const log = getLog();
   const idx = log.findIndex(
     (s) => s.exercicioId === entry.exercicioId && s.data === entry.data && s.serieNumero === entry.serieNumero,
   );
   if (idx >= 0) log[idx] = entry;
   else log.push(entry);
-  saveLog(log);
+  return saveLog(log);
 }
 
-export function removerSerie(exercicioId: string, data: string, serieNumero: number) {
+export function removerSerie(exercicioId: string, data: string, serieNumero: number): boolean {
   const log = getLog().filter((s) => !(s.exercicioId === exercicioId && s.data === data && s.serieNumero === serieNumero));
-  saveLog(log);
+  return saveLog(log);
 }
 
 export function seriesDoExercicioNaData(exercicioId: string, data: string): SerieRegistrada[] {
@@ -82,8 +92,13 @@ export function getTodasSessoes(): Record<string, RegistroSessao[]> {
   }
 }
 
-function saveSessoesPorDia(map: Record<string, RegistroSessao[]>) {
-  window.localStorage.setItem(KEY_SESSOES, JSON.stringify(map));
+function saveSessoesPorDia(map: Record<string, RegistroSessao[]>): boolean {
+  try {
+    window.localStorage.setItem(KEY_SESSOES, JSON.stringify(map));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function getSessoesDoDia(data: string): RegistroSessao[] {
@@ -94,7 +109,7 @@ export function getSessaoAtiva(data: string, sessaoTipo: SessaoTreino): Registro
   return getSessoesDoDia(data).find((r) => r.sessaoTipo === sessaoTipo) ?? null;
 }
 
-export function iniciarSessao(data: string, sessaoTipo: SessaoTreino, bloco: number) {
+export function iniciarSessao(data: string, sessaoTipo: SessaoTreino, bloco: number): boolean {
   const map = getTodasSessoes();
   const lista = map[data] ?? [];
   const idx = lista.findIndex((r) => r.sessaoTipo === sessaoTipo);
@@ -102,27 +117,25 @@ export function iniciarSessao(data: string, sessaoTipo: SessaoTreino, bloco: num
   if (idx >= 0) lista[idx] = novo;
   else lista.push(novo);
   map[data] = lista;
-  saveSessoesPorDia(map);
+  return saveSessoesPorDia(map);
 }
 
-export function terminarSessao(data: string, sessaoTipo: SessaoTreino) {
+export function terminarSessao(data: string, sessaoTipo: SessaoTreino): boolean {
   const map = getTodasSessoes();
   const lista = map[data] ?? [];
   const atual = lista.find((r) => r.sessaoTipo === sessaoTipo);
-  if (atual) {
-    atual.fimISO = new Date().toISOString();
-    saveSessoesPorDia(map);
-  }
+  if (!atual) return false;
+  atual.fimISO = new Date().toISOString();
+  return saveSessoesPorDia(map);
 }
 
-export function reabrirSessao(data: string, sessaoTipo: SessaoTreino) {
+export function reabrirSessao(data: string, sessaoTipo: SessaoTreino): boolean {
   const map = getTodasSessoes();
   const lista = map[data] ?? [];
   const atual = lista.find((r) => r.sessaoTipo === sessaoTipo);
-  if (atual) {
-    atual.fimISO = null;
-    saveSessoesPorDia(map);
-  }
+  if (!atual) return false;
+  atual.fimISO = null;
+  return saveSessoesPorDia(map);
 }
 
 // ===== Escolha manual da sessão do dia (sobrepõe a sugestão de calendário) =====
@@ -141,16 +154,26 @@ export function getSessaoEscolhida(data: string): EscolhaDoDia | null {
   return getEscolhas()[data] ?? null;
 }
 
-export function setSessaoEscolhida(data: string, valor: EscolhaDoDia) {
+export function setSessaoEscolhida(data: string, valor: EscolhaDoDia): boolean {
   const map = getEscolhas();
   map[data] = valor;
-  window.localStorage.setItem(KEY_ESCOLHAS, JSON.stringify(map));
+  try {
+    window.localStorage.setItem(KEY_ESCOLHAS, JSON.stringify(map));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-export function limparSessaoEscolhida(data: string) {
+export function limparSessaoEscolhida(data: string): boolean {
   const map = getEscolhas();
   delete map[data];
-  window.localStorage.setItem(KEY_ESCOLHAS, JSON.stringify(map));
+  try {
+    window.localStorage.setItem(KEY_ESCOLHAS, JSON.stringify(map));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // ===== Troca de exercício do dia (mesmo grupo muscular, só para aquele dia) =====
@@ -173,16 +196,26 @@ export function getSubstituicao(data: string, exercicioOriginalId: string): stri
   return getSubstituicoes()[chaveSubstituicao(data, exercicioOriginalId)] ?? null;
 }
 
-export function setSubstituicao(data: string, exercicioOriginalId: string, substitutoId: string) {
+export function setSubstituicao(data: string, exercicioOriginalId: string, substitutoId: string): boolean {
   const map = getSubstituicoes();
   map[chaveSubstituicao(data, exercicioOriginalId)] = substitutoId;
-  window.localStorage.setItem(KEY_SUBSTITUICOES, JSON.stringify(map));
+  try {
+    window.localStorage.setItem(KEY_SUBSTITUICOES, JSON.stringify(map));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-export function removerSubstituicao(data: string, exercicioOriginalId: string) {
+export function removerSubstituicao(data: string, exercicioOriginalId: string): boolean {
   const map = getSubstituicoes();
   delete map[chaveSubstituicao(data, exercicioOriginalId)];
-  window.localStorage.setItem(KEY_SUBSTITUICOES, JSON.stringify(map));
+  try {
+    window.localStorage.setItem(KEY_SUBSTITUICOES, JSON.stringify(map));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // ===== Histórico por tipo de sessão (para descanso por grupo muscular e exposição real) =====
@@ -225,27 +258,29 @@ export function getBikeIndoor(data: string): RegistroBikeIndoor | null {
   }
 }
 
-export function saveBikeIndoor(entry: RegistroBikeIndoor) {
-  if (typeof window === "undefined") return;
+export function saveBikeIndoor(entry: RegistroBikeIndoor): boolean {
+  if (typeof window === "undefined") return false;
   try {
     const raw = window.localStorage.getItem(KEY_BIKE);
     const map = raw ? (JSON.parse(raw) as Record<string, RegistroBikeIndoor>) : {};
     map[entry.data] = entry;
     window.localStorage.setItem(KEY_BIKE, JSON.stringify(map));
+    return true;
   } catch {
-    // ignore
+    return false;
   }
 }
 
-export function removerBikeIndoor(data: string) {
-  if (typeof window === "undefined") return;
+export function removerBikeIndoor(data: string): boolean {
+  if (typeof window === "undefined") return false;
   try {
     const raw = window.localStorage.getItem(KEY_BIKE);
     const map = raw ? (JSON.parse(raw) as Record<string, RegistroBikeIndoor>) : {};
     delete map[data];
     window.localStorage.setItem(KEY_BIKE, JSON.stringify(map));
+    return true;
   } catch {
-    // ignore
+    return false;
   }
 }
 
@@ -271,18 +306,28 @@ export function getRegistrosBioimpedanciaSalvos(): Record<string, RegistroBioimp
   }
 }
 
-export function salvarRegistroBioimpedancia(registro: RegistroBioimpedancia) {
-  if (typeof window === "undefined") return;
+export function salvarRegistroBioimpedancia(registro: RegistroBioimpedancia): boolean {
+  if (typeof window === "undefined") return false;
   const map = getRegistrosBioimpedanciaSalvos();
   map[registro.data] = registro;
-  window.localStorage.setItem(KEY_BIOIMPEDANCIA, JSON.stringify(map));
+  try {
+    window.localStorage.setItem(KEY_BIOIMPEDANCIA, JSON.stringify(map));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-export function removerRegistroBioimpedancia(data: string) {
-  if (typeof window === "undefined") return;
+export function removerRegistroBioimpedancia(data: string): boolean {
+  if (typeof window === "undefined") return false;
   const map = getRegistrosBioimpedanciaSalvos();
   delete map[data];
-  window.localStorage.setItem(KEY_BIOIMPEDANCIA, JSON.stringify(map));
+  try {
+    window.localStorage.setItem(KEY_BIOIMPEDANCIA, JSON.stringify(map));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // ===== Chave de API do Gemini (fica só no localStorage do navegador, nunca no código) =====
@@ -292,11 +337,20 @@ export function getGeminiApiKey(): string | null {
   return window.localStorage.getItem(KEY_GEMINI_API_KEY);
 }
 
-export function setGeminiApiKey(chave: string) {
-  window.localStorage.setItem(KEY_GEMINI_API_KEY, chave);
+export function setGeminiApiKey(chave: string): boolean {
+  try {
+    window.localStorage.setItem(KEY_GEMINI_API_KEY, chave);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function removerGeminiApiKey() {
-  window.localStorage.removeItem(KEY_GEMINI_API_KEY);
+  try {
+    window.localStorage.removeItem(KEY_GEMINI_API_KEY);
+  } catch {
+    // ignore
+  }
 }
 

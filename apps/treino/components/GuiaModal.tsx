@@ -22,22 +22,36 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
           setInputData(getDataInicio() ?? dataInicio);
           setAberto(true);
         }}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line bg-base-800 text-ink-muted"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-base-800 text-ink-muted"
         aria-label="Guia do programa e configurações"
       >
-        ⓘ
+        <span aria-hidden="true">ⓘ</span>
       </button>
 
       {aberto && (
-        <div className="fixed inset-0 z-30 flex items-end justify-center bg-black/60" onClick={() => setAberto(false)}>
+        <div
+          className="fixed inset-0 z-30 flex items-end justify-center bg-black/60"
+          onClick={() => setAberto(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Guia do programa"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setAberto(false);
+          }}
+        >
           <div
             className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-t-2xl border-t border-line bg-base-800 p-4 pb-8"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Guia do programa</h2>
-              <button type="button" onClick={() => setAberto(false)} className="text-ink-muted">
-                ✕
+              <button
+                type="button"
+                onClick={() => setAberto(false)}
+                className="flex h-11 w-11 shrink-0 items-center justify-center text-ink-muted"
+                aria-label="Fechar"
+              >
+                <span aria-hidden="true">✕</span>
               </button>
             </div>
 
