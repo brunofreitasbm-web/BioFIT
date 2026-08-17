@@ -14,19 +14,6 @@ const GRUPO_CLASSE: Record<GrupoMuscular, string> = {
   Core: "bg-grupo-core/15 text-grupo-core border-grupo-core/30",
 };
 
-export const GRUPO_COR_HEX: Record<GrupoMuscular, string> = {
-  Peito: "#ff8a5c",
-  Costas: "#4f9bff",
-  Deltoides: "#ffcf5c",
-  "Bíceps": "#8a7bff",
-  "Tríceps": "#ff6bd6",
-  "Quadríceps": "#4fe0c0",
-  Posterior: "#38c7ff",
-  Panturrilha: "#a6ff3f",
-  Postura: "#ff9fd0",
-  Core: "#ffcf5c",
-};
-
 export function GrupoBadge({ grupo }: { grupo: GrupoMuscular }) {
   return (
     <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium", GRUPO_CLASSE[grupo])}>

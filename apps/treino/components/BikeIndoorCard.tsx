@@ -34,21 +34,27 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
       return;
     }
 
-    setErro(null);
-    const novoStatus = !concluido;
-    setConcluido(novoStatus);
-
-    if (novoStatus) {
-      saveBikeIndoor({
-        data: hojeISO,
-        tempoMinutos: numTempo,
-        concluido: true,
-        registradoEm: new Date().toISOString(),
-      });
-    } else {
-      removerBikeIndoor(hojeISO);
+    // Desmarcar apaga o registro do dia (sem undo) — confirma antes de um toque acidental.
+    if (concluido && !window.confirm("Desmarcar remove o registro de cardio de hoje. Continuar?")) {
+      return;
     }
 
+    const novoStatus = !concluido;
+    const salvou = novoStatus
+      ? saveBikeIndoor({
+          data: hojeISO,
+          tempoMinutos: numTempo,
+          concluido: true,
+          registradoEm: new Date().toISOString(),
+        })
+      : removerBikeIndoor(hojeISO);
+
+    if (!salvou) {
+      setErro("Não foi possível salvar no dispositivo. Tente novamente.");
+      return;
+    }
+    setErro(null);
+    setConcluido(novoStatus);
     if (onUpdate) onUpdate();
   }
 
@@ -56,12 +62,16 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
     setTempo(minutos.toString());
     setErro(null);
     if (concluido) {
-      saveBikeIndoor({
+      const salvou = saveBikeIndoor({
         data: hojeISO,
         tempoMinutos: minutos,
         concluido: true,
         registradoEm: new Date().toISOString(),
       });
+      if (!salvou) {
+        setErro("Não foi possível salvar no dispositivo. Tente novamente.");
+        return;
+      }
       if (onUpdate) onUpdate();
     }
   }
@@ -72,12 +82,16 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
     setErro(null);
     const numTempo = parseInt(val, 10);
     if (concluido && !isNaN(numTempo) && numTempo > 0) {
-      saveBikeIndoor({
+      const salvou = saveBikeIndoor({
         data: hojeISO,
         tempoMinutos: numTempo,
         concluido: true,
         registradoEm: new Date().toISOString(),
       });
+      if (!salvou) {
+        setErro("Não foi possível salvar no dispositivo. Tente novamente.");
+        return;
+      }
       if (onUpdate) onUpdate();
     }
   }
@@ -94,6 +108,7 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div
+            aria-hidden="true"
             className={cn(
               "flex h-9 w-9 items-center justify-center rounded-xl text-lg font-bold transition-all",
               concluido ? "bg-accent text-white" : "bg-base-700 text-ink-muted"
@@ -126,7 +141,7 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-1.5 rounded-lg border border-line bg-base-900 px-3 py-1.5">
-          <span className="text-xs text-ink-faint">Duração:</span>
+          <span className="text-xs text-ink-faint" id="bike-duracao-label">Duração:</span>
           <input
             type="number"
             min="1"
@@ -134,9 +149,11 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
             value={tempo}
             onChange={handleTempoChange}
             placeholder="30"
+            aria-labelledby="bike-duracao-label"
+            aria-describedby="bike-duracao-unidade"
             className="w-12 bg-transparent text-sm font-semibold text-ink text-center outline-none"
           />
-          <span className="text-xs font-medium text-ink-muted">min</span>
+          <span className="text-xs font-medium text-ink-muted" id="bike-duracao-unidade">min</span>
         </div>
 
         <div className="flex items-center gap-1">
@@ -145,8 +162,9 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
               key={m}
               type="button"
               onClick={() => handlePresetClick(m)}
+              aria-pressed={tempo === m.toString()}
               className={cn(
-                "rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors",
+                "min-h-11 rounded-lg border px-2.5 text-xs font-medium transition-colors",
                 tempo === m.toString()
                   ? "border-brand bg-brand-soft font-semibold text-brand"
                   : "border-line bg-base-900 text-ink-muted hover:border-brand/40"
@@ -159,7 +177,7 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
       </div>
 
       {erro && (
-        <p className="mt-2 text-xs font-medium text-danger">{erro}</p>
+        <p role="alert" className="mt-2 text-xs font-medium text-danger">{erro}</p>
       )}
 
       <button
@@ -172,7 +190,7 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
             : "bg-brand text-white hover:bg-brand-hover shadow-sm"
         )}
       >
-        <span className="text-sm">{concluido ? "✓" : "○"}</span>
+        <span className="text-sm" aria-hidden="true">{concluido ? "✓" : "○"}</span>
         <span>
           {concluido ? `Concluído (${tempo} min)` : "Marcar como Concluído"}
         </span>

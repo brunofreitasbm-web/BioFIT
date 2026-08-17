@@ -8,6 +8,7 @@ import { GraficoLinha } from "@/components/GraficoLinha";
 import { InsightIACard } from "@/components/InsightIACard";
 import { BioimpedanciaForm } from "@/components/BioimpedanciaForm";
 import { cn } from "@/lib/cn";
+import { CHART_COLORS } from "@/lib/colors";
 
 export default function BioimpedanciaPage() {
   const [pronto, setPronto] = useState(false);
@@ -51,7 +52,7 @@ export default function BioimpedanciaPage() {
         <button
           type="button"
           onClick={() => setFormAberto(true)}
-          className="rounded-full bg-brand px-3 py-2 text-xs font-semibold text-white"
+          className="min-h-11 rounded-full bg-brand px-4 text-sm font-semibold text-white"
         >
           + Medição
         </button>
@@ -87,20 +88,20 @@ export default function BioimpedanciaPage() {
             titulo="% de gordura"
             pontos={registros.map((r) => ({ data: r.data, valor: r.percentualGordura }))}
             unidade="%"
-            cor="#d63548"
+            cor={CHART_COLORS.danger}
             corPositivaQuandoCai
           />
           <GraficoLinha
             titulo="Massa livre de gordura (kg)"
             pontos={registros.map((r) => ({ data: r.data, valor: r.massaLivreGorduraKg }))}
             unidade="kg"
-            cor="#158a43"
+            cor={CHART_COLORS.accent}
           />
           <GraficoLinha
             titulo="Água corporal (L)"
             pontos={registros.map((r) => ({ data: r.data, valor: r.aguaCorporalL }))}
             unidade="L"
-            cor="#38c7ff"
+            cor={CHART_COLORS.info}
           />
         </div>
       )}
@@ -143,8 +144,13 @@ export default function BioimpedanciaPage() {
                   {r.pesoKg}kg · {r.percentualGordura}% gordura · {r.massaLivreGorduraKg}kg magra
                 </span>
                 {salvosPeloUsuario[r.data] && (
-                  <button type="button" onClick={() => remover(r.data)} className="text-danger" aria-label="Remover medição">
-                    🗑
+                  <button
+                    type="button"
+                    onClick={() => remover(r.data)}
+                    className="flex h-11 w-11 shrink-0 items-center justify-center text-danger"
+                    aria-label="Remover medição"
+                  >
+                    <span aria-hidden="true">🗑</span>
                   </button>
                 )}
               </div>

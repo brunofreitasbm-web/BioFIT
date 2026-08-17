@@ -17,7 +17,8 @@ const config: Config = {
         ink: {
           DEFAULT: "#1a1d23",
           muted: "#5b606c",
-          faint: "#8a8f9b",
+          // Darkened from #8a8f9b (2.97:1 on base-900) to meet WCAG AA 4.5:1 for small text.
+          faint: "#656b78",
         },
         brand: {
           DEFAULT: "#3d63e0",
@@ -25,24 +26,26 @@ const config: Config = {
           hover: "#2f4fc0",
         },
         accent: {
-          DEFAULT: "#158a43",
+          // Darkened from #158a43 (4.05:1 as text, 4.42:1 as white-on-bg) to pass WCAG AA both ways.
+          DEFAULT: "#12793a",
           soft: "#e7f6ec",
         },
         danger: {
-          DEFAULT: "#d63548",
+          // Darkened from #d63548 (4.31:1 as text) to comfortably pass WCAG AA.
+          DEFAULT: "#c22d3f",
           soft: "#fceaec",
         },
         grupo: {
-          peito: "#d9591c",
+          peito: "#c25019",
           costas: "#2f6fe0",
-          deltoides: "#b8860b",
+          deltoides: "#966d09",
           biceps: "#6b57e6",
-          triceps: "#c93aa3",
-          quadriceps: "#0f9e83",
-          posterior: "#1789c9",
-          panturrilha: "#5a9216",
-          postura: "#c94a86",
-          core: "#d6a319",
+          triceps: "#c737a1",
+          quadriceps: "#0c826c",
+          posterior: "#1479b2",
+          panturrilha: "#4f8013",
+          postura: "#c74281",
+          core: "#926f11",
         },
       },
       fontFamily: {

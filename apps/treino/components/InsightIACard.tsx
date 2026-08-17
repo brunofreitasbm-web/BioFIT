@@ -80,7 +80,9 @@ export function InsightIACard({ registros }: { registros: RegistroBioimpedancia[
   return (
     <div className="rounded-xl border border-brand-soft bg-brand-soft p-3">
       <div className="mb-1 flex items-center justify-between">
-        <p className="text-sm font-semibold text-accent">🤖 Análise por IA (Gemini)</p>
+        <p className="text-sm font-semibold text-accent">
+          <span aria-hidden="true">🤖</span> Análise por IA (Gemini)
+        </p>
         {apiKey && (
           <button type="button" onClick={trocarChave} className="text-[11px] text-ink-muted underline">
             trocar chave
@@ -100,6 +102,7 @@ export function InsightIACard({ registros }: { registros: RegistroBioimpedancia[
               value={inputChave}
               onChange={(e) => setInputChave(e.target.value)}
               placeholder="Chave de API do Gemini"
+              aria-label="Chave de API do Gemini"
               className="flex-1 rounded-lg border border-line bg-base-800 px-3 py-2 text-sm text-ink"
             />
             <button type="button" onClick={salvarChave} className="rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white">
@@ -113,8 +116,14 @@ export function InsightIACard({ registros }: { registros: RegistroBioimpedancia[
             type="button"
             onClick={perguntar}
             disabled={carregando || registros.length === 0}
-            className="w-full rounded-lg bg-brand py-2 text-sm font-semibold text-white disabled:opacity-60"
+            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand py-2 text-sm font-semibold text-white disabled:opacity-60"
           >
+            {carregando && (
+              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+            )}
             {carregando ? "Analisando..." : "Cruzar bioimpedância com o treino"}
           </button>
           {erro && <p className="text-xs text-danger">{erro}</p>}

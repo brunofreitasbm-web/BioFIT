@@ -74,7 +74,21 @@ export default function HojePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessaoEfetiva, blocoAtivo, progressoPorExercicio]);
 
-  if (!pronto) return null;
+  if (!pronto) {
+    return (
+      <div className="p-4" aria-hidden="true">
+        <div className="mb-4 animate-pulse space-y-2">
+          <div className="h-3 w-20 rounded bg-base-600" />
+          <div className="h-6 w-48 rounded bg-base-600" />
+        </div>
+        <div className="animate-pulse space-y-2">
+          <div className="h-24 rounded-xl bg-base-600" />
+          <div className="h-16 rounded-xl bg-base-600" />
+          <div className="h-16 rounded-xl bg-base-600" />
+        </div>
+      </div>
+    );
+  }
 
   function escolher(valor: EscolhaDoDia) {
     setSessaoEscolhida(hojeISO, valor);
@@ -113,7 +127,7 @@ export default function HojePage() {
       </header>
 
       {sessaoEfetiva && exercicios.length > 0 && (
-        <div className="sticky top-0 z-10 -mx-4 mb-3 border-b border-line bg-base-900/95 px-4 py-2 backdrop-blur">
+        <div className="sticky top-0 z-10 -mx-4 mb-3 border-b border-line bg-base-900/95 px-4 py-2 shadow-[0_2px_8px_rgba(20,22,26,0.06)] backdrop-blur">
           <div className="mb-1 flex items-center justify-between text-xs">
             <span className="font-medium text-ink">Sessão de hoje</span>
             <span className="text-ink-muted">
@@ -146,7 +160,12 @@ export default function HojePage() {
         </>
       )}
       {status?.isDeload && sessaoEfetiva && (
-        <p className="mb-4 text-xs text-danger">Semana de deload — metade das séries, esforço leve, cargas reduzidas em 10%.</p>
+        <div className="mb-4 flex items-start gap-2 rounded-xl border border-danger/30 bg-danger-soft px-3 py-2.5">
+          <span aria-hidden="true" className="mt-0.5 text-danger">⚠</span>
+          <p className="text-xs font-medium text-danger">
+            Semana de deload — metade das séries, esforço leve, cargas reduzidas em 10%.
+          </p>
+        </div>
       )}
 
       {sessaoEfetiva && (
@@ -155,10 +174,11 @@ export default function HojePage() {
             <button
               type="button"
               onClick={() => setPostural((v) => !v)}
-              className="mb-2 flex w-full items-center justify-between text-sm font-medium text-ink-muted"
+              aria-expanded={postural}
+              className="mb-2 flex min-h-11 w-full items-center justify-between text-sm font-medium text-ink-muted"
             >
               <span>Bloco postural diário (em casa, fora da academia)</span>
-              <span>{postural ? "▲" : "▼"}</span>
+              <span aria-hidden="true">{postural ? "▲" : "▼"}</span>
             </button>
             {postural && (
               <div className="space-y-2">
