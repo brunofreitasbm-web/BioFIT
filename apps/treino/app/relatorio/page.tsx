@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { calcularVolumePorGrupo, totalSeriesNoPeriodo, type VolumeGrupo } from "@/lib/relatorio";
 import { getTodosBikeIndoor, getTodasSessoes } from "@/lib/storage";
 import type { RegistroSessao } from "@/lib/tipos";
-import { Heatmap } from "@/components/Heatmap";
+import { MuscleMap } from "@/components/MuscleMap";
 import { cn } from "@/lib/cn";
 
 const PERIODOS: { label: string; valor: number | "tudo" }[] = [
@@ -231,7 +231,7 @@ export default function RelatorioPage() {
       {volumes && (
         <section className="space-y-2">
           <h2 className="text-base font-semibold text-ink">Volume por Grupo Muscular</h2>
-          <Heatmap volumes={volumes} />
+          <MuscleMap volumes={volumes} />
           <p className="pt-2 text-center text-xs text-ink-faint">
             Total: {totalSeriesNoPeriodo(volumes)} séries registradas no período
           </p>

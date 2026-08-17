@@ -42,6 +42,7 @@ const config: Config = {
           posterior: "#1789c9",
           panturrilha: "#5a9216",
           postura: "#c94a86",
+          core: "#d6a319",
         },
       },
       fontFamily: {

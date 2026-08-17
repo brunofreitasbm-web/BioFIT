@@ -19,6 +19,7 @@ const TODOS_GRUPOS: GrupoMuscular[] = [
   "Posterior",
   "Panturrilha",
   "Postura",
+  "Core",
 ];
 
 function addDays(d: Date, days: number): Date {

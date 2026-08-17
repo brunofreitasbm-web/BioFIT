@@ -6,11 +6,14 @@ import { getStatusPrograma, sessaoDoDia, toISODate, SESSAO_LABEL, type StatusPro
 import { calcularExposicao } from "@/lib/descanso";
 import { exerciciosDoBloco, POSTURAL } from "@/lib/exercicios";
 import { gerarInsightHoje, gerarInsightAmanha } from "@/lib/motivacao";
+import { progressoBloco, progressoCiclo } from "@/lib/progresso";
 import { ExercicioCard } from "@/components/ExercicioCard";
 import { GuiaModal, dataInicioPadrao } from "@/components/GuiaModal";
 import { SeletorSessao } from "@/components/SeletorSessao";
 import { TreinoTimer } from "@/components/TreinoTimer";
 import { BikeIndoorCard } from "@/components/BikeIndoorCard";
+import { ProgressoBloco } from "@/components/ProgressoBloco";
+import { ProgressoCiclo } from "@/components/ProgressoCiclo";
 import type { EscolhaDoDia } from "@/lib/tipos";
 
 
@@ -22,6 +25,9 @@ export default function HojePage() {
   const [hoje] = useState(() => new Date());
   const [postural, setPostural] = useState(true);
   const [escolha, setEscolha] = useState<EscolhaDoDia | null>(null);
+  const [exercicioAbertoId, setExercicioAbertoId] = useState<string | null>(null);
+  const [posturalAbertoId, setPosturalAbertoId] = useState<string | null>(null);
+  const [progressoPorExercicio, setProgressoPorExercicio] = useState<Record<string, { feitas: number; total: number }>>({});
 
   const hojeISO = toISODate(hoje);
 
@@ -32,9 +38,7 @@ export default function HojePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!pronto) return null;
-
-  const status: StatusPrograma | null = getStatusPrograma(dataInicio, hoje);
+  const status: StatusPrograma | null = pronto ? getStatusPrograma(dataInicio, hoje) : null;
   const sessaoSugerida = sessaoDoDia(hoje);
   const sessaoEfetiva = escolha === "DESCANSO" ? null : (escolha ?? sessaoSugerida);
   const blocoAtivo = status ? (status.isDeload ? 4 : status.bloco) : 1;
@@ -47,10 +51,54 @@ export default function HojePage() {
   const insightHoje = status ? gerarInsightHoje(status, hojeISO, sessaoEfetiva, exposicaoAtual) : null;
   const insightAmanha = status ? gerarInsightAmanha(status) : null;
 
+  // Fluxo guiado: mantém só um exercício da sessão principal aberto por vez. Ao completar
+  // todas as séries do exercício aberto, avança sozinho para o próximo pendente da lista.
+  // Precisa vir antes de qualquer `return` condicional para não violar a ordem dos hooks.
+  useEffect(() => {
+    if (exercicios.length === 0) {
+      setExercicioAbertoId(null);
+      return;
+    }
+    setExercicioAbertoId((atual) => {
+      if (atual) {
+        const aindaNaLista = exercicios.some((e) => e.id === atual);
+        const p = progressoPorExercicio[atual];
+        if (aindaNaLista && (!p || p.feitas < p.total)) return atual;
+      }
+      const proximo = exercicios.find((e) => {
+        const p = progressoPorExercicio[e.id];
+        return !p || p.feitas < p.total;
+      });
+      return proximo ? proximo.id : null;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessaoEfetiva, blocoAtivo, progressoPorExercicio]);
+
+  if (!pronto) return null;
+
   function escolher(valor: EscolhaDoDia) {
     setSessaoEscolhida(hojeISO, valor);
     setEscolha(valor);
   }
+
+  function handleProgresso(exercicioId: string, feitas: number, total: number) {
+    setProgressoPorExercicio((prev) => {
+      const atual = prev[exercicioId];
+      if (atual && atual.feitas === feitas && atual.total === total) return prev;
+      return { ...prev, [exercicioId]: { feitas, total } };
+    });
+  }
+
+  const progressoSessao = exercicios.reduce(
+    (acc, ex) => {
+      const p = progressoPorExercicio[ex.id];
+      const total = p?.total ?? ex.series;
+      const feitas = p ? Math.min(p.feitas, total) : 0;
+      return { feitas: acc.feitas + feitas, total: acc.total + total };
+    },
+    { feitas: 0, total: 0 },
+  );
+  const progressoSessaoPct = progressoSessao.total > 0 ? Math.min(100, (progressoSessao.feitas / progressoSessao.total) * 100) : 0;
 
   return (
     <div className="p-4">
@@ -63,6 +111,20 @@ export default function HojePage() {
         </div>
         <GuiaModal dataInicio={dataInicio} onDataInicioChange={setDataInicioState} />
       </header>
+
+      {sessaoEfetiva && exercicios.length > 0 && (
+        <div className="sticky top-0 z-10 -mx-4 mb-3 border-b border-line bg-base-900/95 px-4 py-2 backdrop-blur">
+          <div className="mb-1 flex items-center justify-between text-xs">
+            <span className="font-medium text-ink">Sessão de hoje</span>
+            <span className="text-ink-muted">
+              {progressoSessao.feitas} de {progressoSessao.total} séries
+            </span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-base-600">
+            <div className="h-full rounded-full bg-accent transition-[width]" style={{ width: `${progressoSessaoPct}%` }} />
+          </div>
+        </div>
+      )}
 
       {insightHoje && (
         <div className="mb-3 rounded-xl border border-brand-soft bg-brand-soft p-3">
@@ -77,11 +139,11 @@ export default function HojePage() {
 
       {sessaoEfetiva && status && <TreinoTimer hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} bloco={blocoAtivo} />}
 
-
-      {status && !status.isDeload && sessaoEfetiva && (
-        <p className="mb-4 text-xs text-ink-faint">
-          Bloco {status.bloco} de 4 · Exposição {exposicaoAtual}/4
-        </p>
+      {status && (
+        <>
+          <ProgressoBloco info={progressoBloco(status)} />
+          <ProgressoCiclo segmentos={progressoCiclo(status, hoje)} />
+        </>
       )}
       {status?.isDeload && sessaoEfetiva && (
         <p className="mb-4 text-xs text-danger">Semana de deload — metade das séries, esforço leve, cargas reduzidas em 10%.</p>
@@ -101,7 +163,13 @@ export default function HojePage() {
             {postural && (
               <div className="space-y-2">
                 {POSTURAL.map((ex) => (
-                  <ExercicioCard key={ex.id} exercicio={ex} data={hojeISO} />
+                  <ExercicioCard
+                    key={ex.id}
+                    exercicio={ex}
+                    data={hojeISO}
+                    expandido={posturalAbertoId === ex.id}
+                    onToggleExpandido={() => setPosturalAbertoId((atual) => (atual === ex.id ? null : ex.id))}
+                  />
                 ))}
               </div>
             )}
@@ -111,7 +179,14 @@ export default function HojePage() {
             <h2 className="mb-2 text-sm font-medium text-ink-muted">{SESSAO_LABEL[sessaoEfetiva]}</h2>
             <div className="space-y-2">
               {exercicios.map((ex) => (
-                <ExercicioCard key={ex.id} exercicio={ex} data={hojeISO} />
+                <ExercicioCard
+                  key={ex.id}
+                  exercicio={ex}
+                  data={hojeISO}
+                  expandido={exercicioAbertoId === ex.id}
+                  onToggleExpandido={() => setExercicioAbertoId((atual) => (atual === ex.id ? null : ex.id))}
+                  onProgresso={handleProgresso}
+                />
               ))}
             </div>
           </section>

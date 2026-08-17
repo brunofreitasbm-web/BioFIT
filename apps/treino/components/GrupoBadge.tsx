@@ -11,6 +11,7 @@ const GRUPO_CLASSE: Record<GrupoMuscular, string> = {
   Posterior: "bg-grupo-posterior/15 text-grupo-posterior border-grupo-posterior/30",
   Panturrilha: "bg-grupo-panturrilha/15 text-grupo-panturrilha border-grupo-panturrilha/30",
   Postura: "bg-grupo-postura/15 text-grupo-postura border-grupo-postura/30",
+  Core: "bg-grupo-core/15 text-grupo-core border-grupo-core/30",
 };
 
 export const GRUPO_COR_HEX: Record<GrupoMuscular, string> = {
@@ -23,6 +24,7 @@ export const GRUPO_COR_HEX: Record<GrupoMuscular, string> = {
   Posterior: "#38c7ff",
   Panturrilha: "#a6ff3f",
   Postura: "#ff9fd0",
+  Core: "#ffcf5c",
 };
 
 export function GrupoBadge({ grupo }: { grupo: GrupoMuscular }) {

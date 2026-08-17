@@ -7,7 +7,8 @@ export type GrupoMuscular =
   | "Quadríceps"
   | "Posterior"
   | "Panturrilha"
-  | "Postura";
+  | "Postura"
+  | "Core";
 
 export type SessaoTreino = "PUSH" | "PULL" | "LEGS";
 export type Sessao = SessaoTreino | "POSTURAL";
@@ -51,5 +52,27 @@ export interface RegistroBikeIndoor {
   tempoMinutos: number;
   concluido: boolean;
   registradoEm: string; // ISO timestamp
+}
+
+// Espelha os campos do "Relatório de Avaliações" (bioimpedância InBody) da clínica.
+export interface RegistroBioimpedancia {
+  data: string; // YYYY-MM-DD
+  pesoKg: number;
+  percentualGordura: number;
+  massaGorduraKg: number;
+  massaLivreGorduraKg: number;
+  aguaCorporalL: number;
+  imc: number;
+  taxaMetabolicaBasalKcal: number;
+  indiceApendicular: number; // kg/m²
+  idadeMetabolica: number;
+  nivelGorduraVisceral: number;
+  massaMagraSegmentar: {
+    bracoDireitoKg: number;
+    bracoEsquerdoKg: number;
+    troncoKg: number;
+    pernaDireitaKg: number;
+    pernaEsquerdaKg: number;
+  };
 }
 

@@ -1,4 +1,11 @@
-import type { EscolhaDoDia, RegistroBikeIndoor, RegistroSessao, SerieRegistrada, SessaoTreino } from "./tipos";
+import type {
+  EscolhaDoDia,
+  RegistroBikeIndoor,
+  RegistroBioimpedancia,
+  RegistroSessao,
+  SerieRegistrada,
+  SessaoTreino,
+} from "./tipos";
 import { getExercicio } from "./exercicios";
 
 const KEY_LOG = "treino:log";
@@ -7,6 +14,8 @@ const KEY_SESSOES = "treino:sessoesPorDia";
 const KEY_ESCOLHAS = "treino:escolhaPorDia";
 const KEY_SUBSTITUICOES = "treino:substituicoes";
 const KEY_BIKE = "treino:bikeIndoor";
+const KEY_BIOIMPEDANCIA = "treino:bioimpedancia";
+const KEY_GEMINI_API_KEY = "treino:geminiApiKey";
 
 
 export function getDataInicio(): string | null {
@@ -248,5 +257,46 @@ export function getTodosBikeIndoor(): Record<string, RegistroBikeIndoor> {
   } catch {
     return {};
   }
+}
+
+// ===== Bioimpedância (registros que o usuário for adicionando, além dos históricos) =====
+
+export function getRegistrosBioimpedanciaSalvos(): Record<string, RegistroBioimpedancia> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(KEY_BIOIMPEDANCIA);
+    return raw ? (JSON.parse(raw) as Record<string, RegistroBioimpedancia>) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function salvarRegistroBioimpedancia(registro: RegistroBioimpedancia) {
+  if (typeof window === "undefined") return;
+  const map = getRegistrosBioimpedanciaSalvos();
+  map[registro.data] = registro;
+  window.localStorage.setItem(KEY_BIOIMPEDANCIA, JSON.stringify(map));
+}
+
+export function removerRegistroBioimpedancia(data: string) {
+  if (typeof window === "undefined") return;
+  const map = getRegistrosBioimpedanciaSalvos();
+  delete map[data];
+  window.localStorage.setItem(KEY_BIOIMPEDANCIA, JSON.stringify(map));
+}
+
+// ===== Chave de API do Gemini (fica só no localStorage do navegador, nunca no código) =====
+
+export function getGeminiApiKey(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(KEY_GEMINI_API_KEY);
+}
+
+export function setGeminiApiKey(chave: string) {
+  window.localStorage.setItem(KEY_GEMINI_API_KEY, chave);
+}
+
+export function removerGeminiApiKey() {
+  window.localStorage.removeItem(KEY_GEMINI_API_KEY);
 }
 

@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 const TABS = [
   { href: "/", label: "Hoje", icon: "🏋️" },
   { href: "/relatorio", label: "Relatório", icon: "📊" },
+  { href: "/bioimpedancia", label: "Corpo", icon: "🧬" },
 ];
 
 export function NavTabs() {
