@@ -2,11 +2,17 @@
 // `getGeminiApiKey()` (localStorage do navegador, ver components/InsightIACard.tsx),
 // exatamente como o resto dos dados deste app (sem backend).
 const MODELO = "gemini-flash-latest";
+const MAX_TENTATIVAS = 3;
+const BACKOFF_BASE_MS = 1000;
 
 export class GeminiError extends Error {}
 
-export async function pedirInsightIA(prompt: string, apiKey: string): Promise<string> {
-  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELO}:generateContent`, {
+function esperar(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function chamarGemini(prompt: string, apiKey: string): Promise<Response> {
+  return fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODELO}:generateContent`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -16,8 +22,25 @@ export async function pedirInsightIA(prompt: string, apiKey: string): Promise<st
       contents: [{ parts: [{ text: prompt }] }],
     }),
   });
+}
+
+export async function pedirInsightIA(prompt: string, apiKey: string): Promise<string> {
+  let resp: Response | undefined;
+
+  for (let tentativa = 1; tentativa <= MAX_TENTATIVAS; tentativa++) {
+    resp = await chamarGemini(prompt, apiKey);
+
+    // 503 = modelo sobrecarregado no momento. Vale tentar de novo com backoff.
+    if (resp.status !== 503 || tentativa === MAX_TENTATIVAS) break;
+    await esperar(BACKOFF_BASE_MS * tentativa);
+  }
+
+  if (!resp) throw new GeminiError("Não foi possível falar com o Gemini agora.");
 
   if (!resp.ok) {
+    if (resp.status === 503) {
+      throw new GeminiError("O Gemini está sobrecarregado no momento. Tente novamente em alguns segundos.");
+    }
     const corpo = await resp.text().catch(() => "");
     throw new GeminiError(`Gemini respondeu ${resp.status}: ${corpo.slice(0, 200)}`);
   }
