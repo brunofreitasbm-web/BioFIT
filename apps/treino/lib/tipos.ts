@@ -7,7 +7,8 @@ export type GrupoMuscular =
   | "Quadríceps"
   | "Posterior"
   | "Panturrilha"
-  | "Postura";
+  | "Postura"
+  | "Core";
 
 export type SessaoTreino = "PUSH" | "PULL" | "LEGS";
 export type Sessao = SessaoTreino | "POSTURAL";

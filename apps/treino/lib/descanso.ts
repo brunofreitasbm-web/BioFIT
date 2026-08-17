@@ -50,3 +50,16 @@ export function calcularExposicao(tipo: SessaoTreino, blocoStartISO: string, hoj
   const passados = diasTreinadosPorTipo.filter((d) => d >= blocoStartISO && d < hojeISO).length;
   return Math.min(passados + 1, 4);
 }
+
+// Converte o texto de descanso da planilha ("2-3 min", "90 s", "60-90 s", "-") em segundos,
+// usando o maior valor da faixa (o timer de descanso deve dar o tempo cheio, não o mínimo).
+export function parseDescansoSegundos(descanso: string): number | null {
+  const matches = [...descanso.matchAll(/(\d+)\s*(min|s)/g)];
+  if (matches.length === 0) return null;
+  let maiorSegundos = 0;
+  for (const [, numeroStr, unidade] of matches) {
+    const segundos = unidade === "min" ? Number(numeroStr) * 60 : Number(numeroStr);
+    if (segundos > maiorSegundos) maiorSegundos = segundos;
+  }
+  return maiorSegundos || null;
+}
