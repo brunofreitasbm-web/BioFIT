@@ -126,8 +126,9 @@ export default function RelatorioPage() {
             key={p.label}
             type="button"
             onClick={() => setPeriodo(p.valor)}
+            aria-pressed={periodo === p.valor}
             className={cn(
-              "rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors",
+              "min-h-11 rounded-full border px-3.5 text-xs font-medium transition-colors",
               periodo === p.valor ? "border-brand bg-brand text-white shadow-sm" : "border-line bg-base-800 text-ink-muted hover:text-ink",
             )}
           >
@@ -141,7 +142,7 @@ export default function RelatorioPage() {
         {/* Card Força */}
         <div className="rounded-xl border border-line bg-base-800 p-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-xl">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-xl" aria-hidden="true">
               🏋️‍♂️
             </div>
             <div>
@@ -158,7 +159,7 @@ export default function RelatorioPage() {
         {/* Card Bike Indoor */}
         <div className="rounded-xl border border-line bg-base-800 p-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-xl">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-xl" aria-hidden="true">
               🚴‍♂️
             </div>
             <div>
@@ -212,11 +213,11 @@ export default function RelatorioPage() {
                   <div className="text-right">
                     {estaConcluido ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-[11px] font-medium text-accent">
-                        ✓ {formatarDuracaoMs(duracaoMs)}
+                        <span aria-hidden="true">✓</span> {formatarDuracaoMs(duracaoMs)}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-medium text-brand">
-                        ⏱ Em andamento
+                        <span aria-hidden="true">⏱</span> Em andamento
                       </span>
                     )}
                   </div>

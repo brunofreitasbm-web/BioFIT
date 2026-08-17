@@ -35,6 +35,7 @@ export function TreinoTimer({ hojeISO, sessaoTipo, bloco }: { hojeISO: string; s
   }
 
   function terminar() {
+    if (!window.confirm(`Terminar o treino de ${sessaoTipo} agora? Dá pra reabrir depois se precisar.`)) return;
     terminarSessao(hojeISO, sessaoTipo);
     setRegistro(getSessaoAtiva(hojeISO, sessaoTipo));
   }
@@ -52,7 +53,7 @@ export function TreinoTimer({ hojeISO, sessaoTipo, bloco }: { hojeISO: string; s
         onClick={iniciar}
         className="mb-4 w-full rounded-xl bg-brand py-3 text-center text-sm font-semibold text-white"
       >
-        ▶ Iniciar treino de {sessaoTipo}
+        <span aria-hidden="true">▶</span> Iniciar treino de {sessaoTipo}
       </button>
     );
   }
@@ -66,7 +67,7 @@ export function TreinoTimer({ hojeISO, sessaoTipo, bloco }: { hojeISO: string; s
           <span className="font-mono text-sm font-semibold text-ink">{formatarDuracao(decorrido)}</span>
         </div>
         <button type="button" onClick={terminar} className="shrink-0 rounded-xl bg-danger px-4 py-3 text-sm font-semibold text-white">
-          ■ Terminar
+          <span aria-hidden="true">■</span> Terminar
         </button>
       </div>
     );
@@ -76,9 +77,9 @@ export function TreinoTimer({ hojeISO, sessaoTipo, bloco }: { hojeISO: string; s
   return (
     <div className="mb-4 flex items-center justify-between rounded-xl border border-accent/30 bg-accent-soft px-4 py-3">
       <span className="text-sm font-medium text-accent">
-        ✓ Treino de {sessaoTipo} concluído · {formatarDuracao(duracaoFinal)}
+        <span aria-hidden="true">✓</span> Treino de {sessaoTipo} concluído · {formatarDuracao(duracaoFinal)}
       </span>
-      <button type="button" onClick={reabrir} className="text-xs text-ink-muted underline">
+      <button type="button" onClick={reabrir} className="min-h-11 px-2 text-xs font-medium text-ink-muted underline">
         reabrir
       </button>
     </div>

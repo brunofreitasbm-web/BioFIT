@@ -35,7 +35,7 @@ function Corpo({
   // Segmentos encostados uns nos outros (sem vãos de fundo entre eles), para o corpo ler
   // como uma silhueta sólida e definida em vez de blocos soltos.
   return (
-    <svg viewBox="0 0 120 280" className="h-full w-full" role="img" aria-label={`Corpo (${variante})`}>
+    <svg viewBox="0 0 120 300" className="h-full w-full" role="img" aria-label={`Corpo (${variante})`}>
       {/* pés */}
       <ellipse cx={38} cy={274} rx={10} ry={5} fill={CINZA_NEUTRO} />
       <ellipse cx={82} cy={274} rx={10} ry={5} fill={CINZA_NEUTRO} />
