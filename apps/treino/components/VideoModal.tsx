@@ -17,7 +17,7 @@ export function VideoModal({ youtubeId, titulo, onClose }: { youtubeId: string; 
         </div>
         <div className="overflow-hidden rounded-xl bg-black shadow-panel" style={{ aspectRatio: "16 / 9" }}>
           <iframe
-            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1`}
+            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&end=30`}
             title={titulo}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
