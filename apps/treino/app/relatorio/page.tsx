@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { calcularVolumePorGrupo, totalSeriesNoPeriodo, type VolumeGrupo } from "@/lib/relatorio";
 import { getTodosBikeIndoor, getTodasSessoes } from "@/lib/storage";
@@ -114,9 +115,15 @@ export default function RelatorioPage() {
 
   return (
     <div className="p-4 space-y-6">
-      <header className="mb-2">
+      <header className="mb-2 space-y-2">
         <h1 className="text-xl font-semibold text-ink">Relatório de Evolução</h1>
         <p className="text-sm text-ink-muted">Acompanhamento diário de treinos e volume muscular</p>
+        <div className="flex gap-1.5 rounded-full border border-line bg-base-800 p-1 text-xs font-medium">
+          <span className="flex-1 rounded-full bg-brand py-1.5 text-center text-white shadow-sm">Visão Geral</span>
+          <Link href="/relatorio/frequencia" className="flex-1 rounded-full py-1.5 text-center text-ink-muted hover:text-ink">
+            Frequência
+          </Link>
+        </div>
       </header>
 
       {/* Seletor de Período */}
