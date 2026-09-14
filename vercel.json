@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "cd apps/treino && npm run build",
+  "buildCommand": "npm run build -w @biofit/treino",
   "outputDirectory": "apps/treino/.next"
 }
