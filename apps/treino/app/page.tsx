@@ -23,7 +23,7 @@ export default function HojePage() {
   const [pronto, setPronto] = useState(false);
   const [dataInicio, setDataInicioState] = useState<string>("");
   const [hoje] = useState(() => new Date());
-  const [postural, setPostural] = useState(true);
+  const [postural, setPostural] = useState(false);
   const [escolha, setEscolha] = useState<EscolhaDoDia | null>(null);
   const [exercicioAbertoId, setExercicioAbertoId] = useState<string | null>(null);
   const [posturalAbertoId, setPosturalAbertoId] = useState<string | null>(null);

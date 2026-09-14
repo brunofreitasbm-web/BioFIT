@@ -5,7 +5,6 @@ import { todosRegistrosBioimpedancia, gerarInsightsBasicos, formatarDataBR } fro
 import { salvarRegistroBioimpedancia, removerRegistroBioimpedancia, getRegistrosBioimpedanciaSalvos } from "@/lib/storage";
 import type { RegistroBioimpedancia } from "@/lib/tipos";
 import { GraficoLinha } from "@/components/GraficoLinha";
-import { InsightIACard } from "@/components/InsightIACard";
 import { BioimpedanciaForm } from "@/components/BioimpedanciaForm";
 import { cn } from "@/lib/cn";
 import { CHART_COLORS } from "@/lib/colors";
@@ -121,12 +120,6 @@ export default function BioimpedanciaPage() {
               <p className="mt-0.5 text-xs text-ink-muted">{ins.mensagem}</p>
             </div>
           ))}
-        </section>
-      )}
-
-      {registros.length > 0 && (
-        <section className="mb-4">
-          <InsightIACard registros={registros} />
         </section>
       )}
 

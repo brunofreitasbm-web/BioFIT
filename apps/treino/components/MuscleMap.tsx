@@ -181,7 +181,7 @@ export function MuscleMap({ volumes }: { volumes: VolumeGrupo[] }) {
               {v.grupo}
             </span>
             <span className="shrink-0 text-ink-faint">
-              {v.pct.toFixed(0)}% · {v.seriesFeitas}sr
+              {v.pct.toFixed(0)}%
             </span>
           </div>
         ))}
