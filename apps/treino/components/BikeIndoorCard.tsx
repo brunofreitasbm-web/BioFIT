@@ -15,6 +15,7 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
   const [tempo, setTempo] = useState<string>("30");
   const [concluido, setConcluido] = useState<boolean>(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [minimizado, setMinimizado] = useState<boolean>(false);
 
   useEffect(() => {
     const reg = getBikeIndoor(hojeISO);
@@ -25,6 +26,8 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
       setTempo("30");
       setConcluido(false);
     }
+    // Recolhida sempre que o dia muda, para não vazar o estado "aberto" de ontem.
+    setMinimizado(false);
   }, [hojeISO]);
 
   function handleCheckToggle() {
@@ -105,7 +108,12 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
           : "border-line bg-base-800"
       )}
     >
-      <div className="flex items-center justify-between">
+      <button
+        type="button"
+        onClick={() => setMinimizado((v) => !v)}
+        aria-expanded={!minimizado}
+        className="flex w-full items-center justify-between gap-2 text-left"
+      >
         <div className="flex items-center gap-2.5">
           <div
             aria-hidden="true"
@@ -131,75 +139,82 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
               </span>
             </div>
             <p className="text-xs text-ink-muted">
-              {concluido
+              {minimizado
+                ? `${tempo} min${concluido ? " · concluído" : ""}`
+                : concluido
                 ? `Sessão de ${tempo} min finalizada!`
                 : "Informe a duração e faça o check"}
             </p>
           </div>
         </div>
-      </div>
-
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1.5 rounded-lg border border-line bg-base-900 px-3 py-1.5">
-          <span className="text-xs text-ink-faint" id="bike-duracao-label">Duração:</span>
-          <input
-            type="number"
-            inputMode="numeric"
-            min="1"
-            max="300"
-            step="1"
-            value={tempo}
-            onChange={handleTempoChange}
-            placeholder="30"
-            aria-labelledby="bike-duracao-label"
-            aria-describedby="bike-duracao-unidade"
-            className="w-12 bg-transparent text-sm font-semibold text-ink text-center outline-none focus:border-brand"
-          />
-          <span className="text-xs font-medium text-ink-muted" id="bike-duracao-unidade">min</span>
-        </div>
-
-        <div className="flex items-center gap-1">
-          {PRESETS.map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => handlePresetClick(m)}
-              aria-pressed={tempo === m.toString()}
-              className={cn(
-                "min-h-11 rounded-lg border px-2.5 text-xs font-medium transition-colors",
-                tempo === m.toString()
-                  ? "border-brand bg-brand-soft font-semibold text-brand"
-                  : "border-line bg-base-900 text-ink-muted hover:border-brand/40"
-              )}
-            >
-              {m}m
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {erro && (
-        <p role="alert" className="mt-2 text-xs font-medium text-danger">{erro}</p>
-      )}
-
-      <button
-        type="button"
-        disabled={!tempo || parseInt(tempo, 10) <= 0}
-        onClick={handleCheckToggle}
-        className={cn(
-          "mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all active:scale-[0.99]",
-          !tempo || parseInt(tempo, 10) <= 0
-            ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-50"
-            : concluido
-            ? "bg-accent text-white shadow-sm hover:bg-accent/90"
-            : "bg-brand text-white hover:bg-brand-hover shadow-sm"
-        )}
-      >
-        <span className="text-sm" aria-hidden="true">{concluido ? "✓" : "○"}</span>
-        <span>
-          {concluido ? `Concluído (${tempo} min)` : "Marcar como Concluído"}
-        </span>
+        <span className="shrink-0 text-ink-faint" aria-hidden="true">{minimizado ? "▼" : "▲"}</span>
       </button>
+
+      {!minimizado && (
+        <>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5 rounded-lg border border-line bg-base-900 px-3 py-1.5">
+              <span className="text-xs text-ink-faint" id="bike-duracao-label">Duração:</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min="1"
+                max="300"
+                step="1"
+                value={tempo}
+                onChange={handleTempoChange}
+                placeholder="30"
+                aria-labelledby="bike-duracao-label"
+                aria-describedby="bike-duracao-unidade"
+                className="w-12 bg-transparent text-sm font-semibold text-ink text-center outline-none focus:border-brand"
+              />
+              <span className="text-xs font-medium text-ink-muted" id="bike-duracao-unidade">min</span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              {PRESETS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => handlePresetClick(m)}
+                  aria-pressed={tempo === m.toString()}
+                  className={cn(
+                    "min-h-11 rounded-lg border px-2.5 text-xs font-medium transition-colors",
+                    tempo === m.toString()
+                      ? "border-brand bg-brand-soft font-semibold text-brand"
+                      : "border-line bg-base-900 text-ink-muted hover:border-brand/40"
+                  )}
+                >
+                  {m}m
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {erro && (
+            <p role="alert" className="mt-2 text-xs font-medium text-danger">{erro}</p>
+          )}
+
+          <button
+            type="button"
+            disabled={!tempo || parseInt(tempo, 10) <= 0}
+            onClick={handleCheckToggle}
+            className={cn(
+              "mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all active:scale-[0.99]",
+              !tempo || parseInt(tempo, 10) <= 0
+                ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-50"
+                : concluido
+                ? "bg-accent text-white shadow-sm hover:bg-accent/90"
+                : "bg-brand text-white hover:bg-brand-hover shadow-sm"
+            )}
+          >
+            <span className="text-sm" aria-hidden="true">{concluido ? "✓" : "○"}</span>
+            <span>
+              {concluido ? `Concluído (${tempo} min)` : "Marcar como Concluído"}
+            </span>
+          </button>
+        </>
+      )}
     </div>
   );
 }
