@@ -109,10 +109,13 @@ export function BioimpedanciaForm({
               <input
                 type="number"
                 inputMode="decimal"
+                min="0"
+                max="300"
+                step="0.1"
                 value={peso}
                 onChange={(e) => setPeso(e.target.value)}
                 aria-invalid={erro ? true : undefined}
-                className="mt-1 w-full rounded-lg border border-line bg-base-700 px-3 py-2 text-sm text-ink"
+                className="mt-1 w-full rounded-lg border border-line bg-base-700 px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
               />
             </label>
             <label className="block text-xs text-ink-muted">
@@ -120,10 +123,13 @@ export function BioimpedanciaForm({
               <input
                 type="number"
                 inputMode="decimal"
+                min="0"
+                max="100"
+                step="0.1"
                 value={percentualGordura}
                 onChange={(e) => setPercentualGordura(e.target.value)}
                 aria-invalid={erro ? true : undefined}
-                className="mt-1 w-full rounded-lg border border-line bg-base-700 px-3 py-2 text-sm text-ink"
+                className="mt-1 w-full rounded-lg border border-line bg-base-700 px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
               />
             </label>
           </div>
@@ -133,9 +139,12 @@ export function BioimpedanciaForm({
               <input
                 type="number"
                 inputMode="decimal"
+                min="0"
+                max="100"
+                step="0.1"
                 value={aguaCorporal}
                 onChange={(e) => setAguaCorporal(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-line bg-base-700 px-3 py-2 text-sm text-ink"
+                className="mt-1 w-full rounded-lg border border-line bg-base-700 px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
               />
             </label>
             <label className="block text-xs text-ink-muted">
@@ -143,9 +152,12 @@ export function BioimpedanciaForm({
               <input
                 type="number"
                 inputMode="numeric"
+                min="0"
+                max="50"
+                step="1"
                 value={nivelVisceral}
                 onChange={(e) => setNivelVisceral(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-line bg-base-700 px-3 py-2 text-sm text-ink"
+                className="mt-1 w-full rounded-lg border border-line bg-base-700 px-3 py-2 text-sm text-ink focus:border-brand focus:outline-none"
               />
             </label>
           </div>
@@ -166,9 +178,12 @@ export function BioimpedanciaForm({
                 <input
                   type="number"
                   inputMode="numeric"
+                  min="0"
+                  max="5000"
+                  step="1"
                   value={taxaMetabolica}
                   onChange={(e) => setTaxaMetabolica(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-line bg-base-700 px-2 py-2 text-sm text-ink"
+                  className="mt-1 w-full rounded-lg border border-line bg-base-700 px-2 py-2 text-sm text-ink focus:border-brand focus:outline-none"
                 />
               </label>
               <label className="block text-xs text-ink-muted">
@@ -176,9 +191,12 @@ export function BioimpedanciaForm({
                 <input
                   type="number"
                   inputMode="decimal"
+                  min="0"
+                  max="50"
+                  step="0.1"
                   value={indiceApendicular}
                   onChange={(e) => setIndiceApendicular(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-line bg-base-700 px-2 py-2 text-sm text-ink"
+                  className="mt-1 w-full rounded-lg border border-line bg-base-700 px-2 py-2 text-sm text-ink focus:border-brand focus:outline-none"
                 />
               </label>
               <label className="block text-xs text-ink-muted">
@@ -186,9 +204,12 @@ export function BioimpedanciaForm({
                 <input
                   type="number"
                   inputMode="numeric"
+                  min="0"
+                  max="120"
+                  step="1"
                   value={idadeMetabolica}
                   onChange={(e) => setIdadeMetabolica(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-line bg-base-700 px-2 py-2 text-sm text-ink"
+                  className="mt-1 w-full rounded-lg border border-line bg-base-700 px-2 py-2 text-sm text-ink focus:border-brand focus:outline-none"
                 />
               </label>
             </div>
@@ -206,8 +227,13 @@ export function BioimpedanciaForm({
 
           <button
             type="button"
+            disabled={!peso || num(peso, 0) <= 0 || !percentualGordura || num(percentualGordura, 0) <= 0}
             onClick={salvar}
-            className="min-h-11 w-full rounded-lg bg-brand py-2.5 text-sm font-semibold text-white"
+            className={`min-h-11 w-full rounded-lg py-2.5 text-sm font-semibold text-white transition-all ${
+              !peso || num(peso, 0) <= 0 || !percentualGordura || num(percentualGordura, 0) <= 0
+                ? "cursor-not-allowed bg-base-600 opacity-50"
+                : "bg-brand hover:bg-brand-hover shadow-sm"
+            }`}
           >
             Salvar medição
           </button>

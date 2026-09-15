@@ -126,6 +126,13 @@ export function terminarSessao(data: string, sessaoTipo: SessaoTreino): boolean 
   const atual = lista.find((r) => r.sessaoTipo === sessaoTipo);
   if (!atual) return false;
   atual.fimISO = new Date().toISOString();
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.removeItem(`draft_session_${sessaoTipo}`);
+    } catch {
+      // ignore
+    }
+  }
   return saveSessoesPorDia(map);
 }
 

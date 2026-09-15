@@ -310,32 +310,49 @@ function LinhaReplicada({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [primeira?.cargaKg, primeira?.reps, ultimaPrimeira?.cargaKg, ultimaPrimeira?.reps]);
 
+  const kgNum = Number(kg);
+  const repsNum = Number(reps);
+  const isDisabled = !kg.trim() || !reps.trim() || isNaN(kgNum) || kgNum <= 0 || isNaN(repsNum) || repsNum <= 0;
+  const kgPlaceholder = ultimaPrimeira?.cargaKg != null ? `${ultimaPrimeira.cargaKg}` : "kg";
+  const repsPlaceholder = ultimaPrimeira?.reps != null ? `${ultimaPrimeira.reps}` : "reps";
+
   return (
     <>
       <input
         type="number"
         inputMode="decimal"
-        placeholder="kg"
+        min="0"
+        max="999"
+        step="0.5"
+        placeholder={kgPlaceholder}
         aria-label="Carga em quilos, todas as séries"
         value={kg}
         onChange={(e) => setKg(e.target.value)}
-        className="w-full rounded-lg border border-line bg-base-700 px-2 py-2.5 text-ink"
+        className="w-full rounded-lg border border-line bg-base-700 px-2 py-2.5 text-ink focus:border-brand focus:outline-none"
       />
       <input
         type="number"
         inputMode="numeric"
-        placeholder="reps"
+        min="0"
+        max="999"
+        step="1"
+        placeholder={repsPlaceholder}
         aria-label="Repetições, todas as séries"
         value={reps}
         onChange={(e) => setReps(e.target.value)}
-        className="w-full rounded-lg border border-line bg-base-700 px-2 py-2.5 text-ink"
+        className="w-full rounded-lg border border-line bg-base-700 px-2 py-2.5 text-ink focus:border-brand focus:outline-none"
       />
       <button
         type="button"
-        onClick={() => onConfirmarTodas(kg, reps)}
+        disabled={isDisabled}
+        onClick={() => !isDisabled && onConfirmarTodas(kg, reps)}
         className={cn(
           "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-base font-semibold transition-colors",
-          todasFeitas ? "border-accent bg-accent-soft text-accent" : "border-line bg-base-700 text-ink-faint",
+          isDisabled
+            ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-40"
+            : todasFeitas
+            ? "border-accent bg-accent-soft text-accent"
+            : "border-brand bg-brand text-white shadow-sm hover:opacity-90 active:scale-95",
         )}
         aria-label={`Confirmar as ${totalSeries} séries`}
       >
@@ -367,33 +384,50 @@ function FragmentoLinha({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s?.cargaKg, s?.reps, ultimaValor?.cargaKg, ultimaValor?.reps]);
 
+  const kgNum = Number(kg);
+  const repsNum = Number(reps);
+  const isDisabled = !kg.trim() || !reps.trim() || isNaN(kgNum) || kgNum <= 0 || isNaN(repsNum) || repsNum <= 0;
+  const kgPlaceholder = ultimaValor?.cargaKg != null ? `${ultimaValor.cargaKg}` : "kg";
+  const repsPlaceholder = ultimaValor?.reps != null ? `${ultimaValor.reps}` : "reps";
+
   return (
     <>
       <span className="text-ink-muted">{n}</span>
       <input
         type="number"
         inputMode="decimal"
-        placeholder="kg"
+        min="0"
+        max="999"
+        step="0.5"
+        placeholder={kgPlaceholder}
         aria-label={`Carga em quilos, série ${n}`}
         value={kg}
         onChange={(e) => setKg(e.target.value)}
-        className="w-full rounded-lg border border-line bg-base-700 px-2 py-2.5 text-ink"
+        className="w-full rounded-lg border border-line bg-base-700 px-2 py-2.5 text-ink focus:border-brand focus:outline-none"
       />
       <input
         type="number"
         inputMode="numeric"
-        placeholder="reps"
+        min="0"
+        max="999"
+        step="1"
+        placeholder={repsPlaceholder}
         aria-label={`Repetições, série ${n}`}
         value={reps}
         onChange={(e) => setReps(e.target.value)}
-        className="w-full rounded-lg border border-line bg-base-700 px-2 py-2.5 text-ink"
+        className="w-full rounded-lg border border-line bg-base-700 px-2 py-2.5 text-ink focus:border-brand focus:outline-none"
       />
       <button
         type="button"
-        onClick={() => onConfirmar(kg, reps)}
+        disabled={isDisabled}
+        onClick={() => !isDisabled && onConfirmar(kg, reps)}
         className={cn(
           "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-base font-semibold transition-colors",
-          feita ? "border-accent bg-accent-soft text-accent" : "border-line bg-base-700 text-ink-faint",
+          isDisabled
+            ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-40"
+            : feita
+            ? "border-accent bg-accent-soft text-accent"
+            : "border-brand bg-brand text-white shadow-sm hover:opacity-90 active:scale-95",
         )}
         aria-label={`Confirmar série ${n}`}
       >

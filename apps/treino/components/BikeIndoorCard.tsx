@@ -144,14 +144,16 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
           <span className="text-xs text-ink-faint" id="bike-duracao-label">Duração:</span>
           <input
             type="number"
+            inputMode="numeric"
             min="1"
             max="300"
+            step="1"
             value={tempo}
             onChange={handleTempoChange}
             placeholder="30"
             aria-labelledby="bike-duracao-label"
             aria-describedby="bike-duracao-unidade"
-            className="w-12 bg-transparent text-sm font-semibold text-ink text-center outline-none"
+            className="w-12 bg-transparent text-sm font-semibold text-ink text-center outline-none focus:border-brand"
           />
           <span className="text-xs font-medium text-ink-muted" id="bike-duracao-unidade">min</span>
         </div>
@@ -182,10 +184,13 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
 
       <button
         type="button"
+        disabled={!tempo || parseInt(tempo, 10) <= 0}
         onClick={handleCheckToggle}
         className={cn(
           "mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all active:scale-[0.99]",
-          concluido
+          !tempo || parseInt(tempo, 10) <= 0
+            ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-50"
+            : concluido
             ? "bg-accent text-white shadow-sm hover:bg-accent/90"
             : "bg-brand text-white hover:bg-brand-hover shadow-sm"
         )}
