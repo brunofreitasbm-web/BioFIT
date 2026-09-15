@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { calcularVolumePorGrupo, totalSeriesNoPeriodo, type VolumeGrupo } from "@/lib/relatorio";
 import { getTodosBikeIndoor, getTodasSessoes } from "@/lib/storage";
 import type { RegistroSessao } from "@/lib/tipos";
-import { MuscleMap } from "@/components/MuscleMap";
 import { cn } from "@/lib/cn";
 
 const PERIODOS: { label: string; valor: number | "tudo" }[] = [
@@ -44,7 +42,6 @@ function formatarDuracaoMs(ms: number): string {
 
 export default function RelatorioPage() {
   const [periodo, setPeriodo] = useState<number | "tudo">(7);
-  const [volumes, setVolumes] = useState<VolumeGrupo[] | null>(null);
 
   // Bike
   const [totalMinutosBike, setTotalMinutosBike] = useState<number>(0);
@@ -56,7 +53,6 @@ export default function RelatorioPage() {
   const [sessoesForcaCount, setSessoesForcaCount] = useState<number>(0);
 
   useEffect(() => {
-    setVolumes(calcularVolumePorGrupo(periodo));
     const agora = new Date();
 
     // 1. Processar Bike Indoor
@@ -235,16 +231,6 @@ export default function RelatorioPage() {
         )}
       </section>
 
-      {/* Relatório de Volume por Grupo Muscular */}
-      {volumes && (
-        <section className="space-y-2">
-          <h2 className="text-base font-semibold text-ink">Volume por Grupo Muscular</h2>
-          <MuscleMap volumes={volumes} />
-          <p className="pt-2 text-center text-xs text-ink-faint">
-            Total: {totalSeriesNoPeriodo(volumes)} séries registradas no período
-          </p>
-        </section>
-      )}
     </div>
   );
 }
