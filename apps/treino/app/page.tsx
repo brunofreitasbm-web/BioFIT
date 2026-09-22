@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getDataInicio, getSessaoEscolhida, setSessaoEscolhida } from "@/lib/storage";
 import { getStatusPrograma, sessaoDoDia, toISODate, SESSAO_LABEL, type StatusPrograma } from "@/lib/program";
 import { POSTURAL } from "@/lib/exercicios";
@@ -16,7 +16,7 @@ import { BikeIndoorCard } from "@/components/BikeIndoorCard";
 import { ProgressoBloco } from "@/components/ProgressoBloco";
 import { ProgressoCiclo } from "@/components/ProgressoCiclo";
 import type { EscolhaDoDia } from "@/lib/tipos";
-import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronUp, Coffee, CheckCircle2 } from "lucide-react";
 
 
 const DIAS_SEMANA_LABEL = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -50,7 +50,6 @@ export default function HojePage() {
 
   // Fluxo guiado: mantém só um exercício da sessão principal aberto por vez. Ao completar
   // todas as séries do exercício aberto, avança sozinho para o próximo pendente da lista.
-  // Precisa vir antes de qualquer `return` condicional para não violar a ordem dos hooks.
   useEffect(() => {
     if (exercicios.length === 0) {
       setExercicioAbertoId(null);
@@ -71,9 +70,31 @@ export default function HojePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessaoEfetiva, progressoPorExercicio]);
 
+  const handleToggleExercicio = useCallback((id: string) => {
+    setExercicioAbertoId((atual) => (atual === id ? null : id));
+  }, []);
+
+  const handleTogglePostural = useCallback((id: string) => {
+    setPosturalAbertoId((atual) => (atual === id ? null : id));
+  }, []);
+
+  function escolher(valor: EscolhaDoDia) {
+    setSessaoEscolhida(hojeISO, valor);
+    setEscolha(valor);
+  }
+
+  const handleProgresso = useCallback((exercicioId: string, feitas: number, total: number) => {
+    setProgressoPorExercicio((prev) => {
+      const atual = prev[exercicioId];
+      if (atual && atual.feitas === feitas && atual.total === total) return prev;
+      return { ...prev, [exercicioId]: { feitas, total } };
+    });
+  }, []);
+
   if (!pronto) {
     return (
-      <div className="p-4" aria-hidden="true">
+      <div className="p-4" aria-busy="true" aria-live="polite">
+        <span className="sr-only">Carregando dados do treino do dia...</span>
         <div className="mb-4 animate-pulse space-y-2">
           <div className="h-3 w-20 rounded bg-base-600" />
           <div className="h-6 w-48 rounded bg-base-600" />
@@ -87,19 +108,6 @@ export default function HojePage() {
     );
   }
 
-  function escolher(valor: EscolhaDoDia) {
-    setSessaoEscolhida(hojeISO, valor);
-    setEscolha(valor);
-  }
-
-  function handleProgresso(exercicioId: string, feitas: number, total: number) {
-    setProgressoPorExercicio((prev) => {
-      const atual = prev[exercicioId];
-      if (atual && atual.feitas === feitas && atual.total === total) return prev;
-      return { ...prev, [exercicioId]: { feitas, total } };
-    });
-  }
-
   const progressoSessao = exercicios.reduce(
     (acc, ex) => {
       const p = progressoPorExercicio[ex.id];
@@ -110,29 +118,42 @@ export default function HojePage() {
     { feitas: 0, total: 0 },
   );
   const progressoSessaoPct = progressoSessao.total > 0 ? Math.min(100, (progressoSessao.feitas / progressoSessao.total) * 100) : 0;
+  const treinoConcluido = progressoSessao.total > 0 && progressoSessao.feitas >= progressoSessao.total;
 
   return (
     <div className="p-4">
       <header className="mb-4 flex items-center justify-between">
         <div>
-          <p className="text-xs text-ink-faint">{DIAS_SEMANA_LABEL[hoje.getDay()]}</p>
-          <h1 className="text-xl font-semibold">
-            {sessaoEfetiva ? `Treino de hoje: ${sessaoEfetiva}` : "Hoje é descanso"}
+          <p className="text-xs font-medium text-ink-faint">{DIAS_SEMANA_LABEL[hoje.getDay()]}</p>
+          <h1 className="text-xl font-bold tracking-tight text-ink">
+            {sessaoEfetiva ? `Treino de hoje: ${sessaoEfetiva}` : "Hoje é dia de descanso"}
           </h1>
         </div>
         <GuiaModal dataInicio={dataInicio} onDataInicioChange={setDataInicioState} />
       </header>
 
       {sessaoEfetiva && exercicios.length > 0 && (
-        <div className="sticky top-0 z-10 -mx-4 mb-3 border-b border-line bg-base-900/95 px-4 py-2 shadow-[0_2px_8px_rgba(20,22,26,0.06)] backdrop-blur">
-          <div className="mb-1 flex items-center justify-between text-xs">
-            <span className="font-medium text-ink">Sessão de hoje</span>
-            <span className="text-ink-muted">
-              {progressoSessao.feitas} de {progressoSessao.total} séries
+        <div className="sticky top-0 z-10 -mx-4 mb-3 border-b border-line bg-base-800/95 px-4 py-2.5 shadow-panel backdrop-blur transition-all">
+          <div className="mb-1.5 flex items-center justify-between text-xs">
+            <span className="flex items-center gap-1.5 font-semibold text-ink">
+              {treinoConcluido ? (
+                <>
+                  <CheckCircle2 size={15} className="text-accent" />
+                  <span>Treino Concluído!</span>
+                </>
+              ) : (
+                <span>Progresso da Sessão</span>
+              )}
+            </span>
+            <span className="font-medium text-ink-muted">
+              {progressoSessao.feitas} de {progressoSessao.total} séries ({Math.round(progressoSessaoPct)}%)
             </span>
           </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-base-600">
-            <div className="h-full rounded-full bg-accent transition-[width]" style={{ width: `${progressoSessaoPct}%` }} />
+          <div className="h-2 w-full overflow-hidden rounded-full bg-base-600">
+            <div
+              className="h-full rounded-full bg-accent transition-all duration-300 ease-out"
+              style={{ width: `${progressoSessaoPct}%` }}
+            />
           </div>
         </div>
       )}
@@ -145,6 +166,18 @@ export default function HojePage() {
       )}
 
       <SeletorSessao hojeISO={hojeISO} sessaoSugerida={sessaoSugerida} valorAtual={escolha} onEscolher={escolher} />
+
+      {!sessaoEfetiva && (
+        <div className="mb-4 flex flex-col items-center justify-center rounded-xl border border-line bg-base-800 p-5 text-center shadow-panel">
+          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
+            <Coffee size={24} strokeWidth={2} />
+          </div>
+          <h2 className="text-base font-semibold text-ink">Recuperação Muscular Ativa</h2>
+          <p className="mt-1 text-xs text-ink-muted">
+            O descanso planejado é fundamental para a hipertrofia e reconstrução tecidual. Mantenha a hidratação e priorize boas horas de sono!
+          </p>
+        </div>
+      )}
 
       <BikeIndoorCard hojeISO={hojeISO} />
 
@@ -172,7 +205,8 @@ export default function HojePage() {
               type="button"
               onClick={() => setPostural((v) => !v)}
               aria-expanded={postural}
-              className="mb-2 flex min-h-11 w-full items-center justify-between text-sm font-medium text-ink-muted"
+              aria-controls="bloco-postural-container"
+              className="mb-2 flex min-h-11 w-full items-center justify-between text-sm font-medium text-ink-muted focus-visible:outline-none"
             >
               <span>Bloco postural diário (em casa, fora da academia)</span>
               {postural ? (
@@ -182,14 +216,14 @@ export default function HojePage() {
               )}
             </button>
             {postural && (
-              <div className="space-y-2">
+              <div id="bloco-postural-container" className="space-y-2">
                 {POSTURAL.map((ex) => (
                   <ExercicioPosturalCard
                     key={ex.id}
                     exercicio={ex}
                     data={hojeISO}
                     expandido={posturalAbertoId === ex.id}
-                    onToggleExpandido={() => setPosturalAbertoId((atual) => (atual === ex.id ? null : ex.id))}
+                    onToggleExpandido={() => handleTogglePostural(ex.id)}
                   />
                 ))}
               </div>
@@ -197,7 +231,7 @@ export default function HojePage() {
           </section>
 
           <section className="mb-4">
-            <h2 className="mb-2 text-sm font-medium text-ink-muted">{SESSAO_LABEL[sessaoEfetiva]}</h2>
+            <h2 className="mb-2 text-sm font-semibold text-ink">{SESSAO_LABEL[sessaoEfetiva]}</h2>
             <div className="space-y-2">
               {exercicios.map((ex) => (
                 <ExercicioCard
@@ -205,7 +239,7 @@ export default function HojePage() {
                   exercicio={ex}
                   data={hojeISO}
                   expandido={exercicioAbertoId === ex.id}
-                  onToggleExpandido={() => setExercicioAbertoId((atual) => (atual === ex.id ? null : ex.id))}
+                  onToggleExpandido={() => handleToggleExercicio(ex.id)}
                   onProgresso={handleProgresso}
                 />
               ))}
@@ -215,11 +249,12 @@ export default function HojePage() {
       )}
 
       {insightAmanha && (
-        <div className="mt-2 rounded-xl border border-line bg-base-800 p-3">
-          <p className="text-sm font-semibold">{insightAmanha.titulo}</p>
+        <div className="mt-2 rounded-xl border border-line bg-base-800 p-3 shadow-panel">
+          <p className="text-sm font-semibold text-ink">{insightAmanha.titulo}</p>
           <p className="mt-1 text-sm text-ink-muted">{insightAmanha.mensagem}</p>
         </div>
       )}
     </div>
   );
 }
+
