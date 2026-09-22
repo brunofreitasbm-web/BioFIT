@@ -2,7 +2,6 @@ import type {
   EscolhaDoDia,
   LogTroca,
   RegistroBikeIndoor,
-  RegistroBioimpedancia,
   RegistroSessao,
   SerieRegistrada,
   SessaoTreino,
@@ -16,8 +15,6 @@ const KEY_ESCOLHAS = "treino:escolhaPorDia";
 const KEY_PROGRAMA_ATUAL = "treino:programaAtual";
 const KEY_LOG_TROCAS = "treino:logTrocas";
 const KEY_BIKE = "treino:bikeIndoor";
-const KEY_BIOIMPEDANCIA = "treino:bioimpedancia";
-const KEY_GEMINI_API_KEY = "treino:geminiApiKey";
 
 
 export function getDataInicio(): string | null {
@@ -305,63 +302,4 @@ export function getTodosBikeIndoor(): Record<string, RegistroBikeIndoor> {
   }
 }
 
-// ===== Bioimpedância (registros que o usuário for adicionando, além dos históricos) =====
-
-export function getRegistrosBioimpedanciaSalvos(): Record<string, RegistroBioimpedancia> {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = window.localStorage.getItem(KEY_BIOIMPEDANCIA);
-    return raw ? (JSON.parse(raw) as Record<string, RegistroBioimpedancia>) : {};
-  } catch {
-    return {};
-  }
-}
-
-export function salvarRegistroBioimpedancia(registro: RegistroBioimpedancia): boolean {
-  if (typeof window === "undefined") return false;
-  const map = getRegistrosBioimpedanciaSalvos();
-  map[registro.data] = registro;
-  try {
-    window.localStorage.setItem(KEY_BIOIMPEDANCIA, JSON.stringify(map));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function removerRegistroBioimpedancia(data: string): boolean {
-  if (typeof window === "undefined") return false;
-  const map = getRegistrosBioimpedanciaSalvos();
-  delete map[data];
-  try {
-    window.localStorage.setItem(KEY_BIOIMPEDANCIA, JSON.stringify(map));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// ===== Chave de API do Gemini (fica só no localStorage do navegador, nunca no código) =====
-
-export function getGeminiApiKey(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(KEY_GEMINI_API_KEY);
-}
-
-export function setGeminiApiKey(chave: string): boolean {
-  try {
-    window.localStorage.setItem(KEY_GEMINI_API_KEY, chave);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function removerGeminiApiKey() {
-  try {
-    window.localStorage.removeItem(KEY_GEMINI_API_KEY);
-  } catch {
-    // ignore
-  }
-}
 
