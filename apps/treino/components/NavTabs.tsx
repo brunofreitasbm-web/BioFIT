@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Dumbbell, LineChart, Activity } from "lucide-react";
+import { Dumbbell, LineChart } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const TABS = [
   { href: "/", label: "Hoje", Icon: Dumbbell },
   { href: "/relatorio", label: "Relatório", Icon: LineChart },
-  { href: "/bioimpedancia", label: "Corpo", Icon: Activity },
 ];
 
 export function NavTabs() {

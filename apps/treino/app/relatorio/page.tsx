@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { calcularVolumePorGrupo, totalSeriesNoPeriodo, type VolumeGrupo } from "@/lib/relatorio";
 import { getTodosBikeIndoor, getTodasSessoes } from "@/lib/storage";
 import type { RegistroSessao } from "@/lib/tipos";
-import { MuscleMap } from "@/components/MuscleMap";
+import { corCalor } from "@/lib/cor";
 import { cn } from "@/lib/cn";
 import { Dumbbell, Bike, Check, Timer } from "lucide-react";
 
@@ -238,10 +238,31 @@ export default function RelatorioPage() {
 
       {/* Relatório de Volume por Grupo Muscular */}
       {volumes && (
-        <section className="space-y-2">
+        <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm space-y-3">
           <h2 className="text-base font-semibold text-ink">Volume por Grupo Muscular</h2>
-          <MuscleMap volumes={volumes} />
-          <p className="pt-2 text-center text-xs text-ink-faint">
+          {volumes.filter((v) => v.seriesFeitas > 0).length === 0 ? (
+            <p className="py-4 text-center text-xs text-ink-muted">Nenhuma série registrada no período selecionado.</p>
+          ) : (
+            <div className="space-y-2.5">
+              {volumes
+                .filter((v) => v.seriesFeitas > 0)
+                .map((v) => (
+                  <div key={v.grupo} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-ink">{v.grupo}</span>
+                      <span className="text-ink-faint">{v.seriesFeitas} séries</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-base-900">
+                      <div
+                        className="h-full rounded-full transition-[width]"
+                        style={{ width: `${v.pct}%`, backgroundColor: corCalor(v.pct / 100) }}
+                      />
+                    </div>
+                  </div>
+                ))}
+            </div>
+          )}
+          <p className="pt-1 text-center text-xs text-ink-faint">
             Total: {totalSeriesNoPeriodo(volumes)} séries registradas no período
           </p>
         </section>

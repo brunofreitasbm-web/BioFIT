@@ -1,60 +1,40 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { getToken, clearToken, api } from "./lib/api";
-import { LoginScreen } from "./screens/LoginScreen";
-import { HomeScreen } from "./screens/HomeScreen";
-import { ProgressoScreen } from "./screens/ProgressoScreen";
-import { DesafioScreen } from "./screens/DesafioScreen";
-import { PagamentosScreen } from "./screens/PagamentosScreen";
-import { PerfilScreen } from "./screens/PerfilScreen";
-import { TabBar, type TabDef } from "./components/TabBar";
+import { colors } from "./theme";
 import { ErrorBoundary } from "./ErrorBoundary";
-import { ThemeProvider, useAppTheme } from "./lib/themeContext";
+import { hydrateStorage } from "./lib/treino/storage";
+import { HojeScreen } from "./screens/treino/HojeScreen";
+import { RelatorioScreen } from "./screens/treino/RelatorioScreen";
+import { TabBarIcons, type TabDef } from "./components/TabBar";
 
 const TABS: TabDef[] = [
-  { key: "treino", label: "Treino", icon: "🏋" },
-  { key: "progresso", label: "Progresso", icon: "📈" },
-  { key: "desafio", label: "Desafio", icon: "🏆" },
-  { key: "pagamentos", label: "Pagar", icon: "💳" },
-  { key: "perfil", label: "Perfil", icon: "👤" },
+  { key: "hoje", label: "Hoje", icon: "barbell" },
+  { key: "relatorio", label: "Relatório", icon: "stats-chart" },
 ];
 
-function MainTabs({ onLogout }: { onLogout: () => void }) {
-  const [activeTab, setActiveTab] = useState("treino");
-  const { colors } = useAppTheme();
+function MainTabs() {
+  const [activeTab, setActiveTab] = useState("hoje");
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <View style={{ flex: 1 }}>
-        {activeTab === "treino" && <HomeScreen />}
-        {activeTab === "progresso" && <ProgressoScreen />}
-        {activeTab === "desafio" && <DesafioScreen />}
-        {activeTab === "pagamentos" && <PagamentosScreen />}
-        {activeTab === "perfil" && <PerfilScreen onLogout={onLogout} />}
+        {activeTab === "hoje" && <HojeScreen />}
+        {activeTab === "relatorio" && <RelatorioScreen />}
       </View>
-      <TabBar tabs={TABS} active={activeTab} onChange={setActiveTab} />
+      <TabBarIcons tabs={TABS} active={activeTab} onChange={setActiveTab} />
     </View>
   );
 }
 
 function App() {
-  const [checking, setChecking] = useState(true);
-  const [loggedIn, setLoggedIn] = useState(false);
-  const { colors, refreshUserInfo, updateUserInfo } = useAppTheme();
+  const [pronto, setPronto] = useState(false);
 
   useEffect(() => {
-    getToken().then((token) => {
-      setLoggedIn(!!token);
-      if (token) {
-        refreshUserInfo().finally(() => setChecking(false));
-      } else {
-        setChecking(false);
-      }
-    });
+    hydrateStorage().then(() => setPronto(true));
   }, []);
 
-  if (checking) {
+  if (!pronto) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg, alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator color={colors.brand} />
@@ -65,19 +45,7 @@ function App() {
   return (
     <>
       <StatusBar style="light" />
-      {loggedIn ? (
-        <MainTabs onLogout={() => {
-          clearToken().then(() => {
-            updateUserInfo(null);
-            setLoggedIn(false);
-          });
-        }} />
-      ) : (
-        <LoginScreen onLoggedIn={() => {
-          setLoggedIn(true);
-          refreshUserInfo();
-        }} />
-      )}
+      <MainTabs />
     </>
   );
 }
@@ -85,9 +53,7 @@ function App() {
 export default function AppRoot() {
   return (
     <ErrorBoundary>
-      <ThemeProvider apiFetch={api}>
-        <App />
-      </ThemeProvider>
+      <App />
     </ErrorBoundary>
   );
 }
