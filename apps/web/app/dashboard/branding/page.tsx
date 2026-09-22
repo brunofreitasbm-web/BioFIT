@@ -68,7 +68,7 @@ export default function BrandingPage() {
         <p className="text-sm text-ink-muted">Configure a identidade visual da sua marca para seus alunos</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="flex flex-col gap-6">
         <Card className="p-6">
           <form onSubmit={handleSave} className="flex flex-col gap-4">
             <Input
