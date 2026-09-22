@@ -1,13 +1,14 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useAppTheme } from "../lib/themeContext";
+import { Ionicons } from "@expo/vector-icons";
+import { colors } from "../theme";
 
 export interface TabDef {
   key: string;
   label: string;
-  icon: string;
+  icon: keyof typeof Ionicons.glyphMap;
 }
 
-export function TabBar({
+export function TabBarIcons({
   tabs,
   active,
   onChange,
@@ -16,15 +17,13 @@ export function TabBar({
   active: string;
   onChange: (key: string) => void;
 }) {
-  const { colors } = useAppTheme();
-
   return (
     <View style={[styles.bar, { borderTopColor: colors.line, backgroundColor: colors.bg }]}>
       {tabs.map((tab) => {
         const isActive = tab.key === active;
         return (
           <Pressable key={tab.key} style={styles.tab} onPress={() => onChange(tab.key)}>
-            <Text style={[styles.icon, isActive && styles.iconActive]}>{tab.icon}</Text>
+            <Ionicons name={tab.icon} size={22} color={isActive ? colors.brand : colors.inkFaint} />
             <Text style={[styles.label, { color: isActive ? colors.ink : colors.inkFaint }, isActive && styles.labelActive]}>
               {tab.label}
             </Text>
@@ -43,8 +42,6 @@ const styles = StyleSheet.create({
     paddingTop: 6,
   },
   tab: { flex: 1, alignItems: "center", gap: 2 },
-  icon: { fontSize: 18, opacity: 0.5 },
-  iconActive: { opacity: 1 },
   label: { fontSize: 11 },
   labelActive: { fontWeight: "600" },
 });
