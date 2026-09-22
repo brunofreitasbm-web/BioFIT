@@ -126,7 +126,7 @@ export default function ExerciciosPage() {
       )}
 
       {exercicios === null && (
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
           <Skeleton className="h-40" />
           <Skeleton className="h-40" />
         </div>
@@ -139,7 +139,7 @@ export default function ExerciciosPage() {
         />
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
         {filtrados.map((ex) => {
           const thumb = ex.videoUrl ? youtubeThumbnail(ex.videoUrl) : null;
           return (
