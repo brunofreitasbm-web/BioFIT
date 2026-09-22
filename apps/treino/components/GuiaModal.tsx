@@ -57,7 +57,7 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
 
             <section className="mb-4 rounded-xl border border-line bg-base-700 p-3">
               <h3 className="mb-1 text-sm font-medium">Início do programa</h3>
-              <p className="mb-2 text-xs text-ink-muted">Define a partir de qual data o app calcula semana e deload.</p>
+              <p className="mb-2 text-xs text-ink-muted">Define a partir de qual data o app contabiliza os treinos concluídos do ciclo.</p>
               <div className="flex items-center gap-2">
                 <input
                   type="date"
@@ -73,9 +73,7 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
 
             <div className="space-y-3 text-sm text-ink-muted">
               <p>
-                <strong className="text-ink">Estrutura:</strong> Push / Pull / Legs 2x por semana (Seg-Sáb, Dom off). Fase:
-                manutenção/recomposição. A sessão de academia é 100% musculação: 6 exercícios; os compostos principais têm 4
-                séries, os demais 3 (panturrilha 4). O bloco postural NÃO ocupa tempo de academia — é feito em casa.
+                <strong className="text-ink">Estrutura e Periodização:</strong> Push / Pull / Legs (6 sessões por semana). A progressão de semanas (S1 a S8 e Deload) avança estritamente conforme a conclusão dos treinos: só se passa para a próxima etapa/semana após concluir as 6 sessões da semana atual.
               </p>
               <p>
                 <strong className="text-ink">Orçamento de tempo real:</strong> PUSH ~54 min · PULL ~57 min · LEGS ~57 min
@@ -110,9 +108,7 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
                 (RIR 3-4 na 1ª sessão).
               </p>
               <p>
-                <strong className="text-ink">Deload:</strong> a cada 8 semanas corridas (contadas a partir do início do
-                programa, ou do último deload) — 1 semana de deload: metade das séries, RIR 4, cargas atuais reduzidas em
-                10%. Depois do deload as cargas seguem progredindo de onde pararam, e o ciclo de 8 semanas recomeça.
+                <strong className="text-ink">Deload:</strong> a cada 48 sessões de trabalho concluídas (8 semanas × 6 treinos), você realiza 6 sessões de deload (1 semana): metade das séries, RIR 4, cargas atuais reduzidas em 10%. Depois do deload as cargas seguem progredindo de onde pararam, e o ciclo recomeça.
               </p>
               <p>
                 <strong className="text-ink">Execução:</strong> Sem cadência numérica prescrita — subir com intenção de força

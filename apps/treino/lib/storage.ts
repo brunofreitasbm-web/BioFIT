@@ -256,6 +256,29 @@ export function diasTreinadosUnicos(): string[] {
   return Array.from(dias).sort();
 }
 
+export function contarSessoesConcluidasTotal(dataInicioISO?: string): number {
+  const chaves = new Set<string>();
+  for (const lista of Object.values(getTodasSessoes())) {
+    for (const sessao of lista) {
+      if (sessao.fimISO && (!dataInicioISO || sessao.data >= dataInicioISO)) {
+        if (sessao.sessaoTipo === "PUSH" || sessao.sessaoTipo === "PULL" || sessao.sessaoTipo === "LEGS") {
+          chaves.add(`${sessao.data}:${sessao.sessaoTipo}`);
+        }
+      }
+    }
+  }
+  for (const s of getLog()) {
+    if ((s.cargaKg !== null || s.reps !== null) && (!dataInicioISO || s.data >= dataInicioISO)) {
+      const exercicio = getExercicio(s.exercicioId);
+      if (exercicio && (exercicio.sessao === "PUSH" || exercicio.sessao === "PULL" || exercicio.sessao === "LEGS")) {
+        chaves.add(`${s.data}:${exercicio.sessao}`);
+      }
+    }
+  }
+  return chaves.size;
+}
+
+
 // ===== Bike Indoor =====
 
 export function getBikeIndoor(data: string): RegistroBikeIndoor | null {

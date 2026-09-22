@@ -40,7 +40,7 @@ export default function HojePage() {
   }, []);
 
   const status: StatusPrograma | null = pronto ? getStatusPrograma(dataInicio, hoje) : null;
-  const sessaoSugerida = sessaoDoDia(hoje);
+  const sessaoSugerida = status?.proximaSessaoTipo ?? sessaoDoDia(hoje);
   const sessaoEfetiva = escolha === "DESCANSO" ? null : (escolha ?? sessaoSugerida);
   const exercicios = sessaoEfetiva ? getSessaoCompleta(sessaoEfetiva) : [];
 

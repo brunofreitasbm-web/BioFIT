@@ -1,15 +1,21 @@
 import type { Sessao, SessaoTreino } from "./tipos";
+import { contarSessoesConcluidasTotal } from "./storage";
 
-// v4: não existe mais "bloco" como unidade de calendário — os exercícios não rotacionam
-// automaticamente (banco de opções trocado manualmente, ver lib/programaAtual.ts). O único
-// ciclo de calendário que resta é o deload: a cada 8 semanas corridas (56 dias) de trabalho,
-// 1 semana (7 dias) de deload, repetindo indefinidamente a partir do início do programa.
-export const DIAS_TRABALHO = 56; // 8 semanas
+// A progressão da periodização é baseada na execução dos treinos (e não em calendário).
+// Cada semana do ciclo de treino exige 6 sessões concluídas (Push/Pull/Legs 2x).
+// Ciclo total: 8 semanas de treino (48 sessões) + 1 semana de deload (6 sessões) = 54 sessões no total.
+export const SESSOES_POR_SEMANA = 6;
+export const SEMANAS_TRABALHO = 8;
+export const DIAS_TRABALHO = 56; // Mantido para compatibilidade de tipos/labels
 export const DIAS_DELOAD = 7;
-export const CICLO_TOTAL_DIAS = DIAS_TRABALHO + DIAS_DELOAD; // 63 dias
-export const SEMANAS_TRABALHO = DIAS_TRABALHO / 7; // 8
+export const CICLO_TOTAL_DIAS = 63;
+export const SESSOES_TRABALHO = SEMANAS_TRABALHO * SESSOES_POR_SEMANA; // 48 sessões
+export const SESSOES_DELOAD = 6;
+export const CICLO_TOTAL_SESSOES = SESSOES_TRABALHO + SESSOES_DELOAD; // 54 sessões
 
-// Seg/Qui = PUSH, Ter/Sex = PULL, Qua/Sáb = LEGS, Dom = OFF — usado só como sugestão padrão do dia.
+export const SEQUENCIA_SESSAO: SessaoTreino[] = ["PUSH", "PULL", "LEGS", "PUSH", "PULL", "LEGS"];
+
+// Seg/Qui = PUSH, Ter/Sex = PULL, Qua/Sáb = LEGS, Dom = OFF — usado apenas como fallback de calendário.
 const SESSAO_POR_DIA_SEMANA: Record<number, SessaoTreino | null> = {
   0: null, // domingo
   1: "PUSH",
@@ -35,22 +41,19 @@ function startOfDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
-function addDays(d: Date, days: number): Date {
-  const r = new Date(d);
-  r.setDate(r.getDate() + days);
-  return r;
-}
-
 function diffDays(a: Date, b: Date): number {
   return Math.round((startOfDay(a).getTime() - startOfDay(b).getTime()) / 86400000);
 }
 
 export interface StatusPrograma {
   diasDesdeInicio: number;
+  totalConcluidas: number;
+  concluidasNaSemana: number;
+  esperadoNaSemana: number;
   isDeload: boolean;
-  semana: number; // 1-8 (não usado durante o deload)
-  cicloStartDate: Date; // início do ciclo de 63 dias em que "hoje" cai
-  proximaSessaoLabel: string; // amanhã (sugestão de calendário)
+  semana: number; // 1-8 (semana de trabalho ou 8 no deload)
+  cicloStartDate: Date;
+  proximaSessaoLabel: string;
   proximaSessaoTipo: SessaoTreino | null;
 }
 
@@ -60,21 +63,27 @@ export function getStatusPrograma(dataInicioISO: string, hoje: Date = new Date()
   const dias = diffDays(t, inicio);
   if (dias < 0) return null;
 
-  const cyclePos = dias % CICLO_TOTAL_DIAS;
-  const isDeload = cyclePos >= DIAS_TRABALHO;
-  const semana = isDeload ? SEMANAS_TRABALHO : Math.floor(cyclePos / 7) + 1;
-  const cicloStartDate = addDays(inicio, dias - cyclePos);
+  const totalConcluidas = contarSessoesConcluidasTotal(dataInicioISO);
+  const posNoCiclo = totalConcluidas % CICLO_TOTAL_SESSOES;
+  const isDeload = posNoCiclo >= SESSOES_TRABALHO;
+  const semana = isDeload ? SEMANAS_TRABALHO : Math.floor(posNoCiclo / SESSOES_POR_SEMANA) + 1;
+  const concluidasNaSemana = isDeload
+    ? posNoCiclo - SESSOES_TRABALHO
+    : posNoCiclo % SESSOES_POR_SEMANA;
 
-  const amanha = addDays(t, 1);
-  const sessaoAmanha = sessaoDoDia(amanha);
+  const proximaSessaoTipo = SEQUENCIA_SESSAO[concluidasNaSemana % SESSOES_POR_SEMANA];
+  const proximaSessaoLabel = proximaSessaoTipo;
 
   return {
     diasDesdeInicio: dias,
+    totalConcluidas,
+    concluidasNaSemana,
+    esperadoNaSemana: SESSOES_POR_SEMANA,
     isDeload,
     semana,
-    cicloStartDate,
-    proximaSessaoLabel: sessaoAmanha ?? "Descanso",
-    proximaSessaoTipo: sessaoAmanha,
+    cicloStartDate: inicio,
+    proximaSessaoLabel,
+    proximaSessaoTipo,
   };
 }
 

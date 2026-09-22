@@ -76,15 +76,14 @@ export function gerarInsightHoje(status: StatusPrograma, hojeISO: string, sessao
 }
 
 export function gerarInsightAmanha(status: StatusPrograma): InsightHoje {
-  if (!status.proximaSessaoTipo) {
-    return { titulo: "Amanhã: descanso", mensagem: "Sem treino de força amanhã — bom dia para o cardio Z2, se estiver na programação." };
-  }
-  const exercicios = getSessaoCompleta(status.proximaSessaoTipo);
+  const proximoIdx = (status.concluidasNaSemana + 1) % 6;
+  const sessaoAmanha: SessaoTreino = ["PUSH", "PULL", "LEGS", "PUSH", "PULL", "LEGS"][proximoIdx];
+  const exercicios = getSessaoCompleta(sessaoAmanha);
   const primeiro = exercicios[0];
   return {
-    titulo: `Amanhã: ${status.proximaSessaoTipo}`,
+    titulo: `Próximo treino: ${sessaoAmanha}`,
     mensagem: primeiro
-      ? `${SESSAO_LABEL[status.proximaSessaoTipo]}. Abre com ${primeiro.nome} (${primeiro.series}x${primeiro.reps}). Já pensa na carga hoje à noite para não perder tempo amanhã. Lembre-se: você pode trocar a sessão do dia se preferir treinar outro grupo.`
-      : `${SESSAO_LABEL[status.proximaSessaoTipo]} amanhã.`,
+      ? `${SESSAO_LABEL[sessaoAmanha]}. Abre com ${primeiro.nome} (${primeiro.series}x${primeiro.reps}). Já pensa na carga de referência para não perder tempo. Lembre-se: você pode trocar a sessão do dia se preferir.`
+      : `${SESSAO_LABEL[sessaoAmanha]} a seguir.`,
   };
 }
