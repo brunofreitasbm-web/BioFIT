@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { X } from "lucide-react";
 import type { ExercicioEfetivo } from "@/lib/tipos";
 import { opcoesDoSlot } from "@/lib/exercicios";
 import { GrupoBadge } from "./GrupoBadge";
@@ -42,7 +43,7 @@ export function SeletorExercicio({
             className="flex h-11 w-11 shrink-0 items-center justify-center text-ink-muted"
             aria-label="Fechar"
           >
-            <span aria-hidden="true">✕</span>
+            <X aria-hidden="true" size={20} strokeWidth={1.75} />
           </button>
         </div>
         <p className="mb-3 text-xs text-ink-muted">

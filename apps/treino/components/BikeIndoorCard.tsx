@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Bike, Check, Circle } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { getBikeIndoor, saveBikeIndoor, removerBikeIndoor } from "@/lib/storage";
 
@@ -110,11 +111,11 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
           <div
             aria-hidden="true"
             className={cn(
-              "flex h-9 w-9 items-center justify-center rounded-xl text-lg font-bold transition-all",
+              "flex h-9 w-9 items-center justify-center rounded-xl transition-all",
               concluido ? "bg-accent text-white" : "bg-base-700 text-ink-muted"
             )}
           >
-            🚴‍♂️
+            <Bike aria-hidden="true" size={19} strokeWidth={2} />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -195,7 +196,11 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
             : "bg-brand text-white hover:bg-brand-hover shadow-sm"
         )}
       >
-        <span className="text-sm" aria-hidden="true">{concluido ? "✓" : "○"}</span>
+        {concluido ? (
+          <Check aria-hidden="true" size={16} strokeWidth={3} />
+        ) : (
+          <Circle aria-hidden="true" size={15} strokeWidth={2.25} />
+        )}
         <span>
           {concluido ? `Concluído (${tempo} min)` : "Marcar como Concluído"}
         </span>

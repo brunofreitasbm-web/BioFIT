@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { RegistroBioimpedancia } from "@/lib/tipos";
 import { ALTURA_M } from "@/lib/bioimpedancia";
 import { toISODate } from "@/lib/program";
+import { X } from "lucide-react";
 
 function num(v: string, fallback: number): number {
   const n = Number(v.replace(",", "."));
@@ -89,7 +90,7 @@ export function BioimpedanciaForm({
             className="flex h-11 w-11 shrink-0 items-center justify-center text-ink-muted"
             aria-label="Fechar"
           >
-            <span aria-hidden="true">✕</span>
+            <X aria-hidden="true" size={20} strokeWidth={1.75} />
           </button>
         </div>
 

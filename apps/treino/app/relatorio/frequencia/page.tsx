@@ -10,6 +10,7 @@ import {
 } from "@/lib/relatorio";
 import { corCalor } from "@/lib/cor";
 import { cn } from "@/lib/cn";
+import { ArrowUpCircle, ArrowDownCircle, Footprints, type LucideIcon } from "lucide-react";
 
 const PERIODOS: { label: string; valor: number | "tudo" }[] = [
   { label: "7 dias", valor: 7 },
@@ -17,10 +18,10 @@ const PERIODOS: { label: string; valor: number | "tudo" }[] = [
   { label: "Tudo", valor: "tudo" },
 ];
 
-const ICONE_SESSAO: Record<FrequenciaSessao["tipo"], string> = {
-  PUSH: "💪",
-  PULL: "🔙",
-  LEGS: "🦵",
+const ICONE_SESSAO: Record<FrequenciaSessao["tipo"], LucideIcon> = {
+  PUSH: ArrowUpCircle,
+  PULL: ArrowDownCircle,
+  LEGS: Footprints,
 };
 
 function formatarDataBR(dataIso: string | null): string {
@@ -91,9 +92,10 @@ export default function FrequenciaPage() {
             {porSessao.map((s) => (
               <div key={s.tipo} className="rounded-lg border border-line/60 bg-base-900 p-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg" aria-hidden="true">
-                    {ICONE_SESSAO[s.tipo]}
-                  </span>
+                  {(() => {
+                    const Icone = ICONE_SESSAO[s.tipo];
+                    return <Icone aria-hidden="true" size={18} strokeWidth={2} className="text-brand" />;
+                  })()}
                   <span className="text-xs font-bold text-ink">{s.tipo}</span>
                 </div>
                 <p className="mt-2 text-2xl font-semibold text-ink">{s.sessoesConcluidas}</p>

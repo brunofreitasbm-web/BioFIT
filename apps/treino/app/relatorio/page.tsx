@@ -7,6 +7,7 @@ import { getTodosBikeIndoor, getTodasSessoes } from "@/lib/storage";
 import type { RegistroSessao } from "@/lib/tipos";
 import { MuscleMap } from "@/components/MuscleMap";
 import { cn } from "@/lib/cn";
+import { Dumbbell, Bike, Check, Timer } from "lucide-react";
 
 const PERIODOS: { label: string; valor: number | "tudo" }[] = [
   { label: "7 dias", valor: 7 },
@@ -149,8 +150,8 @@ export default function RelatorioPage() {
         {/* Card Força */}
         <div className="rounded-xl border border-line bg-base-800 p-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-xl" aria-hidden="true">
-              🏋️‍♂️
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand" aria-hidden="true">
+              <Dumbbell size={19} strokeWidth={2} />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-ink">Treinos de Força</h3>
@@ -166,8 +167,8 @@ export default function RelatorioPage() {
         {/* Card Bike Indoor */}
         <div className="rounded-xl border border-line bg-base-800 p-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-xl" aria-hidden="true">
-              🚴‍♂️
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent" aria-hidden="true">
+              <Bike size={19} strokeWidth={2} />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-ink">Bike Indoor (Cardio)</h3>
@@ -220,11 +221,11 @@ export default function RelatorioPage() {
                   <div className="text-right">
                     {estaConcluido ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-[11px] font-medium text-accent">
-                        <span aria-hidden="true">✓</span> {formatarDuracaoMs(duracaoMs)}
+                        <Check aria-hidden="true" size={12} strokeWidth={3} /> {formatarDuracaoMs(duracaoMs)}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-medium text-brand">
-                        <span aria-hidden="true">⏱</span> Em andamento
+                        <Timer aria-hidden="true" size={12} strokeWidth={2.5} /> Em andamento
                       </span>
                     )}
                   </div>

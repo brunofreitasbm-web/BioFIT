@@ -8,6 +8,7 @@ import { pedirInsightIA, GeminiError } from "@/lib/gemini";
 import { calcularVolumePorGrupo } from "@/lib/relatorio";
 import { calcularStreak, totalSeriesRegistradas } from "@/lib/motivacao";
 import { toISODate } from "@/lib/program";
+import { Sparkles } from "lucide-react";
 
 function montarPrompt(registros: RegistroBioimpedancia[]): string {
   const tabela = registros
@@ -80,8 +81,8 @@ export function InsightIACard({ registros }: { registros: RegistroBioimpedancia[
   return (
     <div className="rounded-xl border border-brand-soft bg-brand-soft p-3">
       <div className="mb-1 flex items-center justify-between">
-        <p className="text-sm font-semibold text-accent">
-          <span aria-hidden="true">🤖</span> Análise por IA (Gemini)
+        <p className="flex items-center gap-1.5 text-sm font-semibold text-accent">
+          <Sparkles aria-hidden="true" size={15} strokeWidth={2} /> Análise por IA (Gemini)
         </p>
         {apiKey && (
           <button type="button" onClick={trocarChave} className="text-[11px] text-ink-muted underline">

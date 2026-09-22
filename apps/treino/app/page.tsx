@@ -16,6 +16,7 @@ import { BikeIndoorCard } from "@/components/BikeIndoorCard";
 import { ProgressoBloco } from "@/components/ProgressoBloco";
 import { ProgressoCiclo } from "@/components/ProgressoCiclo";
 import type { EscolhaDoDia } from "@/lib/tipos";
+import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 
 
 const DIAS_SEMANA_LABEL = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -157,7 +158,7 @@ export default function HojePage() {
       )}
       {status?.isDeload && sessaoEfetiva && (
         <div className="mb-4 flex items-start gap-2 rounded-xl border border-danger/30 bg-danger-soft px-3 py-2.5">
-          <span aria-hidden="true" className="mt-0.5 text-danger">⚠</span>
+          <AlertTriangle aria-hidden="true" size={16} strokeWidth={2.25} className="mt-0.5 shrink-0 text-danger" />
           <p className="text-xs font-medium text-danger">
             Semana de deload — metade das séries, esforço leve, cargas reduzidas em 10%.
           </p>
@@ -174,7 +175,11 @@ export default function HojePage() {
               className="mb-2 flex min-h-11 w-full items-center justify-between text-sm font-medium text-ink-muted"
             >
               <span>Bloco postural diário (em casa, fora da academia)</span>
-              <span aria-hidden="true">{postural ? "▲" : "▼"}</span>
+              {postural ? (
+                <ChevronUp aria-hidden="true" size={16} />
+              ) : (
+                <ChevronDown aria-hidden="true" size={16} />
+              )}
             </button>
             {postural && (
               <div className="space-y-2">

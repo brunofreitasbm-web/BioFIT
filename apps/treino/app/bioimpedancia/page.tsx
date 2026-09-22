@@ -8,6 +8,7 @@ import { GraficoLinha } from "@/components/GraficoLinha";
 import { BioimpedanciaForm } from "@/components/BioimpedanciaForm";
 import { cn } from "@/lib/cn";
 import { CHART_COLORS } from "@/lib/colors";
+import { Plus, Trash2 } from "lucide-react";
 
 export default function BioimpedanciaPage() {
   const [pronto, setPronto] = useState(false);
@@ -51,9 +52,9 @@ export default function BioimpedanciaPage() {
         <button
           type="button"
           onClick={() => setFormAberto(true)}
-          className="min-h-11 rounded-full bg-brand px-4 text-sm font-semibold text-white"
+          className="flex min-h-11 items-center gap-1.5 rounded-full bg-brand px-4 text-sm font-semibold text-white"
         >
-          + Medição
+          <Plus aria-hidden="true" size={16} strokeWidth={2.5} /> Medição
         </button>
       </header>
 
@@ -76,7 +77,7 @@ export default function BioimpedanciaPage() {
 
       {registros.length === 0 && (
         <p className="rounded-xl border border-line bg-base-800 p-6 text-center text-sm text-ink-muted">
-          Nenhuma medição registrada ainda. Toque em "+ Medição" para adicionar a primeira.
+          Nenhuma medição registrada ainda. Toque em &ldquo;Medição&rdquo; para adicionar a primeira.
         </p>
       )}
 
@@ -143,7 +144,7 @@ export default function BioimpedanciaPage() {
                     className="flex h-11 w-11 shrink-0 items-center justify-center text-danger"
                     aria-label="Remover medição"
                   >
-                    <span aria-hidden="true">🗑</span>
+                    <Trash2 aria-hidden="true" size={17} strokeWidth={1.75} />
                   </button>
                 )}
               </div>
