@@ -1,21 +1,24 @@
 "use client";
 
-import type { Exercicio } from "@/lib/tipos";
-import { alternativasParaExercicio } from "@/lib/exercicios";
+import { useState } from "react";
+import { X } from "lucide-react";
+import type { ExercicioEfetivo } from "@/lib/tipos";
+import { opcoesDoSlot } from "@/lib/exercicios";
 import { GrupoBadge } from "./GrupoBadge";
 
+const MOTIVOS = ["Estagnação", "Dor/desconforto", "Falta de equipamento", "Outro"];
+
 export function SeletorExercicio({
-  original,
-  substitutoAtualId,
+  atual,
   onEscolher,
   onFechar,
 }: {
-  original: Exercicio;
-  substitutoAtualId: string | null;
-  onEscolher: (novoId: string | null) => void;
+  atual: ExercicioEfetivo;
+  onEscolher: (novoId: string, motivo: string) => void;
   onFechar: () => void;
 }) {
-  const alternativas = alternativasParaExercicio(original.id);
+  const opcoes = opcoesDoSlot(atual.sessao, atual.slot).filter((o) => o.id !== atual.id);
+  const [motivo, setMotivo] = useState(MOTIVOS[0]);
 
   return (
     <div
@@ -23,7 +26,7 @@ export function SeletorExercicio({
       onClick={onFechar}
       role="dialog"
       aria-modal="true"
-      aria-label="Mudar exercício"
+      aria-label="Trocar exercício"
       onKeyDown={(e) => {
         if (e.key === "Escape") onFechar();
       }}
@@ -33,80 +36,75 @@ export function SeletorExercicio({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-1 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Mudar exercício</h2>
+          <h2 className="text-lg font-semibold">Trocar exercício</h2>
           <button
             type="button"
             onClick={onFechar}
             className="flex h-11 w-11 shrink-0 items-center justify-center text-ink-muted"
             aria-label="Fechar"
           >
-            <span aria-hidden="true">✕</span>
+            <X aria-hidden="true" size={20} strokeWidth={1.75} />
           </button>
         </div>
         <p className="mb-3 text-xs text-ink-muted">
-          Vale só por hoje. Todas as opções trabalham o mesmo grupo muscular: <GrupoBadge grupo={original.grupoMuscular} />
+          Isso muda o Programa Atual (não é só por hoje) e fica registrado no Log de Trocas. Séries, reps e descanso
+          continuam os mesmos, só o exercício muda. Todas as opções trabalham{" "}
+          <GrupoBadge grupo={atual.grupoMuscular} />.
         </p>
 
-        <button
-          type="button"
-          onClick={() => onEscolher(null)}
-          aria-pressed={!substitutoAtualId}
-          className={`mb-2 flex w-full items-center gap-3 rounded-xl border p-2.5 text-left ${
-            !substitutoAtualId ? "border-brand bg-brand-soft" : "border-line bg-base-700"
-          }`}
-        >
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">{original.nome}</p>
-            <p className="text-[11px] text-ink-muted">
-              Original do plano · {original.series}×{original.reps}
-            </p>
-          </div>
-          {!substitutoAtualId && (
-            <span className="text-accent" aria-hidden="true">
-              ✓
-            </span>
-          )}
-        </button>
-
-        <div className="space-y-2">
-          {alternativas.map((alt) => {
-            const selecionado = substitutoAtualId === alt.id;
-            return (
+        <div className="mb-3">
+          <p className="mb-1.5 text-[11px] font-medium text-ink-muted">Motivo da troca</p>
+          <div className="flex flex-wrap gap-1.5">
+            {MOTIVOS.map((m) => (
               <button
-                key={alt.id}
+                key={m}
                 type="button"
-                onClick={() => onEscolher(alt.id)}
-                aria-pressed={selecionado}
-                className={`flex w-full items-center gap-3 rounded-xl border p-2.5 text-left ${
-                  selecionado ? "border-brand bg-brand-soft" : "border-line bg-base-700"
+                onClick={() => setMotivo(m)}
+                aria-pressed={motivo === m}
+                className={`min-h-8 rounded-full border px-3 py-1 text-[11px] font-medium ${
+                  motivo === m ? "border-brand bg-brand-soft text-brand" : "border-line bg-base-700 text-ink-muted"
                 }`}
               >
-                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-base-600">
-                  {alt.youtubeId && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={`https://img.youtube.com/vi/${alt.youtubeId}/default.jpg`}
-                      alt={alt.nome}
-                      loading="lazy"
-                      className="h-full w-full object-cover"
-                    />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{alt.nome}</p>
-                  <p className="text-[11px] text-ink-muted">
-                    {alt.bloco > 0 ? `Bloco ${alt.bloco} · ` : ""}
-                    {alt.series}×{alt.reps}
-                  </p>
-                </div>
-                {selecionado && (
-                  <span className="text-accent" aria-hidden="true">
-                    ✓
-                  </span>
-                )}
+                {m}
               </button>
-            );
-          })}
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-2 rounded-xl border border-brand bg-brand-soft p-2.5">
+          <p className="truncate text-sm font-medium">{atual.nome}</p>
+          <p className="text-[11px] text-ink-muted">
+            Atual · {atual.series}×{atual.reps}
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          {opcoes.map((opcao) => (
+            <button
+              key={opcao.id}
+              type="button"
+              onClick={() => onEscolher(opcao.id, motivo)}
+              className="flex w-full items-center gap-3 rounded-xl border border-line bg-base-700 p-2.5 text-left"
+            >
+              <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-base-600">
+                {opcao.youtubeId && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`https://img.youtube.com/vi/${opcao.youtubeId}/default.jpg`}
+                    alt={opcao.nome}
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{opcao.nome}</p>
+                <p className="text-[11px] text-ink-muted">
+                  {atual.series}×{atual.reps}
+                </p>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
     </div>

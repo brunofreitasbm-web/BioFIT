@@ -49,7 +49,10 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        sans: ["var(--font-display)", "system-ui", "sans-serif"],
+      },
+      letterSpacing: {
+        tightest: "-0.03em",
       },
       borderRadius: {
         xl: "14px",

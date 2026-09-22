@@ -1,11 +1,12 @@
-import type { ProgressoBlocoInfo } from "@/lib/progresso";
+import type { ProgressoSemanaInfo } from "@/lib/progresso";
+import { SEMANAS_TRABALHO } from "@/lib/program";
 
-export function ProgressoBloco({ info }: { info: ProgressoBlocoInfo }) {
+export function ProgressoBloco({ info }: { info: ProgressoSemanaInfo }) {
   const pct = Math.min(100, info.pct);
   return (
     <div className="mb-2">
       <div className="mb-1 flex items-center justify-between text-xs text-ink-muted">
-        <span className="font-medium">{info.isDeload ? "Semana de deload" : `Bloco ${info.bloco} de 4`}</span>
+        <span className="font-medium">{info.isDeload ? "Semana de deload" : `Semana ${info.semana} de ${SEMANAS_TRABALHO}`}</span>
         <span>
           {info.concluidas}/{info.esperado} sessões
         </span>

@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getDataInicio, getSessaoEscolhida, setSessaoEscolhida, diasTreinadosPorTipo } from "@/lib/storage";
+import { getDataInicio, getSessaoEscolhida, setSessaoEscolhida } from "@/lib/storage";
 import { getStatusPrograma, sessaoDoDia, toISODate, SESSAO_LABEL, type StatusPrograma } from "@/lib/program";
-import { calcularExposicao } from "@/lib/descanso";
-import { exerciciosDoBloco, POSTURAL } from "@/lib/exercicios";
+import { POSTURAL } from "@/lib/exercicios";
+import { getSessaoCompleta } from "@/lib/programaAtual";
 import { gerarInsightHoje, gerarInsightAmanha } from "@/lib/motivacao";
-import { progressoBloco, progressoCiclo } from "@/lib/progresso";
+import { progressoSemana, progressoCiclo } from "@/lib/progresso";
 import { ExercicioCard } from "@/components/ExercicioCard";
+import { ExercicioPosturalCard } from "@/components/ExercicioPosturalCard";
 import { GuiaModal, dataInicioPadrao } from "@/components/GuiaModal";
 import { SeletorSessao } from "@/components/SeletorSessao";
 import { TreinoTimer } from "@/components/TreinoTimer";
@@ -15,6 +16,7 @@ import { BikeIndoorCard } from "@/components/BikeIndoorCard";
 import { ProgressoBloco } from "@/components/ProgressoBloco";
 import { ProgressoCiclo } from "@/components/ProgressoCiclo";
 import type { EscolhaDoDia } from "@/lib/tipos";
+import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 
 
 const DIAS_SEMANA_LABEL = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -41,14 +43,9 @@ export default function HojePage() {
   const status: StatusPrograma | null = pronto ? getStatusPrograma(dataInicio, hoje) : null;
   const sessaoSugerida = sessaoDoDia(hoje);
   const sessaoEfetiva = escolha === "DESCANSO" ? null : (escolha ?? sessaoSugerida);
-  const blocoAtivo = status ? (status.isDeload ? 4 : status.bloco) : 1;
-  const exposicaoAtual =
-    sessaoEfetiva && status
-      ? calcularExposicao(sessaoEfetiva, toISODate(status.blocoStartDate), hojeISO, diasTreinadosPorTipo(sessaoEfetiva))
-      : 0;
-  const exercicios = sessaoEfetiva ? exerciciosDoBloco(blocoAtivo, sessaoEfetiva) : [];
+  const exercicios = sessaoEfetiva ? getSessaoCompleta(sessaoEfetiva) : [];
 
-  const insightHoje = status ? gerarInsightHoje(status, hojeISO, sessaoEfetiva, exposicaoAtual) : null;
+  const insightHoje = status ? gerarInsightHoje(status, hojeISO, sessaoEfetiva) : null;
   const insightAmanha = status ? gerarInsightAmanha(status) : null;
 
   // Fluxo guiado: mantém só um exercício da sessão principal aberto por vez. Ao completar
@@ -72,7 +69,7 @@ export default function HojePage() {
       return proximo ? proximo.id : null;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessaoEfetiva, blocoAtivo, progressoPorExercicio]);
+  }, [sessaoEfetiva, progressoPorExercicio]);
 
   if (!pronto) {
     return (
@@ -151,17 +148,17 @@ export default function HojePage() {
 
       <BikeIndoorCard hojeISO={hojeISO} />
 
-      {sessaoEfetiva && status && <TreinoTimer hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} bloco={blocoAtivo} />}
+      {sessaoEfetiva && status && <TreinoTimer hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} />}
 
       {status && (
         <>
-          <ProgressoBloco info={progressoBloco(status)} />
-          <ProgressoCiclo segmentos={progressoCiclo(status, hoje)} />
+          <ProgressoBloco info={progressoSemana(status)} />
+          <ProgressoCiclo segmentos={progressoCiclo(status)} />
         </>
       )}
       {status?.isDeload && sessaoEfetiva && (
         <div className="mb-4 flex items-start gap-2 rounded-xl border border-danger/30 bg-danger-soft px-3 py-2.5">
-          <span aria-hidden="true" className="mt-0.5 text-danger">⚠</span>
+          <AlertTriangle aria-hidden="true" size={16} strokeWidth={2.25} className="mt-0.5 shrink-0 text-danger" />
           <p className="text-xs font-medium text-danger">
             Semana de deload — metade das séries, esforço leve, cargas reduzidas em 10%.
           </p>
@@ -178,12 +175,16 @@ export default function HojePage() {
               className="mb-2 flex min-h-11 w-full items-center justify-between text-sm font-medium text-ink-muted"
             >
               <span>Bloco postural diário (em casa, fora da academia)</span>
-              <span aria-hidden="true">{postural ? "▲" : "▼"}</span>
+              {postural ? (
+                <ChevronUp aria-hidden="true" size={16} />
+              ) : (
+                <ChevronDown aria-hidden="true" size={16} />
+              )}
             </button>
             {postural && (
               <div className="space-y-2">
                 {POSTURAL.map((ex) => (
-                  <ExercicioCard
+                  <ExercicioPosturalCard
                     key={ex.id}
                     exercicio={ex}
                     data={hojeISO}
