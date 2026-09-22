@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getDataInicio, getSessaoEscolhida, setSessaoEscolhida, diasTreinadosPorTipo } from "@/lib/storage";
+import { getDataInicio, getSessaoEscolhida, setSessaoEscolhida } from "@/lib/storage";
 import { getStatusPrograma, sessaoDoDia, toISODate, SESSAO_LABEL, type StatusPrograma } from "@/lib/program";
-import { calcularExposicao } from "@/lib/descanso";
-import { exerciciosDoBloco, POSTURAL } from "@/lib/exercicios";
+import { POSTURAL } from "@/lib/exercicios";
+import { getSessaoCompleta } from "@/lib/programaAtual";
 import { gerarInsightHoje, gerarInsightAmanha } from "@/lib/motivacao";
-import { progressoBloco, progressoCiclo } from "@/lib/progresso";
+import { progressoSemana, progressoCiclo } from "@/lib/progresso";
 import { ExercicioCard } from "@/components/ExercicioCard";
+import { ExercicioPosturalCard } from "@/components/ExercicioPosturalCard";
 import { GuiaModal, dataInicioPadrao } from "@/components/GuiaModal";
 import { SeletorSessao } from "@/components/SeletorSessao";
 import { TreinoTimer } from "@/components/TreinoTimer";
@@ -41,14 +42,9 @@ export default function HojePage() {
   const status: StatusPrograma | null = pronto ? getStatusPrograma(dataInicio, hoje) : null;
   const sessaoSugerida = sessaoDoDia(hoje);
   const sessaoEfetiva = escolha === "DESCANSO" ? null : (escolha ?? sessaoSugerida);
-  const blocoAtivo = status ? (status.isDeload ? 4 : status.bloco) : 1;
-  const exposicaoAtual =
-    sessaoEfetiva && status
-      ? calcularExposicao(sessaoEfetiva, toISODate(status.blocoStartDate), hojeISO, diasTreinadosPorTipo(sessaoEfetiva))
-      : 0;
-  const exercicios = sessaoEfetiva ? exerciciosDoBloco(blocoAtivo, sessaoEfetiva) : [];
+  const exercicios = sessaoEfetiva ? getSessaoCompleta(sessaoEfetiva) : [];
 
-  const insightHoje = status ? gerarInsightHoje(status, hojeISO, sessaoEfetiva, exposicaoAtual) : null;
+  const insightHoje = status ? gerarInsightHoje(status, hojeISO, sessaoEfetiva) : null;
   const insightAmanha = status ? gerarInsightAmanha(status) : null;
 
   // Fluxo guiado: mantém só um exercício da sessão principal aberto por vez. Ao completar
@@ -72,7 +68,7 @@ export default function HojePage() {
       return proximo ? proximo.id : null;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessaoEfetiva, blocoAtivo, progressoPorExercicio]);
+  }, [sessaoEfetiva, progressoPorExercicio]);
 
   if (!pronto) {
     return (
@@ -151,12 +147,12 @@ export default function HojePage() {
 
       <BikeIndoorCard hojeISO={hojeISO} />
 
-      {sessaoEfetiva && status && <TreinoTimer hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} bloco={blocoAtivo} />}
+      {sessaoEfetiva && status && <TreinoTimer hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} />}
 
       {status && (
         <>
-          <ProgressoBloco info={progressoBloco(status)} />
-          <ProgressoCiclo segmentos={progressoCiclo(status, hoje)} />
+          <ProgressoBloco info={progressoSemana(status)} />
+          <ProgressoCiclo segmentos={progressoCiclo(status)} />
         </>
       )}
       {status?.isDeload && sessaoEfetiva && (
@@ -183,7 +179,7 @@ export default function HojePage() {
             {postural && (
               <div className="space-y-2">
                 {POSTURAL.map((ex) => (
-                  <ExercicioCard
+                  <ExercicioPosturalCard
                     key={ex.id}
                     exercicio={ex}
                     data={hojeISO}

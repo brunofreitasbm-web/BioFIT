@@ -1,5 +1,5 @@
 import type { GrupoMuscular, SessaoTreino } from "./tipos";
-import { exerciciosDoBloco, getExercicio } from "./exercicios";
+import { getExercicio, SLOTS } from "./exercicios";
 import { getLog } from "./storage";
 
 // Recomendação geral de hipertrofia: pelo menos 48h entre sessões que treinam o mesmo grupo muscular.
@@ -18,10 +18,10 @@ function diasEntre(dataAnteriorISO: string, dataAtualISO: string): number {
   return Math.round((b - a) / 86400000);
 }
 
-// Os grupos musculares de cada posição (ex.: PUSH #1) são os mesmos em todos os blocos,
-// então usar o Bloco 1 como referência é suficiente para saber quais grupos uma sessão trabalha.
+// Os grupos musculares de cada slot são fixos (pertencem à prescrição do slot, não ao
+// exercício escolhido nele), então dá pra ler direto de SLOTS.
 export function gruposDaSessao(tipo: SessaoTreino): GrupoMuscular[] {
-  return Array.from(new Set(exerciciosDoBloco(1, tipo).map((e) => e.grupoMuscular)));
+  return Array.from(new Set(SLOTS.filter((s) => s.sessao === tipo).map((s) => s.grupoMuscular)));
 }
 
 export function statusDescansoPorSessao(tipo: SessaoTreino, hojeISO: string): StatusGrupo[] {
@@ -46,9 +46,22 @@ export function statusDescansoPorSessao(tipo: SessaoTreino, hojeISO: string): St
   });
 }
 
-export function calcularExposicao(tipo: SessaoTreino, blocoStartISO: string, hojeISO: string, diasTreinadosPorTipo: string[]): number {
-  const passados = diasTreinadosPorTipo.filter((d) => d >= blocoStartISO && d < hojeISO).length;
-  return Math.min(passados + 1, 4);
+// Progressão de RIR: acompanha o número de sessões já registradas NAQUELE exercício
+// específico (não a sessão de treino em geral). Como trocar um exercício do banco troca
+// também o id usado no histórico, a progressão de um exercício recém-trocado reinicia
+// sozinha — sem precisar de nenhum reset manual.
+//   sessões 1-2 = RIR 2-3 (aprendizado motor) · sessões 3-6 = RIR 2 · sessão 7+ = RIR 1
+//   (isoladores podem ir à falha; compostos param em RIR 1)
+export interface EstagioRIR {
+  sessoesFeitas: number;
+  rirAlvo: string;
+  label: string;
+}
+
+export function calcularEstagioRIR(sessoesFeitas: number): EstagioRIR {
+  if (sessoesFeitas < 2) return { sessoesFeitas, rirAlvo: "2-3", label: "Aprendizado motor" };
+  if (sessoesFeitas < 6) return { sessoesFeitas, rirAlvo: "2", label: "Progressão" };
+  return { sessoesFeitas, rirAlvo: "1", label: "Carga plena" };
 }
 
 // Converte o texto de descanso da planilha ("2-3 min", "90 s", "60-90 s", "-") em segundos,

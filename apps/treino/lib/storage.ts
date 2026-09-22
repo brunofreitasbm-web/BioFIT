@@ -1,5 +1,6 @@
 import type {
   EscolhaDoDia,
+  LogTroca,
   RegistroBikeIndoor,
   RegistroBioimpedancia,
   RegistroSessao,
@@ -12,7 +13,8 @@ const KEY_LOG = "treino:log";
 const KEY_INICIO = "treino:dataInicio";
 const KEY_SESSOES = "treino:sessoesPorDia";
 const KEY_ESCOLHAS = "treino:escolhaPorDia";
-const KEY_SUBSTITUICOES = "treino:substituicoes";
+const KEY_PROGRAMA_ATUAL = "treino:programaAtual";
+const KEY_LOG_TROCAS = "treino:logTrocas";
 const KEY_BIKE = "treino:bikeIndoor";
 const KEY_BIOIMPEDANCIA = "treino:bioimpedancia";
 const KEY_GEMINI_API_KEY = "treino:geminiApiKey";
@@ -109,11 +111,11 @@ export function getSessaoAtiva(data: string, sessaoTipo: SessaoTreino): Registro
   return getSessoesDoDia(data).find((r) => r.sessaoTipo === sessaoTipo) ?? null;
 }
 
-export function iniciarSessao(data: string, sessaoTipo: SessaoTreino, bloco: number): boolean {
+export function iniciarSessao(data: string, sessaoTipo: SessaoTreino): boolean {
   const map = getTodasSessoes();
   const lista = map[data] ?? [];
   const idx = lista.findIndex((r) => r.sessaoTipo === sessaoTipo);
-  const novo: RegistroSessao = { data, sessaoTipo, bloco, inicioISO: new Date().toISOString(), fimISO: null };
+  const novo: RegistroSessao = { data, sessaoTipo, inicioISO: new Date().toISOString(), fimISO: null };
   if (idx >= 0) lista[idx] = novo;
   else lista.push(novo);
   map[data] = lista;
@@ -183,42 +185,44 @@ export function limparSessaoEscolhida(data: string): boolean {
   }
 }
 
-// ===== Troca de exercício do dia (mesmo grupo muscular, só para aquele dia) =====
+// ===== Programa Atual (escolha persistente por slot) e Log de Trocas =====
+// Substitui o antigo esquema de "substituição só por hoje": na v4 trocar um exercício é
+// uma decisão do programa (estagnação, dor, falta de equipamento), não um ajuste diário.
 
-function chaveSubstituicao(data: string, exercicioOriginalId: string): string {
-  return `${data}|${exercicioOriginalId}`;
-}
-
-function getSubstituicoes(): Record<string, string> {
+export function getEscolhaPrograma(): Record<string, string> {
   if (typeof window === "undefined") return {};
   try {
-    const raw = window.localStorage.getItem(KEY_SUBSTITUICOES);
+    const raw = window.localStorage.getItem(KEY_PROGRAMA_ATUAL);
     return raw ? (JSON.parse(raw) as Record<string, string>) : {};
   } catch {
     return {};
   }
 }
 
-export function getSubstituicao(data: string, exercicioOriginalId: string): string | null {
-  return getSubstituicoes()[chaveSubstituicao(data, exercicioOriginalId)] ?? null;
-}
-
-export function setSubstituicao(data: string, exercicioOriginalId: string, substitutoId: string): boolean {
-  const map = getSubstituicoes();
-  map[chaveSubstituicao(data, exercicioOriginalId)] = substitutoId;
+export function setEscolhaPrograma(map: Record<string, string>): boolean {
   try {
-    window.localStorage.setItem(KEY_SUBSTITUICOES, JSON.stringify(map));
+    window.localStorage.setItem(KEY_PROGRAMA_ATUAL, JSON.stringify(map));
     return true;
   } catch {
     return false;
   }
 }
 
-export function removerSubstituicao(data: string, exercicioOriginalId: string): boolean {
-  const map = getSubstituicoes();
-  delete map[chaveSubstituicao(data, exercicioOriginalId)];
+export function getLogTrocas(): LogTroca[] {
+  if (typeof window === "undefined") return [];
   try {
-    window.localStorage.setItem(KEY_SUBSTITUICOES, JSON.stringify(map));
+    const raw = window.localStorage.getItem(KEY_LOG_TROCAS);
+    return raw ? (JSON.parse(raw) as LogTroca[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function adicionarLogTroca(entry: LogTroca): boolean {
+  const log = getLogTrocas();
+  log.push(entry);
+  try {
+    window.localStorage.setItem(KEY_LOG_TROCAS, JSON.stringify(log));
     return true;
   } catch {
     return false;

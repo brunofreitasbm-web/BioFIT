@@ -13,7 +13,7 @@ function formatarDuracao(ms: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-export function TreinoTimer({ hojeISO, sessaoTipo, bloco }: { hojeISO: string; sessaoTipo: SessaoTreino; bloco: number }) {
+export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTipo: SessaoTreino }) {
   const [registro, setRegistro] = useState<RegistroSessao | null>(null);
   const [agora, setAgora] = useState<number>(0);
 
@@ -29,7 +29,7 @@ export function TreinoTimer({ hojeISO, sessaoTipo, bloco }: { hojeISO: string; s
   }, [registro]);
 
   function iniciar() {
-    iniciarSessao(hojeISO, sessaoTipo, bloco);
+    iniciarSessao(hojeISO, sessaoTipo);
     setRegistro(getSessaoAtiva(hojeISO, sessaoTipo));
     setAgora(Date.now());
   }

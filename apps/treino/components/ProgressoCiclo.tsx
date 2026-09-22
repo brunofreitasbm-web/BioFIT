@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 export function ProgressoCiclo({ segmentos }: { segmentos: SegmentoCiclo[] }) {
   return (
     <div className="mb-3">
-      <p className="mb-1 text-xs font-medium text-ink-muted">Ciclo completo (8 semanas + deload)</p>
+      <p className="mb-1 text-xs font-medium text-ink-muted">Ciclo de deload (8 semanas + 1 semana de deload)</p>
       <div className="flex gap-1">
         {segmentos.map((s) => (
           <div key={s.label} className="flex-1">

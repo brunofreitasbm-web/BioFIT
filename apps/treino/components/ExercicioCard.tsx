@@ -1,21 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Exercicio, SerieRegistrada } from "@/lib/tipos";
+import type { ExercicioEfetivo, SerieRegistrada } from "@/lib/tipos";
 import { GrupoBadge } from "./GrupoBadge";
 import { VideoModal } from "./VideoModal";
 import { SeletorExercicio } from "./SeletorExercicio";
 import { cn } from "@/lib/cn";
-import { parseDescansoSegundos } from "@/lib/descanso";
-import {
-  getSubstituicao,
-  removerSubstituicao,
-  seriesDoExercicioNaData,
-  setSubstituicao,
-  ultimaExecucao,
-  upsertSerie,
-} from "@/lib/storage";
-import { getExercicio } from "@/lib/exercicios";
+import { calcularEstagioRIR, parseDescansoSegundos } from "@/lib/descanso";
+import { seriesDoExercicioNaData, ultimaExecucao, upsertSerie } from "@/lib/storage";
+import { getExercicioDoSlot, sessoesRegistradasDoExercicio, trocarExercicioDoSlot } from "@/lib/programaAtual";
 
 function formatarDescanso(segundos: number): string {
   const m = Math.floor(segundos / 60);
@@ -23,9 +16,15 @@ function formatarDescanso(segundos: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-// `exercicio` é o exercício planejado (o "slot" do dia). Se houver troca salva para hoje,
-// tudo que é exibido/registrado usa o exercício efetivo (substituto); a troca em si sempre
-// se refere ao slot original, para a lista de alternativas não ficar deriva.
+const PAPEL_ESTILO: Record<string, string> = {
+  DIRETO: "text-brand",
+  INDIRETO: "text-ink-muted",
+  NEUTRO: "text-ink-faint",
+};
+
+// `exercicio` é o exercício efetivo do slot para a sessão de hoje (escolha atual do
+// Programa Atual, já mesclada com a prescrição do slot). Trocar aqui muda o programa —
+// não é uma substituição só de hoje — e fica registrado no Log de Trocas.
 export function ExercicioCard({
   exercicio,
   data,
@@ -33,27 +32,25 @@ export function ExercicioCard({
   onToggleExpandido,
   onProgresso,
 }: {
-  exercicio: Exercicio;
+  exercicio: ExercicioEfetivo;
   data: string;
   expandido: boolean;
   onToggleExpandido: () => void;
   onProgresso?: (exercicioId: string, feitas: number, total: number) => void;
 }) {
+  const [efetivo, setEfetivo] = useState(exercicio);
   const [series, setSeries] = useState<SerieRegistrada[]>([]);
   const [ultima, setUltima] = useState<SerieRegistrada[]>([]);
   const [videoAberto, setVideoAberto] = useState(false);
   const [trocaAberta, setTrocaAberta] = useState(false);
-  const [substitutoId, setSubstitutoId] = useState<string | null>(null);
   const [descansoRestante, setDescansoRestante] = useState<number | null>(null);
   const [dicasAbertas, setDicasAbertas] = useState(false);
   const [seriesIndividuais, setSeriesIndividuais] = useState(false);
   const [erroSalvar, setErroSalvar] = useState(false);
 
   useEffect(() => {
-    setSubstitutoId(getSubstituicao(data, exercicio.id));
-  }, [exercicio.id, data]);
-
-  const efetivo = (substitutoId && getExercicio(substitutoId)) || exercicio;
+    setEfetivo(exercicio);
+  }, [exercicio]);
 
   useEffect(() => {
     setSeries(seriesDoExercicioNaData(efetivo.id, data));
@@ -67,11 +64,12 @@ export function ExercicioCard({
 
   const feitas = series.filter((s) => s.cargaKg !== null || s.reps !== null).length;
   const completo = feitas >= efetivo.series;
+  const estagio = calcularEstagioRIR(sessoesRegistradasDoExercicio(efetivo.id));
 
   useEffect(() => {
-    onProgresso?.(exercicio.id, feitas, efetivo.series);
+    onProgresso?.(efetivo.id, feitas, efetivo.series);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [exercicio.id, feitas, efetivo.series]);
+  }, [efetivo.id, feitas, efetivo.series]);
 
   useEffect(() => {
     if (descansoRestante === null || descansoRestante <= 0) return;
@@ -121,10 +119,9 @@ export function ExercicioCard({
     }
   }
 
-  function trocarPara(novoId: string | null) {
-    if (novoId) setSubstituicao(data, exercicio.id, novoId);
-    else removerSubstituicao(data, exercicio.id);
-    setSubstitutoId(novoId);
+  function trocarPara(novoId: string, motivo: string) {
+    trocarExercicioDoSlot(efetivo.sessao, efetivo.slot, novoId, data, motivo);
+    setEfetivo(getExercicioDoSlot(efetivo.sessao, efetivo.slot));
     setTrocaAberta(false);
   }
 
@@ -147,7 +144,9 @@ export function ExercicioCard({
               <span className="text-[11px] text-ink-muted">
                 {efetivo.series}×{efetivo.reps} · desc. {efetivo.descanso}
               </span>
-              {substitutoId && <span className="text-[11px] text-brand">trocado</span>}
+              <span className={cn("text-[11px] font-medium", PAPEL_ESTILO[efetivo.papelPostural])}>
+                {efetivo.papelPostural}
+              </span>
             </div>
           </div>
           <span className="text-ink-faint" aria-hidden="true">{expandido ? "▲" : "▼"}</span>
@@ -174,9 +173,9 @@ export function ExercicioCard({
             setTrocaAberta(true);
           }}
           className="flex min-h-11 shrink-0 items-center gap-1 self-start rounded-full border border-line bg-base-700 px-3 py-2 text-[11px] text-ink-muted"
-          aria-label={`Mudar exercício: ${exercicio.nome}`}
+          aria-label={`Trocar exercício: ${efetivo.nome}`}
         >
-          <span aria-hidden="true">🔄</span> Mudar
+          <span aria-hidden="true">🔄</span> Trocar
         </button>
       </div>
 
@@ -187,7 +186,10 @@ export function ExercicioCard({
               Não foi possível salvar a série no dispositivo. Tente novamente.
             </p>
           )}
-          {(efetivo.cadencia || efetivo.notas) && (
+          <p className="mb-2 text-[11px] text-ink-faint">
+            RIR alvo: {estagio.rirAlvo} · {estagio.label} ({estagio.sessoesFeitas} sessão{estagio.sessoesFeitas === 1 ? "" : "ões"} neste exercício)
+          </p>
+          {(efetivo.execucao || efetivo.notas) && (
             <div className="mb-3">
               <button
                 type="button"
@@ -200,7 +202,7 @@ export function ExercicioCard({
               </button>
               {dicasAbertas && (
                 <div className="mt-1.5">
-                  {efetivo.cadencia && <p className="mb-1 text-[11px] text-ink-muted">Execução: {efetivo.cadencia}</p>}
+                  {efetivo.execucao && <p className="mb-1 text-[11px] text-ink-muted">Execução: {efetivo.execucao}</p>}
                   <p className="text-sm text-ink-muted">{efetivo.notas}</p>
                 </div>
               )}
@@ -272,12 +274,7 @@ export function ExercicioCard({
       )}
 
       {trocaAberta && (
-        <SeletorExercicio
-          original={exercicio}
-          substitutoAtualId={substitutoId}
-          onEscolher={trocarPara}
-          onFechar={() => setTrocaAberta(false)}
-        />
+        <SeletorExercicio atual={efetivo} onEscolher={trocarPara} onFechar={() => setTrocaAberta(false)} />
       )}
     </div>
   );

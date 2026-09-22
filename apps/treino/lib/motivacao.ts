@@ -1,6 +1,6 @@
 import { diasTreinadosUnicos, getLog } from "./storage";
-import { exerciciosDoBloco } from "./exercicios";
-import { toISODate, SESSAO_LABEL, type StatusPrograma } from "./program";
+import { getSessaoCompleta } from "./programaAtual";
+import { toISODate, SESSAO_LABEL, SEMANAS_TRABALHO, type StatusPrograma } from "./program";
 import type { SessaoTreino } from "./tipos";
 
 function addDays(d: Date, days: number): Date {
@@ -32,12 +32,11 @@ export interface InsightHoje {
   mensagem: string;
 }
 
-export function gerarInsightHoje(
-  status: StatusPrograma,
-  hojeISO: string,
-  sessaoHoje: SessaoTreino | null,
-  exposicaoAtual: number,
-): InsightHoje {
+function labelSemana(status: StatusPrograma): string {
+  return status.isDeload ? `deload (semana ${SEMANAS_TRABALHO + 1})` : `semana ${status.semana}/${SEMANAS_TRABALHO}`;
+}
+
+export function gerarInsightHoje(status: StatusPrograma, hojeISO: string, sessaoHoje: SessaoTreino | null): InsightHoje {
   const streak = calcularStreak(hojeISO);
   const totalSeries = totalSeriesRegistradas();
   const treinouHoje = diasTreinadosUnicos().includes(hojeISO);
@@ -55,7 +54,7 @@ export function gerarInsightHoje(
   if (streak >= 5) {
     return {
       titulo: `${streak} dias seguidos 🔥`,
-      mensagem: `Consistência é o que constrói hipertrofia — você já tem ${totalSeries} séries registradas no total. Hoje é ${SESSAO_LABEL[sessaoHoje]}, bloco ${status.isDeload ? "deload" : status.bloco}. Mantém a técnica antes de perseguir carga.`,
+      mensagem: `Consistência é o que constrói hipertrofia — você já tem ${totalSeries} séries registradas no total. Hoje é ${SESSAO_LABEL[sessaoHoje]}, ${labelSemana(status)}. Mantém a técnica antes de perseguir carga.`,
     };
   }
 
@@ -64,15 +63,15 @@ export function gerarInsightHoje(
       streak === 1 ? (treinouHoje ? "Já registrou hoje" : "Você treinou ontem") : `Streak de ${streak} dias`;
     return {
       titulo: `Sessão de hoje: ${sessaoHoje}`,
-      mensagem: `${abertura} — continue no ritmo. Bloco ${status.isDeload ? "deload (semana 9)" : status.bloco}${status.isDeload ? "" : `, exposição ${exposicaoAtual}/4`}.`,
+      mensagem: `${abertura} — continue no ritmo. ${status.isDeload ? "Semana de deload" : `Semana ${status.semana} de ${SEMANAS_TRABALHO}`}.`,
     };
   }
 
   return {
     titulo: `Sessão de hoje: ${sessaoHoje}`,
     mensagem: status.isDeload
-      ? "Semana de deload: metade das séries, esforço leve, cargas do Bloco 4 reduzidas em 10%. Objetivo é recuperar, não é dia de recorde."
-      : `Bloco ${status.bloco}, exposição ${exposicaoAtual}/4. Primeira sessão do dia — foco em ativar a técnica antes de subir carga.`,
+      ? "Semana de deload: metade das séries, RIR 4, cargas atuais reduzidas em 10%. Objetivo é recuperar, não é dia de recorde."
+      : `Semana ${status.semana} de ${SEMANAS_TRABALHO}. Foco em ativar a técnica antes de subir carga.`,
   };
 }
 
@@ -80,8 +79,7 @@ export function gerarInsightAmanha(status: StatusPrograma): InsightHoje {
   if (!status.proximaSessaoTipo) {
     return { titulo: "Amanhã: descanso", mensagem: "Sem treino de força amanhã — bom dia para o cardio Z2, se estiver na programação." };
   }
-  const bloco = status.isDeload ? 4 : status.bloco;
-  const exercicios = exerciciosDoBloco(bloco, status.proximaSessaoTipo);
+  const exercicios = getSessaoCompleta(status.proximaSessaoTipo);
   const primeiro = exercicios[0];
   return {
     titulo: `Amanhã: ${status.proximaSessaoTipo}`,

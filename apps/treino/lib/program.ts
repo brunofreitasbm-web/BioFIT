@@ -1,9 +1,13 @@
 import type { Sessao, SessaoTreino } from "./tipos";
 
-export const DIAS_BLOCO = 15;
-export const BLOCOS = 4;
+// v4: não existe mais "bloco" como unidade de calendário — os exercícios não rotacionam
+// automaticamente (banco de opções trocado manualmente, ver lib/programaAtual.ts). O único
+// ciclo de calendário que resta é o deload: a cada 8 semanas corridas (56 dias) de trabalho,
+// 1 semana (7 dias) de deload, repetindo indefinidamente a partir do início do programa.
+export const DIAS_TRABALHO = 56; // 8 semanas
 export const DIAS_DELOAD = 7;
-export const CICLO_TOTAL_DIAS = DIAS_BLOCO * BLOCOS + DIAS_DELOAD; // 67 dias
+export const CICLO_TOTAL_DIAS = DIAS_TRABALHO + DIAS_DELOAD; // 63 dias
+export const SEMANAS_TRABALHO = DIAS_TRABALHO / 7; // 8
 
 // Seg/Qui = PUSH, Ter/Sex = PULL, Qua/Sáb = LEGS, Dom = OFF — usado só como sugestão padrão do dia.
 const SESSAO_POR_DIA_SEMANA: Record<number, SessaoTreino | null> = {
@@ -43,9 +47,9 @@ function diffDays(a: Date, b: Date): number {
 
 export interface StatusPrograma {
   diasDesdeInicio: number;
-  bloco: number; // 1-4
   isDeload: boolean;
-  blocoStartDate: Date;
+  semana: number; // 1-8 (não usado durante o deload)
+  cicloStartDate: Date; // início do ciclo de 63 dias em que "hoje" cai
   proximaSessaoLabel: string; // amanhã (sugestão de calendário)
   proximaSessaoTipo: SessaoTreino | null;
 }
@@ -57,19 +61,18 @@ export function getStatusPrograma(dataInicioISO: string, hoje: Date = new Date()
   if (dias < 0) return null;
 
   const cyclePos = dias % CICLO_TOTAL_DIAS;
-  const isDeload = cyclePos >= BLOCOS * DIAS_BLOCO;
-  const bloco = isDeload ? BLOCOS : Math.floor(cyclePos / DIAS_BLOCO) + 1;
-  const blocoStartOffset = isDeload ? BLOCOS * DIAS_BLOCO : (bloco - 1) * DIAS_BLOCO;
-  const blocoStartDate = addDays(inicio, dias - cyclePos + blocoStartOffset);
+  const isDeload = cyclePos >= DIAS_TRABALHO;
+  const semana = isDeload ? SEMANAS_TRABALHO : Math.floor(cyclePos / 7) + 1;
+  const cicloStartDate = addDays(inicio, dias - cyclePos);
 
   const amanha = addDays(t, 1);
   const sessaoAmanha = sessaoDoDia(amanha);
 
   return {
     diasDesdeInicio: dias,
-    bloco,
     isDeload,
-    blocoStartDate,
+    semana,
+    cicloStartDate,
     proximaSessaoLabel: sessaoAmanha ?? "Descanso",
     proximaSessaoTipo: sessaoAmanha,
   };

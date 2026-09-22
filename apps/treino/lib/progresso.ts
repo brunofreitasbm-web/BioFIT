@@ -1,14 +1,8 @@
 import { getTodasSessoes } from "./storage";
-import { toISODate, DIAS_BLOCO, BLOCOS, DIAS_DELOAD, CICLO_TOTAL_DIAS, type StatusPrograma } from "./program";
+import { toISODate, DIAS_TRABALHO, DIAS_DELOAD, CICLO_TOTAL_DIAS, SEMANAS_TRABALHO, type StatusPrograma } from "./program";
 
-const EXPOSICOES_POR_TIPO = 4; // ver Guia: 4 exposições por exercício dentro de um bloco normal de 15 dias
 const TIPOS_SESSAO = 3; // PUSH, PULL, LEGS
-export const SESSOES_ESPERADAS_BLOCO = EXPOSICOES_POR_TIPO * TIPOS_SESSAO; // 12
-
-// A planilha não define um número de exposições para a semana de deload (7 dias corridos,
-// sem esse conceito) — estimo pela mesma cadência semanal do programa (2x/semana por tipo),
-// ou seja ~2 exposições por tipo = 6 sessões esperadas nos 7 dias.
-export const SESSOES_ESPERADAS_DELOAD = 2 * TIPOS_SESSAO; // 6
+export const SESSOES_ESPERADAS_SEMANA = 2 * TIPOS_SESSAO; // 6 (Seg-Sáb, 2x por tipo)
 
 function addDays(d: Date, dias: number): Date {
   const r = new Date(d);
@@ -29,25 +23,27 @@ function contarSessoesConcluidas(inicio: Date, fimExclusivo: Date): number {
   return total;
 }
 
-export interface ProgressoBlocoInfo {
-  bloco: number;
+export interface ProgressoSemanaInfo {
+  semana: number;
   isDeload: boolean;
   concluidas: number;
   esperado: number;
   pct: number; // 0-100
 }
 
-export function progressoBloco(status: StatusPrograma): ProgressoBlocoInfo {
-  const duracao = status.isDeload ? DIAS_DELOAD : DIAS_BLOCO;
-  const esperado = status.isDeload ? SESSOES_ESPERADAS_DELOAD : SESSOES_ESPERADAS_BLOCO;
-  const fimExclusivo = addDays(status.blocoStartDate, duracao);
-  const concluidas = Math.min(contarSessoesConcluidas(status.blocoStartDate, fimExclusivo), esperado);
+// Progresso da semana corrente (ou da semana de deload) dentro do ciclo de 8 semanas + deload.
+export function progressoSemana(status: StatusPrograma): ProgressoSemanaInfo {
+  const duracao = status.isDeload ? DIAS_DELOAD : 7;
+  const offsetSemana = status.isDeload ? DIAS_TRABALHO : (status.semana - 1) * 7;
+  const inicioSemana = addDays(status.cicloStartDate, offsetSemana);
+  const fimExclusivo = addDays(inicioSemana, duracao);
+  const concluidas = Math.min(contarSessoesConcluidas(inicioSemana, fimExclusivo), SESSOES_ESPERADAS_SEMANA);
   return {
-    bloco: status.bloco,
+    semana: status.semana,
     isDeload: status.isDeload,
     concluidas,
-    esperado,
-    pct: esperado > 0 ? (concluidas / esperado) * 100 : 0,
+    esperado: SESSOES_ESPERADAS_SEMANA,
+    pct: (concluidas / SESSOES_ESPERADAS_SEMANA) * 100,
   };
 }
 
@@ -59,37 +55,35 @@ export interface SegmentoCiclo {
   atual: boolean;
 }
 
-// Os 5 segmentos do ciclo de 67 dias (4 blocos + deload) a partir do início do ciclo em
-// que "hoje" cai — reconstruído a partir de `status.diasDesdeInicio % CICLO_TOTAL_DIAS`,
-// sem precisar guardar nenhum dado novo.
-export function progressoCiclo(status: StatusPrograma, hoje: Date): SegmentoCiclo[] {
-  const cyclePos = status.diasDesdeInicio % CICLO_TOTAL_DIAS;
-  const cicloStartDate = addDays(hoje, -cyclePos);
-
+// Os 9 segmentos do ciclo de 63 dias (8 semanas de trabalho + 1 de deload) a partir do
+// início do ciclo em que "hoje" cai.
+export function progressoCiclo(status: StatusPrograma): SegmentoCiclo[] {
   const segmentos: SegmentoCiclo[] = [];
-  for (let i = 0; i < BLOCOS; i++) {
-    const inicio = addDays(cicloStartDate, i * DIAS_BLOCO);
-    const fimExclusivo = addDays(inicio, DIAS_BLOCO);
-    const concluidas = Math.min(contarSessoesConcluidas(inicio, fimExclusivo), SESSOES_ESPERADAS_BLOCO);
+  for (let i = 0; i < SEMANAS_TRABALHO; i++) {
+    const inicio = addDays(status.cicloStartDate, i * 7);
+    const fimExclusivo = addDays(inicio, 7);
+    const concluidas = Math.min(contarSessoesConcluidas(inicio, fimExclusivo), SESSOES_ESPERADAS_SEMANA);
     segmentos.push({
-      label: `B${i + 1}`,
+      label: `S${i + 1}`,
       concluidas,
-      esperado: SESSOES_ESPERADAS_BLOCO,
-      pct: (concluidas / SESSOES_ESPERADAS_BLOCO) * 100,
-      atual: !status.isDeload && status.bloco === i + 1,
+      esperado: SESSOES_ESPERADAS_SEMANA,
+      pct: (concluidas / SESSOES_ESPERADAS_SEMANA) * 100,
+      atual: !status.isDeload && status.semana === i + 1,
     });
   }
 
-  const inicioDeload = addDays(cicloStartDate, BLOCOS * DIAS_BLOCO);
+  const inicioDeload = addDays(status.cicloStartDate, DIAS_TRABALHO);
   const fimDeload = addDays(inicioDeload, DIAS_DELOAD);
-  const concluidasDeload = Math.min(contarSessoesConcluidas(inicioDeload, fimDeload), SESSOES_ESPERADAS_DELOAD);
+  const concluidasDeload = Math.min(contarSessoesConcluidas(inicioDeload, fimDeload), SESSOES_ESPERADAS_SEMANA);
   segmentos.push({
     label: "Deload",
     concluidas: concluidasDeload,
-    esperado: SESSOES_ESPERADAS_DELOAD,
-    pct: (concluidasDeload / SESSOES_ESPERADAS_DELOAD) * 100,
+    esperado: SESSOES_ESPERADAS_SEMANA,
+    pct: (concluidasDeload / SESSOES_ESPERADAS_SEMANA) * 100,
     atual: status.isDeload,
   });
 
   return segmentos;
 }
+
+export { CICLO_TOTAL_DIAS };
