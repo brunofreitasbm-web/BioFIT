@@ -99,25 +99,3 @@ export interface LogTroca {
   cargaReferenciaKg: number | null;
   motivo: string;
 }
-
-// Espelha os campos do "Relatório de Avaliações" (bioimpedância InBody) da clínica.
-export interface RegistroBioimpedancia {
-  data: string; // YYYY-MM-DD
-  pesoKg: number;
-  percentualGordura: number;
-  massaGorduraKg: number;
-  massaLivreGorduraKg: number;
-  aguaCorporalL: number;
-  imc: number;
-  taxaMetabolicaBasalKcal: number;
-  indiceApendicular: number; // kg/m²
-  idadeMetabolica: number;
-  nivelGorduraVisceral: number;
-  massaMagraSegmentar: {
-    bracoDireitoKg: number;
-    bracoEsquerdoKg: number;
-    troncoKg: number;
-    pernaDireitaKg: number;
-    pernaEsquerdaKg: number;
-  };
-}

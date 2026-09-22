@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Info, X } from "lucide-react";
 import { toISODate } from "@/lib/program";
 import { getDataInicio, setDataInicio } from "@/lib/storage";
 
@@ -25,7 +26,7 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-base-800 text-ink-muted"
         aria-label="Guia do programa e configurações"
       >
-        <span aria-hidden="true">ⓘ</span>
+        <Info aria-hidden="true" size={20} strokeWidth={1.75} />
       </button>
 
       {aberto && (
@@ -51,7 +52,7 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
                 className="flex h-11 w-11 shrink-0 items-center justify-center text-ink-muted"
                 aria-label="Fechar"
               >
-                <span aria-hidden="true">✕</span>
+                <X aria-hidden="true" size={20} strokeWidth={1.75} />
               </button>
             </div>
 

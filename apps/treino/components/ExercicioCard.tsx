@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ChevronDown, ChevronUp, Film, RefreshCw, Lightbulb, Timer, Check } from "lucide-react";
 import type { ExercicioEfetivo, SerieRegistrada } from "@/lib/tipos";
 import { GrupoBadge } from "./GrupoBadge";
 import { VideoModal } from "./VideoModal";
@@ -137,7 +138,7 @@ export function ExercicioCard({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="truncate font-medium">{efetivo.nome}</span>
-              {completo && <span className="text-accent">✓</span>}
+              {completo && <Check aria-hidden="true" size={16} strokeWidth={3} className="shrink-0 text-accent" />}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <GrupoBadge grupo={efetivo.grupoMuscular} />
@@ -149,7 +150,11 @@ export function ExercicioCard({
               </span>
             </div>
           </div>
-          <span className="text-ink-faint" aria-hidden="true">{expandido ? "▲" : "▼"}</span>
+          {expandido ? (
+            <ChevronUp aria-hidden="true" size={18} className="shrink-0 text-ink-faint" />
+          ) : (
+            <ChevronDown aria-hidden="true" size={18} className="shrink-0 text-ink-faint" />
+          )}
         </button>
 
         {efetivo.youtubeId && (
@@ -159,10 +164,10 @@ export function ExercicioCard({
               e.stopPropagation();
               setVideoAberto(true);
             }}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-base-700 text-base"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-base-700 text-ink-muted"
             aria-label={`Ver vídeo de ${efetivo.nome}`}
           >
-            <span aria-hidden="true">🎬</span>
+            <Film aria-hidden="true" size={18} strokeWidth={1.75} />
           </button>
         )}
 
@@ -175,7 +180,7 @@ export function ExercicioCard({
           className="flex min-h-11 shrink-0 items-center gap-1 self-start rounded-full border border-line bg-base-700 px-3 py-2 text-[11px] text-ink-muted"
           aria-label={`Trocar exercício: ${efetivo.nome}`}
         >
-          <span aria-hidden="true">🔄</span> Trocar
+          <RefreshCw aria-hidden="true" size={13} strokeWidth={2} /> Trocar
         </button>
       </div>
 
@@ -197,8 +202,8 @@ export function ExercicioCard({
                 className="flex min-h-11 items-center gap-1 text-[11px] text-ink-faint"
                 aria-expanded={dicasAbertas}
               >
-                <span aria-hidden="true">{dicasAbertas ? "▲" : "▼"}</span>
-                <span aria-hidden="true">💡</span> Dicas e execução
+                {dicasAbertas ? <ChevronUp aria-hidden="true" size={14} /> : <ChevronDown aria-hidden="true" size={14} />}
+                <Lightbulb aria-hidden="true" size={13} strokeWidth={2} /> Dicas e execução
               </button>
               {dicasAbertas && (
                 <div className="mt-1.5">
@@ -212,8 +217,8 @@ export function ExercicioCard({
 
           {descansoRestante !== null && descansoRestante > 0 && (
             <div className="mb-3 flex items-center justify-between rounded-lg border border-brand/30 bg-brand-soft px-3 py-2">
-              <span className="text-xs font-medium text-brand">
-                <span aria-hidden="true">⏱</span> Descanso: {formatarDescanso(descansoRestante)}
+              <span className="flex items-center gap-1.5 text-xs font-medium text-brand">
+                <Timer aria-hidden="true" size={15} strokeWidth={2} /> Descanso: {formatarDescanso(descansoRestante)}
               </span>
               <button
                 type="button"
@@ -353,7 +358,7 @@ function LinhaReplicada({
         )}
         aria-label={`Confirmar as ${totalSeries} séries`}
       >
-        <span aria-hidden="true">✓</span>
+        <Check aria-hidden="true" size={18} strokeWidth={3} />
       </button>
     </>
   );
@@ -428,7 +433,7 @@ function FragmentoLinha({
         )}
         aria-label={`Confirmar série ${n}`}
       >
-        <span aria-hidden="true">✓</span>
+        <Check aria-hidden="true" size={18} strokeWidth={3} />
       </button>
     </>
   );

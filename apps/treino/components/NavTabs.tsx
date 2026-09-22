@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Dumbbell, LineChart } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const TABS = [
-  { href: "/", label: "Hoje", icon: "🏋️" },
-  { href: "/relatorio", label: "Relatório", icon: "📊" },
-  { href: "/bioimpedancia", label: "Corpo", icon: "🧬" },
+  { href: "/", label: "Hoje", Icon: Dumbbell },
+  { href: "/relatorio", label: "Relatório", Icon: LineChart },
 ];
 
 export function NavTabs() {
@@ -21,35 +21,27 @@ export function NavTabs() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="flex">
-        {TABS.map((tab) => {
-          const active = pathname === tab.href;
+        {TABS.map(({ href, label, Icon }) => {
+          const active = pathname === href;
           return (
             <Link
-              key={tab.href}
-              href={tab.href}
+              key={href}
+              href={href}
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex flex-1 flex-col items-center gap-0.5 py-3 text-xs transition-colors duration-150",
-                active
-                  ? "font-semibold text-[#2563EB] dark:text-blue-400"
-                  : "font-medium text-[#64748B] hover:text-ink dark:text-slate-400",
+                active ? "font-semibold text-brand" : "font-medium text-ink-muted hover:text-ink",
               )}
             >
-              <span
-                className={cn(
-                  "text-lg leading-none transition-transform duration-150",
-                  active && "-translate-y-px scale-110",
-                )}
+              <Icon
                 aria-hidden="true"
-              >
-                {tab.icon}
-              </span>
-              <span className={cn(active && "font-semibold")}>{tab.label}</span>
+                size={22}
+                strokeWidth={active ? 2.25 : 1.75}
+                className={cn("transition-transform duration-150", active && "-translate-y-px scale-110")}
+              />
+              <span className={cn(active && "font-semibold")}>{label}</span>
               <span
-                className={cn(
-                  "h-0.5 w-5 rounded-full transition-all duration-150",
-                  active ? "bg-[#2563EB] dark:bg-blue-400" : "bg-transparent",
-                )}
+                className={cn("h-0.5 w-5 rounded-full transition-all duration-150", active ? "bg-brand" : "bg-transparent")}
                 aria-hidden="true"
               />
             </Link>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ChevronDown, ChevronUp, Film, Lightbulb, Check } from "lucide-react";
 import type { ExercicioPostural, SerieRegistrada } from "@/lib/tipos";
 import { GrupoBadge } from "./GrupoBadge";
 import { VideoModal } from "./VideoModal";
@@ -58,7 +59,7 @@ export function ExercicioPosturalCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="truncate font-medium">{exercicio.nome}</span>
-            {completo && <span className="text-accent">✓</span>}
+            {completo && <Check aria-hidden="true" size={16} strokeWidth={3} className="shrink-0 text-accent" />}
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <GrupoBadge grupo={exercicio.grupoMuscular} />
@@ -81,13 +82,17 @@ export function ExercicioPosturalCard({
                 setVideoAberto(true);
               }
             }}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-base-700 text-base"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-base-700 text-ink-muted"
             aria-label={`Ver vídeo de ${exercicio.nome}`}
           >
-            <span aria-hidden="true">🎬</span>
+            <Film aria-hidden="true" size={18} strokeWidth={1.75} />
           </span>
         )}
-        <span className="text-ink-faint" aria-hidden="true">{expandido ? "▲" : "▼"}</span>
+        {expandido ? (
+          <ChevronUp aria-hidden="true" size={18} className="shrink-0 text-ink-faint" />
+        ) : (
+          <ChevronDown aria-hidden="true" size={18} className="shrink-0 text-ink-faint" />
+        )}
       </button>
 
       {expandido && (
@@ -105,8 +110,8 @@ export function ExercicioPosturalCard({
                 className="flex min-h-11 items-center gap-1 text-[11px] text-ink-faint"
                 aria-expanded={dicasAbertas}
               >
-                <span aria-hidden="true">{dicasAbertas ? "▲" : "▼"}</span>
-                <span aria-hidden="true">💡</span> Dicas e execução
+                {dicasAbertas ? <ChevronUp aria-hidden="true" size={14} /> : <ChevronDown aria-hidden="true" size={14} />}
+                <Lightbulb aria-hidden="true" size={13} strokeWidth={2} /> Dicas e execução
               </button>
               {dicasAbertas && <p className="mt-1.5 text-sm text-ink-muted">{exercicio.notas}</p>}
             </div>
@@ -158,7 +163,7 @@ function LinhaPostural({ n, feita, onConfirmar }: { n: number; feita: boolean; o
         )}
         aria-label={`Confirmar série ${n}`}
       >
-        <span aria-hidden="true">✓</span>
+        <Check aria-hidden="true" size={18} strokeWidth={3} />
       </button>
     </>
   );

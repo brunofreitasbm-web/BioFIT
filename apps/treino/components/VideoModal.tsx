@@ -1,5 +1,7 @@
 "use client";
 
+import { X } from "lucide-react";
+
 export function VideoModal({ youtubeId, titulo, onClose }: { youtubeId: string; titulo: string; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
@@ -12,7 +14,7 @@ export function VideoModal({ youtubeId, titulo, onClose }: { youtubeId: string; 
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/90 text-ink"
             aria-label="Fechar vídeo"
           >
-            ✕
+            <X aria-hidden="true" size={16} strokeWidth={2} />
           </button>
         </div>
         <div className="overflow-hidden rounded-xl bg-black shadow-panel" style={{ aspectRatio: "16 / 9" }}>
