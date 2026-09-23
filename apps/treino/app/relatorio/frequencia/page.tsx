@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   calcularFrequenciaPorGrupo,
@@ -10,6 +9,7 @@ import {
 } from "@/lib/relatorio";
 import { corCalor } from "@/lib/cor";
 import { cn } from "@/lib/cn";
+import { RelatorioTabs } from "@/components/RelatorioTabs";
 import { ArrowUpCircle, ArrowDownCircle, Footprints, type LucideIcon } from "lucide-react";
 
 const PERIODOS: { label: string; valor: number | "tudo" }[] = [
@@ -52,12 +52,7 @@ export default function FrequenciaPage() {
       <header className="mb-2 space-y-2">
         <h1 className="text-xl font-semibold text-ink">Frequência de Treinos</h1>
         <p className="text-sm text-ink-muted">Quais treinos e grupos musculares você tem feito com mais regularidade</p>
-        <div className="flex gap-1.5 rounded-full border border-line bg-base-800 p-1 text-xs font-medium">
-          <Link href="/relatorio" className="flex-1 rounded-full py-1.5 text-center text-ink-muted hover:text-ink">
-            Visão Geral
-          </Link>
-          <span className="flex-1 rounded-full bg-brand py-1.5 text-center text-white shadow-sm">Frequência</span>
-        </div>
+        <RelatorioTabs ativa="/relatorio/frequencia" />
       </header>
 
       {/* Seletor de Período */}

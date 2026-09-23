@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronUp, Film, RefreshCw, Lightbulb, Timer, Check } from "lucide-react";
+import { ChevronDown, ChevronUp, Film, RefreshCw, Lightbulb, Timer, Check, TrendingUp, Trophy } from "lucide-react";
 import type { ExercicioEfetivo, SerieRegistrada } from "@/lib/tipos";
 import { GrupoBadge } from "./GrupoBadge";
 import { VideoModal } from "./VideoModal";
@@ -10,6 +10,8 @@ import { cn } from "@/lib/cn";
 import { calcularEstagioRIR, parseDescansoSegundos } from "@/lib/descanso";
 import { seriesDoExercicioNaData, ultimaExecucao, upsertSerie } from "@/lib/storage";
 import { getExercicioDoSlot, sessoesRegistradasDoExercicio, trocarExercicioDoSlot } from "@/lib/programaAtual";
+import { sugerirProximaCarga } from "@/lib/progressao";
+import { estimar1RM, recordesPessoais } from "@/lib/relatorio";
 
 function formatarDescanso(segundos: number): string {
   const m = Math.floor(segundos / 60);
@@ -30,18 +32,24 @@ export function ExercicioCard({
   exercicio,
   data,
   expandido,
+  isDeload = false,
   onToggleExpandido,
   onProgresso,
 }: {
   exercicio: ExercicioEfetivo;
   data: string;
   expandido: boolean;
+  isDeload?: boolean;
   onToggleExpandido: () => void;
   onProgresso?: (exercicioId: string, feitas: number, total: number) => void;
 }) {
   const [efetivo, setEfetivo] = useState(exercicio);
   const [series, setSeries] = useState<SerieRegistrada[]>([]);
   const [ultima, setUltima] = useState<SerieRegistrada[]>([]);
+  const [anterior, setAnterior] = useState<SerieRegistrada[]>([]);
+  const [recorde1RMAnterior, setRecorde1RMAnterior] = useState<number | null>(null);
+  // Incrementa a cada toque na sugestão para a linha de input repopular os campos.
+  const [preenchimento, setPreenchimento] = useState<{ kg: string; reps: string; n: number } | null>(null);
   const [videoAberto, setVideoAberto] = useState(false);
   const [trocaAberta, setTrocaAberta] = useState(false);
   const [descansoRestante, setDescansoRestante] = useState<number | null>(null);
@@ -55,7 +63,11 @@ export function ExercicioCard({
 
   useEffect(() => {
     setSeries(seriesDoExercicioNaData(efetivo.id, data));
-    setUltima(ultimaExecucao(efetivo.id, data));
+    const ult = ultimaExecucao(efetivo.id, data);
+    setUltima(ult);
+    setAnterior(ult.length > 0 ? ultimaExecucao(efetivo.id, ult[0].data) : []);
+    setRecorde1RMAnterior(recordesPessoais(efetivo.id, data).melhor1RM?.kg ?? null);
+    setPreenchimento(null);
     setDescansoRestante(null);
     // Recolhida sempre que o card muda de exercício (troca ou dia novo), para não vazar o
     // estado "aberto" de um exercício para o próximo.
@@ -66,6 +78,14 @@ export function ExercicioCard({
   const feitas = series.filter((s) => s.cargaKg !== null || s.reps !== null).length;
   const completo = feitas >= efetivo.series;
   const estagio = calcularEstagioRIR(sessoesRegistradasDoExercicio(efetivo.id));
+  // Sugestão calculada sobre as sessões ANTERIORES a hoje; o estágio de RIR conta só as
+  // sessões passadas para não mudar de regra no meio do treino de hoje.
+  const sessoesAntes = sessoesRegistradasDoExercicio(efetivo.id) - (feitas > 0 ? 1 : 0);
+  const sugestao = sugerirProximaCarga(efetivo.reps, ultima, anterior, calcularEstagioRIR(sessoesAntes), isDeload);
+  // PR de hoje: alguma série confirmada hoje supera o melhor 1RM estimado de antes de hoje.
+  const bateuPR =
+    recorde1RMAnterior !== null &&
+    series.some((s) => s.cargaKg != null && s.reps != null && s.cargaKg > 0 && s.reps > 0 && estimar1RM(s.cargaKg, s.reps) > recorde1RMAnterior + 1e-9);
 
   useEffect(() => {
     onProgresso?.(efetivo.id, feitas, efetivo.series);
@@ -139,6 +159,11 @@ export function ExercicioCard({
             <div className="flex items-center gap-2">
               <span className="truncate font-medium">{efetivo.nome}</span>
               {completo && <Check aria-hidden="true" size={16} strokeWidth={3} className="shrink-0 text-accent" />}
+              {bateuPR && (
+                <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent">
+                  <Trophy aria-hidden="true" size={11} strokeWidth={2.5} /> PR
+                </span>
+              )}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <GrupoBadge grupo={efetivo.grupoMuscular} />
@@ -192,7 +217,7 @@ export function ExercicioCard({
             </p>
           )}
           <p className="mb-2 text-[11px] text-ink-faint">
-            RIR alvo: {estagio.rirAlvo} · {estagio.label} ({estagio.sessoesFeitas} sessão{estagio.sessoesFeitas === 1 ? "" : "ões"} neste exercício)
+            RIR alvo: {estagio.rirAlvo} · {estagio.label} ({estagio.sessoesFeitas} {estagio.sessoesFeitas === 1 ? "sessão" : "sessões"} neste exercício)
           </p>
           {(efetivo.execucao || efetivo.notas) && (
             <div className="mb-3">
@@ -214,6 +239,35 @@ export function ExercicioCard({
             </div>
           )}
           {ultimaResumo && <p className="mb-2 text-[11px] text-brand">{ultimaResumo}</p>}
+          {sugestao && (
+            sugestao.cargaKg !== null ? (
+              <button
+                type="button"
+                onClick={() =>
+                  setPreenchimento((p) => ({
+                    kg: String(sugestao.cargaKg),
+                    reps: String(sugestao.repsPreencher),
+                    n: (p?.n ?? 0) + 1,
+                  }))
+                }
+                className="mb-2 flex min-h-11 w-full items-center gap-2 rounded-lg border border-brand/30 bg-brand-soft px-3 py-2 text-left"
+                aria-label={`Usar sugestão: ${sugestao.cargaKg} kg por ${sugestao.repsAlvo} repetições`}
+              >
+                <TrendingUp aria-hidden="true" size={16} strokeWidth={2} className="shrink-0 text-brand" />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-xs font-semibold text-brand">
+                    Hoje: {String(sugestao.cargaKg).replace(".", ",")} kg × {sugestao.repsAlvo}
+                  </span>
+                  <span className="block text-[11px] text-ink-muted">{sugestao.motivo}</span>
+                </span>
+                <span className="shrink-0 text-[11px] font-medium text-brand underline">usar</span>
+              </button>
+            ) : (
+              <p className="mb-2 text-[11px] text-ink-faint">
+                {sugestao.repsAlvo} reps · {sugestao.motivo}
+              </p>
+            )
+          )}
 
           {descansoRestante !== null && descansoRestante > 0 && (
             <div className="mb-3 flex items-center justify-between rounded-lg border border-brand/30 bg-brand-soft px-3 py-2">
@@ -267,6 +321,7 @@ export function ExercicioCard({
                 totalSeries={efetivo.series}
                 series={series}
                 ultima={ultima}
+                preenchimento={preenchimento}
                 onConfirmarTodas={confirmarTodas}
               />
             </div>
@@ -292,11 +347,13 @@ function LinhaReplicada({
   totalSeries,
   series,
   ultima,
+  preenchimento,
   onConfirmarTodas,
 }: {
   totalSeries: number;
   series: SerieRegistrada[];
   ultima: SerieRegistrada[];
+  preenchimento: { kg: string; reps: string; n: number } | null;
   onConfirmarTodas: (kg: string, reps: string) => void;
 }) {
   const primeira = series.find((s) => s.serieNumero === 1);
@@ -311,6 +368,13 @@ function LinhaReplicada({
     setReps((primeira?.reps ?? ultimaPrimeira?.reps ?? "").toString());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [primeira?.cargaKg, primeira?.reps, ultimaPrimeira?.cargaKg, ultimaPrimeira?.reps]);
+
+  // Toque em "usar" na sugestão de progressão: sobrescreve os campos (sem confirmar).
+  useEffect(() => {
+    if (!preenchimento) return;
+    setKg(preenchimento.kg);
+    setReps(preenchimento.reps);
+  }, [preenchimento]);
 
   const kgNum = Number(kg);
   const repsNum = Number(reps);
