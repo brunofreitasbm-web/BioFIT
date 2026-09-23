@@ -1,12 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { calcularVolumePorGrupo, totalSeriesNoPeriodo, type VolumeGrupo } from "@/lib/relatorio";
 import { getTodosBikeIndoor, getTodasSessoes } from "@/lib/storage";
 import type { RegistroSessao } from "@/lib/tipos";
 import { corCalor } from "@/lib/cor";
 import { cn } from "@/lib/cn";
+import { RelatorioTabs } from "@/components/RelatorioTabs";
+import { BackupCard } from "@/components/BackupCard";
 import { Dumbbell, Bike, Check, Timer } from "lucide-react";
 
 const PERIODOS: { label: string; valor: number | "tudo" }[] = [
@@ -119,12 +120,7 @@ export default function RelatorioPage() {
       <header className="mb-2 space-y-2">
         <h1 className="text-xl font-semibold text-ink">Relatório de Evolução</h1>
         <p className="text-sm text-ink-muted">Acompanhamento diário de treinos e volume muscular</p>
-        <div className="flex gap-1.5 rounded-full border border-line bg-base-800 p-1 text-xs font-medium">
-          <span className="flex-1 rounded-full bg-brand py-1.5 text-center text-white shadow-sm">Visão Geral</span>
-          <Link href="/relatorio/frequencia" className="flex-1 rounded-full py-1.5 text-center text-ink-muted hover:text-ink">
-            Frequência
-          </Link>
-        </div>
+        <RelatorioTabs ativa="/relatorio" />
       </header>
 
       {/* Seletor de Período */}
@@ -267,6 +263,8 @@ export default function RelatorioPage() {
           </p>
         </section>
       )}
+
+      <BackupCard />
     </div>
   );
 }

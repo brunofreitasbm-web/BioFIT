@@ -22,7 +22,7 @@ export function NavTabs() {
     >
       <div className="flex">
         {TABS.map(({ href, label, Icon }) => {
-          const active = pathname === href;
+          const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
             <Link
               key={href}

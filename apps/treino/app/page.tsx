@@ -205,6 +205,7 @@ export default function HojePage() {
                   exercicio={ex}
                   data={hojeISO}
                   expandido={exercicioAbertoId === ex.id}
+                  isDeload={status?.isDeload ?? false}
                   onToggleExpandido={() => setExercicioAbertoId((atual) => (atual === ex.id ? null : ex.id))}
                   onProgresso={handleProgresso}
                 />

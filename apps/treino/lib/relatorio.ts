@@ -1,7 +1,7 @@
 import { getLog, getTodasSessoes } from "./storage";
 import { getExercicio } from "./exercicios";
 import { toISODate } from "./program";
-import type { GrupoMuscular, SessaoTreino } from "./tipos";
+import type { GrupoMuscular, SerieRegistrada, SessaoTreino } from "./tipos";
 
 export interface VolumeGrupo {
   grupo: GrupoMuscular;
@@ -121,4 +121,110 @@ export function calcularFrequenciaPorGrupo(periodoDias: number | "tudo", hoje: D
       ultimaData: ordenados.length > 0 ? ordenados[ordenados.length - 1] : null,
     };
   }).sort((a, b) => b.diasTreinados - a.diasTreinados);
+}
+
+// ===== Evolução por exercício =====
+
+// 1RM estimado (Epley). Com 1 rep é a própria carga.
+export function estimar1RM(cargaKg: number, reps: number): number {
+  return reps <= 1 ? cargaKg : cargaKg * (1 + reps / 30);
+}
+
+export interface PontoHistorico {
+  data: string; // YYYY-MM-DD
+  cargaMaxKg: number;
+  melhor1RM: number; // melhor 1RM estimado entre as séries do dia
+  melhorSerie: { cargaKg: number; reps: number };
+  volumeKg: number; // Σ kg × reps
+  series: number;
+}
+
+type SerieCompleta = SerieRegistrada & { cargaKg: number; reps: number };
+
+function seriesValidas(exercicioId: string): SerieCompleta[] {
+  return getLog().filter(
+    (s): s is SerieCompleta =>
+      s.exercicioId === exercicioId && s.cargaKg != null && s.cargaKg > 0 && s.reps != null && s.reps > 0,
+  );
+}
+
+// Uma entrada por dia em que o exercício teve séries com carga e reps, em ordem cronológica.
+export function historicoExercicio(exercicioId: string): PontoHistorico[] {
+  const porData = new Map<string, PontoHistorico>();
+  for (const s of seriesValidas(exercicioId)) {
+    const rm = estimar1RM(s.cargaKg, s.reps);
+    const p = porData.get(s.data);
+    if (!p) {
+      porData.set(s.data, {
+        data: s.data,
+        cargaMaxKg: s.cargaKg,
+        melhor1RM: rm,
+        melhorSerie: { cargaKg: s.cargaKg, reps: s.reps },
+        volumeKg: s.cargaKg * s.reps,
+        series: 1,
+      });
+      continue;
+    }
+    p.cargaMaxKg = Math.max(p.cargaMaxKg, s.cargaKg);
+    if (rm > p.melhor1RM) {
+      p.melhor1RM = rm;
+      p.melhorSerie = { cargaKg: s.cargaKg, reps: s.reps };
+    }
+    p.volumeKg += s.cargaKg * s.reps;
+    p.series++;
+  }
+  return [...porData.values()].sort((a, b) => a.data.localeCompare(b.data));
+}
+
+export interface RecordesPessoais {
+  cargaMax: { kg: number; data: string } | null;
+  melhor1RM: { kg: number; data: string; cargaKg: number; reps: number } | null;
+}
+
+// Recordes considerando só as datas anteriores a `antesDe` (exclusivo), quando informado.
+export function recordesPessoais(exercicioId: string, antesDe?: string): RecordesPessoais {
+  let cargaMax: RecordesPessoais["cargaMax"] = null;
+  let melhor1RM: RecordesPessoais["melhor1RM"] = null;
+  for (const p of historicoExercicio(exercicioId)) {
+    if (antesDe && p.data >= antesDe) continue;
+    if (!cargaMax || p.cargaMaxKg > cargaMax.kg) cargaMax = { kg: p.cargaMaxKg, data: p.data };
+    if (!melhor1RM || p.melhor1RM > melhor1RM.kg) {
+      melhor1RM = { kg: p.melhor1RM, data: p.data, cargaKg: p.melhorSerie.cargaKg, reps: p.melhorSerie.reps };
+    }
+  }
+  return { cargaMax, melhor1RM };
+}
+
+export interface ResumoExercicio {
+  exercicioId: string;
+  nome: string;
+  grupo: GrupoMuscular;
+  sessoes: number;
+  ultimaData: string;
+  recorde1RM: number;
+  variacao1RM: number | null; // último vs primeiro 1RM estimado, em %
+}
+
+// Todos os exercícios com histórico (inclusive os que já foram trocados no programa).
+export function resumoExercicios(): ResumoExercicio[] {
+  const ids = new Set(getLog().map((s) => s.exercicioId));
+  const resumo: ResumoExercicio[] = [];
+  for (const id of ids) {
+    const exercicio = getExercicio(id);
+    if (!exercicio) continue;
+    const hist = historicoExercicio(id);
+    if (hist.length === 0) continue;
+    const primeiro = hist[0].melhor1RM;
+    const ultimo = hist[hist.length - 1].melhor1RM;
+    resumo.push({
+      exercicioId: id,
+      nome: exercicio.nome,
+      grupo: exercicio.grupoMuscular,
+      sessoes: hist.length,
+      ultimaData: hist[hist.length - 1].data,
+      recorde1RM: Math.max(...hist.map((p) => p.melhor1RM)),
+      variacao1RM: hist.length > 1 ? ((ultimo - primeiro) / primeiro) * 100 : null,
+    });
+  }
+  return resumo.sort((a, b) => b.ultimaData.localeCompare(a.ultimaData) || a.nome.localeCompare(b.nome));
 }
