@@ -8,7 +8,9 @@ import { corCalor } from "@/lib/cor";
 import { cn } from "@/lib/cn";
 import { RelatorioTabs } from "@/components/RelatorioTabs";
 import { BackupCard } from "@/components/BackupCard";
-import { Dumbbell, Bike, Check, Timer } from "lucide-react";
+import { BarChart3, Dumbbell, Bike, Check, History, Timer } from "lucide-react";
+import { EstadoVazio } from "@/components/EstadoVazio";
+import { ICON, STROKE } from "@/lib/icones";
 
 const PERIODOS: { label: string; valor: number | "tudo" }[] = [
   { label: "7 dias", valor: 7 },
@@ -147,7 +149,7 @@ export default function RelatorioPage() {
         <div className="rounded-xl border border-line bg-base-800 p-4 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand" aria-hidden="true">
-              <Dumbbell size={19} strokeWidth={2} />
+              <Dumbbell size={ICON.md} />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-ink">Treinos de Força</h3>
@@ -164,7 +166,7 @@ export default function RelatorioPage() {
         <div className="rounded-xl border border-line bg-base-800 p-4 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent" aria-hidden="true">
-              <Bike size={19} strokeWidth={2} />
+              <Bike size={ICON.md} />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-ink">Bike Indoor (Cardio)</h3>
@@ -181,12 +183,14 @@ export default function RelatorioPage() {
       {/* Histórico Diário de Sessões de Treino */}
       <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-ink">Histórico de Treinos Diários</h2>
+          <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
+            <History aria-hidden="true" size={ICON.md} className="text-ink-muted" /> Histórico de Treinos Diários
+          </h2>
           <span className="text-xs text-ink-faint">{sessoesForca.length} registro(s)</span>
         </div>
 
         {sessoesForca.length === 0 ? (
-          <p className="py-4 text-center text-xs text-ink-muted">Nenhum treino iniciado ou concluído no período selecionado.</p>
+          <EstadoVazio Icone={Dumbbell} texto="Nenhum treino iniciado ou concluído no período selecionado." />
         ) : (
           <div className="space-y-2.5">
             {sessoesForca.map((sessao, index) => {
@@ -217,11 +221,11 @@ export default function RelatorioPage() {
                   <div className="text-right">
                     {estaConcluido ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-[11px] font-medium text-accent">
-                        <Check aria-hidden="true" size={12} strokeWidth={3} /> {formatarDuracaoMs(duracaoMs)}
+                        <Check aria-hidden="true" size={ICON.xs} strokeWidth={STROKE.forte} /> {formatarDuracaoMs(duracaoMs)}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-medium text-brand">
-                        <Timer aria-hidden="true" size={12} strokeWidth={2.5} /> Em andamento
+                        <Timer aria-hidden="true" size={ICON.xs} strokeWidth={STROKE.forte} /> Em andamento
                       </span>
                     )}
                   </div>
@@ -235,9 +239,11 @@ export default function RelatorioPage() {
       {/* Relatório de Volume por Grupo Muscular */}
       {volumes && (
         <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm space-y-3">
-          <h2 className="text-base font-semibold text-ink">Volume por Grupo Muscular</h2>
+          <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
+            <BarChart3 aria-hidden="true" size={ICON.md} className="text-ink-muted" /> Volume por Grupo Muscular
+          </h2>
           {volumes.filter((v) => v.seriesFeitas > 0).length === 0 ? (
-            <p className="py-4 text-center text-xs text-ink-muted">Nenhuma série registrada no período selecionado.</p>
+            <EstadoVazio Icone={BarChart3} texto="Nenhuma série registrada no período selecionado." />
           ) : (
             <div className="space-y-2.5">
               {volumes

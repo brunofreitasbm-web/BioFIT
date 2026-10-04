@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ChevronRight, TrendingDown, TrendingUp } from "lucide-react";
+import { ChevronRight, Dumbbell, TrendingDown, TrendingUp } from "lucide-react";
+import { EstadoVazio } from "@/components/EstadoVazio";
+import { ICON } from "@/lib/icones";
 import { resumoExercicios, type ResumoExercicio } from "@/lib/relatorio";
 import { GrupoBadge } from "@/components/GrupoBadge";
 import { RelatorioTabs } from "@/components/RelatorioTabs";
@@ -33,7 +35,7 @@ export default function ExerciciosPage() {
       </header>
 
       {lista && lista.length === 0 && (
-        <p className="py-8 text-center text-xs text-ink-muted">Nenhuma série com carga e reps registrada ainda.</p>
+        <EstadoVazio Icone={Dumbbell} texto="Nenhuma série com carga e reps registrada ainda." />
       )}
 
       {lista && lista.length > 0 && (
@@ -63,16 +65,16 @@ export default function ExerciciosPage() {
                       )}
                     >
                       {ex.variacao1RM >= 0 ? (
-                        <TrendingUp aria-hidden="true" size={12} />
+                        <TrendingUp aria-hidden="true" size={ICON.xs} />
                       ) : (
-                        <TrendingDown aria-hidden="true" size={12} />
+                        <TrendingDown aria-hidden="true" size={ICON.xs} />
                       )}
                       {ex.variacao1RM >= 0 ? "+" : ""}
                       {ex.variacao1RM.toFixed(0)}%
                     </p>
                   )}
                 </div>
-                <ChevronRight aria-hidden="true" size={16} className="shrink-0 text-ink-faint" />
+                <ChevronRight aria-hidden="true" size={ICON.sm} className="shrink-0 text-ink-faint" />
               </Link>
             </li>
           ))}

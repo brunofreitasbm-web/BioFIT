@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bike, Check, Circle, ChevronDown, ChevronUp } from "lucide-react";
+import { Bike, Check, Circle, ChevronDown } from "lucide-react";
+import { ICON, STROKE } from "@/lib/icones";
 import { cn } from "@/lib/cn";
 import { getBikeIndoor, saveBikeIndoor, removerBikeIndoor } from "@/lib/storage";
 
@@ -122,7 +123,7 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
               concluido ? "bg-accent text-on-solid" : "bg-base-700 text-ink-muted"
             )}
           >
-            <Bike aria-hidden="true" size={19} strokeWidth={2} />
+            <Bike aria-hidden="true" size={ICON.md} />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -147,11 +148,11 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
         </div>
 
         <div className="flex items-center gap-1 text-ink-faint">
-          {expandido ? (
-            <ChevronUp aria-hidden="true" size={18} />
-          ) : (
-            <ChevronDown aria-hidden="true" size={18} />
-          )}
+          <ChevronDown
+            aria-hidden="true"
+            size={ICON.md}
+            className={cn("transition-transform duration-200", expandido && "rotate-180")}
+          />
         </div>
       </button>
 
@@ -220,9 +221,9 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
             )}
           >
             {concluido ? (
-              <Check aria-hidden="true" size={16} strokeWidth={3} />
+              <Check aria-hidden="true" size={ICON.sm} strokeWidth={STROKE.forte} />
             ) : (
-              <Circle aria-hidden="true" size={15} strokeWidth={2.25} />
+              <Circle aria-hidden="true" size={ICON.sm} />
             )}
             <span>
               {concluido ? `Concluído (${tempo} min)` : "Marcar como Concluído"}

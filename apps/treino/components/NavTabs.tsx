@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Dumbbell, LineChart } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { ICON, STROKE } from "@/lib/icones";
 
 const TABS = [
   { href: "/", label: "Hoje", Icon: Dumbbell },
@@ -35,8 +36,8 @@ export function NavTabs() {
             >
               <Icon
                 aria-hidden="true"
-                size={22}
-                strokeWidth={active ? 2.25 : 1.75}
+                size={ICON.lg}
+                strokeWidth={active ? STROKE.forte : 2}
                 className={cn("transition-transform duration-150", active && "-translate-y-px scale-110")}
               />
               <span className={cn(active && "font-semibold")}>{label}</span>

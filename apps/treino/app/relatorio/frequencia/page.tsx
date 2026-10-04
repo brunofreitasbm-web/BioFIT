@@ -1,5 +1,7 @@
 "use client";
 
+import { BarChart3, Dumbbell } from "lucide-react";
+import { EstadoVazio } from "@/components/EstadoVazio";
 import { useEffect, useState } from "react";
 import {
   calcularFrequenciaPorGrupo,
@@ -79,7 +81,7 @@ export default function FrequenciaPage() {
         </div>
 
         {totalSessoes === 0 ? (
-          <p className="py-4 text-center text-xs text-ink-muted">Nenhum treino concluído no período selecionado.</p>
+          <EstadoVazio Icone={Dumbbell} texto="Nenhum treino concluído no período selecionado." />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {porSessao.map((s) => (
@@ -108,10 +110,10 @@ export default function FrequenciaPage() {
         </div>
 
         {porGrupo.every((g) => g.diasTreinados === 0) ? (
-          <p className="py-4 text-center text-xs text-ink-muted">
-            Ainda não há séries registradas neste período. Marque suas séries na aba <strong className="text-ink">Hoje</strong> para a
-            frequência por grupo aparecer aqui.
-          </p>
+          <EstadoVazio
+            Icone={BarChart3}
+            texto="Ainda não há séries registradas neste período. Marque suas séries na aba Hoje para a frequência por grupo aparecer aqui."
+          />
         ) : (
           <div className="space-y-2.5">
             {porGrupo.map((g) => (
