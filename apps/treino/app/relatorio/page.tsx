@@ -8,6 +8,7 @@ import { corCalor } from "@/lib/cor";
 import { cn } from "@/lib/cn";
 import { RelatorioTabs } from "@/components/RelatorioTabs";
 import { BackupCard } from "@/components/BackupCard";
+import { SyncCard } from "@/components/SyncCard";
 import { BarChart3, Dumbbell, Bike, Check, History, Timer } from "lucide-react";
 import { EstadoVazio } from "@/components/EstadoVazio";
 import { ICON, STROKE } from "@/lib/icones";
@@ -270,6 +271,7 @@ export default function RelatorioPage() {
         </section>
       )}
 
+      <SyncCard />
       <BackupCard />
     </div>
   );

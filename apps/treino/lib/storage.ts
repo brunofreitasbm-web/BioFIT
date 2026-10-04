@@ -7,6 +7,7 @@ import type {
   SessaoTreino,
 } from "./tipos";
 import { CHAVES_STORAGE_PPL_V4 } from "./arquivo/pplV4";
+import { enfileirarRemocao, enfileirarSerie } from "./sync";
 
 const KEY_LOG = "treino:log";
 const KEY_INICIO = "treino:dataInicio";
@@ -59,12 +60,16 @@ export function upsertSerie(entry: SerieRegistrada): boolean {
   );
   if (idx >= 0) log[idx] = entry;
   else log.push(entry);
-  return saveLog(log);
+  const salvou = saveLog(log);
+  if (salvou) enfileirarSerie(entry);
+  return salvou;
 }
 
 export function removerSerie(exercicioId: string, data: string, serieNumero: number): boolean {
   const log = getLog().filter((s) => !(s.exercicioId === exercicioId && s.data === data && s.serieNumero === serieNumero));
-  return saveLog(log);
+  const salvou = saveLog(log);
+  if (salvou) enfileirarRemocao(exercicioId, data, serieNumero);
+  return salvou;
 }
 
 export function seriesDoExercicioNaData(exercicioId: string, data: string): SerieRegistrada[] {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { iniciarSync } from "@/lib/sync";
 import { getDataInicio, getSessaoEscolhida, migrarParaMeso1, setSessaoEscolhida } from "@/lib/storage";
 import { addDiasISO, getStatusAderencia, getStatusPrograma, sessaoSugerida as calcularSessaoSugerida, toISODate } from "@/lib/program";
 import { getSessaoCompleta, SESSAO_LABEL, SESSAO_NOME } from "@/lib/exercicios";
@@ -34,6 +35,7 @@ export default function HojePage() {
     setDataInicioState(getDataInicio() ?? hojeISO);
     setEscolha(getSessaoEscolhida(hojeISO));
     setPronto(true);
+    return iniciarSync();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
