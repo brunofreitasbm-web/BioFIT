@@ -121,6 +121,7 @@ export function ExercicioCard({
     return upsertSerie({
       exercicioId: exercicio.id,
       sessao: exercicio.sessao,
+      rodada: status.rodada,
       data,
       serieNumero,
       cargaKg: kgStr === "" ? null : Number(kgStr),

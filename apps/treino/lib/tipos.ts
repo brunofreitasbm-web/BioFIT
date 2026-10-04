@@ -57,6 +57,7 @@ export interface SerieRegistrada {
   reps: number | null;
   rir?: number | null; // só na última série
   sessao?: SessaoTreino; // a partir do meso 1; registros do PPL não têm
+  rodada?: number; // 1–5 (5 = deload); só séries registradas depois do envio para a planilha
   observacoes?: string;
   registradoEm: string; // ISO timestamp
 }

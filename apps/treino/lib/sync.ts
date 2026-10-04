@@ -20,7 +20,7 @@ export interface ConfigSync {
 
 type Operacao =
   | { tipo: "upsert"; chave: string; serie: SerieRegistrada }
-  | { tipo: "remover"; chave: string };
+  | { tipo: "remover"; chave: string; exercicioId: string; data: string; serieNumero: number };
 
 export interface StatusSync {
   pendentes: number;
@@ -110,7 +110,7 @@ export function enfileirarSerie(serie: SerieRegistrada): void {
 }
 
 export function enfileirarRemocao(exercicioId: string, data: string, serieNumero: number): void {
-  enfileirar([{ tipo: "remover", chave: chaveSerie({ exercicioId, data, serieNumero }) }]);
+  enfileirar([{ tipo: "remover", chave: chaveSerie({ exercicioId, data, serieNumero }), exercicioId, data, serieNumero }]);
 }
 
 // Backfill: coloca todo o histórico local na fila (o script atualiza linhas que já existam).
@@ -125,9 +125,9 @@ function linha(s: SerieRegistrada) {
     chave: chaveSerie(s),
     data: s.data,
     sessao: s.sessao ?? "",
+    rodada: s.rodada ?? null,
     exercicioId: s.exercicioId,
     exercicio: ex?.nome ?? s.exercicioId,
-    grupo: ex?.grupoMuscular ?? "",
     serie: s.serieNumero,
     cargaKg: s.cargaKg,
     reps: s.reps,
@@ -157,7 +157,7 @@ export async function enviarPendentes(): Promise<void> {
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
           token: config.token,
-          ops: lote.map((o) => (o.tipo === "upsert" ? { op: "upsert", ...linha(o.serie) } : { op: "remover", chave: o.chave })),
+          ops: lote.map((o) => (o.tipo === "upsert" ? { op: "upsert", ...linha(o.serie) } : { op: "remover", data: o.data, exercicio: getExercicio(o.exercicioId)?.nome ?? o.exercicioId, serie: o.serieNumero })),
         }),
       });
       const corpo = (await resposta.json()) as { ok?: boolean; erro?: string };

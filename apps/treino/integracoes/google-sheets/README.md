@@ -12,12 +12,18 @@ ficam numa fila e seguem quando a conexão voltar (também ao reabrir o app).
 4. **Implantar → Nova implantação → Tipo: App da Web**
    - Executar como: **Eu**
    - Quem tem acesso: **Qualquer pessoa**
+   - Na primeira vez o Google pede autorização: Avançado → Acessar (não seguro) → Permitir.
 5. Copie a URL terminada em `/exec`.
 6. No app: **Relatório → Planilha Google**, cole a URL e o mesmo token, e toque em **Salvar**.
    Use **Reenviar histórico** uma vez para levar o que já foi registrado.
 
-As linhas vão para a aba **Dados do app** (criada automaticamente). Chave de cada linha:
-`data|exercício|série` — editar uma série atualiza a linha em vez de duplicar.
+As séries vão para a aba **Registro**, a partir da linha 5 (Data, Sessão, Rodada, Exercício,
+Série, Carga, Reps, RIR, e1RM, Obs). A linha da série é achada por Data + Exercício + Série:
+editar no app atualiza a linha em vez de duplicar, e remover limpa a linha (não a apaga, para
+manter formatação e fórmulas). A linha-exemplo marcada "(apagar)" é reaproveitada. A coluna
+e1RM só é escrita onde não houver fórmula. O nome do exercício vem do app: se na aba ele for
+diferente, a série entra como linha nova. A "Rodada" só vem preenchida nas séries registradas
+depois desta versão.
 
 ## Segurança
 
