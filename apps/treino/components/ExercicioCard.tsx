@@ -186,19 +186,33 @@ export function ExercicioCard({
   const erroCalibracao = realCalibracao !== null && palpiteNum !== null ? realCalibracao - palpiteNum : null;
 
   return (
-    <div className="rounded-xl border border-line bg-base-800 shadow-panel">
+    <div
+      className={cn(
+        "rounded-xl border bg-base-800 shadow-panel transition-colors duration-200",
+        completo ? "border-accent/40 bg-accent-soft/40" : "border-line",
+      )}
+    >
       <div className="flex w-full items-center gap-2 p-3 text-left">
-        <button type="button" onClick={onToggleExpandido} className="flex min-w-0 flex-1 items-center gap-2 text-left">
+        <button
+          type="button"
+          onClick={onToggleExpandido}
+          aria-expanded={expandido}
+          className="flex min-h-12 min-w-0 flex-1 items-center gap-2 text-left"
+        >
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold tabular-nums text-ink-faint">
+              <span className="rounded-md bg-base-600 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-ink-muted">
                 {exercicio.sessao}
                 {exercicio.ordem}
               </span>
-              <span className="truncate font-medium">{exercicio.nome}</span>
-              {completo && <Check aria-hidden="true" size={16} strokeWidth={3} className="shrink-0 text-accent" />}
+              <span className="truncate text-[15px] font-semibold tracking-tight text-ink">{exercicio.nome}</span>
+              {completo && (
+                <span className="anim-confirmar flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-white">
+                  <Check aria-hidden="true" size={12} strokeWidth={3.5} />
+                </span>
+              )}
               {bateuPR && (
-                <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent">
+                <span className="anim-pr inline-flex shrink-0 items-center gap-0.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold text-accent">
                   <Trophy aria-hidden="true" size={11} strokeWidth={2.5} /> PR
                 </span>
               )}
@@ -230,7 +244,7 @@ export function ExercicioCard({
               e.stopPropagation();
               setVideoAberto(true);
             }}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-base-700 text-ink-muted"
+            className="toque flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-line bg-base-700 text-ink-muted hover:border-brand/40 hover:text-brand"
             aria-label={`Ver vídeo de ${exercicio.nome}`}
           >
             <Film aria-hidden="true" size={18} strokeWidth={1.75} />
@@ -239,7 +253,7 @@ export function ExercicioCard({
       </div>
 
       {expandido && (
-        <div className="border-t border-line p-3 pt-2">
+        <div className="anim-revelar border-t border-line p-3 pt-3">
           {erroSalvar && (
             <p role="alert" className="mb-2 text-[11px] font-medium text-danger">
               Não foi possível salvar no dispositivo. Tente novamente.
@@ -338,7 +352,7 @@ export function ExercicioCard({
           </div>
 
           {seriesIndividuais ? (
-            <div className="grid grid-cols-[auto_1fr_1fr_auto] items-center gap-x-2 gap-y-1.5 text-xs">
+            <div className="grid grid-cols-[1.25rem_1fr_1fr_auto] items-center gap-x-2.5 gap-y-2 text-xs">
               <span className="text-ink-faint">Série</span>
               <span className="text-ink-faint">Carga (kg)</span>
               <span className="text-ink-faint">{unidadeReps}</span>
@@ -360,7 +374,10 @@ export function ExercicioCard({
               })}
             </div>
           ) : (
-            <div className="grid grid-cols-[1fr_1fr_auto] items-center gap-x-2 text-xs">
+            <div className="grid grid-cols-[1fr_1fr_auto] items-center gap-x-2.5 text-xs">
+              <span className="mb-1 text-[11px] font-medium text-ink-muted">Carga (kg)</span>
+              <span className="mb-1 text-[11px] font-medium text-ink-muted">{unidadeReps}</span>
+              <span />
               <LinhaReplicada
                 totalSeries={totalSeries}
                 series={series}
@@ -458,7 +475,7 @@ function LinhaReplicada({
         aria-label="Carga em quilos, todas as séries"
         value={kg}
         onChange={(e) => setKg(e.target.value)}
-        className="w-full rounded-lg border border-line bg-base-700 px-2 py-2.5 text-ink focus:border-brand focus:outline-none"
+        className="campo-serie"
       />
       <input
         type="number"
@@ -470,19 +487,19 @@ function LinhaReplicada({
         aria-label="Repetições, todas as séries"
         value={reps}
         onChange={(e) => setReps(e.target.value)}
-        className="w-full rounded-lg border border-line bg-base-700 px-2 py-2.5 text-ink focus:border-brand focus:outline-none"
+        className="campo-serie"
       />
       <button
         type="button"
         disabled={isDisabled}
         onClick={() => !isDisabled && onConfirmarTodas(kg, reps)}
         className={cn(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-base font-semibold transition-colors",
+          "toque flex h-12 w-12 shrink-0 items-center justify-center rounded-full border text-base font-semibold",
           isDisabled
             ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-40"
             : todasFeitas
-            ? "border-accent bg-accent-soft text-accent"
-            : "border-brand bg-brand text-white shadow-sm hover:opacity-90 active:scale-95",
+            ? "anim-confirmar border-accent bg-accent text-white"
+            : "border-brand bg-brand text-white shadow-sm hover:bg-brand-hover",
         )}
         aria-label={`Confirmar as ${totalSeries} séries`}
       >
@@ -524,7 +541,7 @@ function FragmentoLinha({
 
   return (
     <>
-      <span className="text-ink-muted">{n}</span>
+      <span className="text-center text-sm font-semibold tabular-nums text-ink-muted">{n}</span>
       <input
         type="number"
         inputMode="decimal"
@@ -535,7 +552,7 @@ function FragmentoLinha({
         aria-label={`Carga em quilos, série ${n}`}
         value={kg}
         onChange={(e) => setKg(e.target.value)}
-        className="w-full rounded-lg border border-line bg-base-700 px-2 py-2.5 text-ink focus:border-brand focus:outline-none"
+        className="campo-serie"
       />
       <input
         type="number"
@@ -547,19 +564,19 @@ function FragmentoLinha({
         aria-label={`Repetições, série ${n}`}
         value={reps}
         onChange={(e) => setReps(e.target.value)}
-        className="w-full rounded-lg border border-line bg-base-700 px-2 py-2.5 text-ink focus:border-brand focus:outline-none"
+        className="campo-serie"
       />
       <button
         type="button"
         disabled={isDisabled}
         onClick={() => !isDisabled && onConfirmar(kg, reps)}
         className={cn(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-base font-semibold transition-colors",
+          "toque flex h-12 w-12 shrink-0 items-center justify-center rounded-full border text-base font-semibold",
           isDisabled
             ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-40"
             : feita
-            ? "border-accent bg-accent-soft text-accent"
-            : "border-brand bg-brand text-white shadow-sm hover:opacity-90 active:scale-95",
+            ? "anim-confirmar border-accent bg-accent text-white"
+            : "border-brand bg-brand text-white shadow-sm hover:bg-brand-hover",
         )}
         aria-label={`Confirmar série ${n}`}
       >

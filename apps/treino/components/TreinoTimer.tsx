@@ -54,7 +54,7 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
       <button
         type="button"
         onClick={iniciar}
-        className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 text-center text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-hover active:scale-[0.99]"
+        className="toque mb-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-brand text-center text-base font-bold text-white shadow-panel hover:bg-brand-hover"
       >
         <Play aria-hidden="true" size={17} strokeWidth={2.25} fill="currentColor" />
         Iniciar treino {nome}
@@ -71,12 +71,12 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
             <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-danger" aria-hidden="true" />
             Treino {nome} em andamento
           </span>
-          <span className="tabular-nums text-sm font-semibold text-ink">{formatarDuracao(decorrido)}</span>
+          <span className="text-xl font-bold tabular-nums tracking-tight text-ink">{formatarDuracao(decorrido)}</span>
         </div>
         <button
           type="button"
           onClick={terminar}
-          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-danger px-4 py-3 text-sm font-semibold text-white transition-colors hover:opacity-90"
+          className="toque flex min-h-14 shrink-0 items-center gap-1.5 rounded-xl bg-danger px-4 text-sm font-semibold text-white hover:opacity-90"
         >
           <Square aria-hidden="true" size={15} strokeWidth={2.25} fill="currentColor" />
           Terminar
@@ -92,7 +92,7 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
         <CheckCircle2 aria-hidden="true" size={17} strokeWidth={2} />
         Treino {nome} concluído · {formatarDuracao(duracaoFinal)}
       </span>
-      <button type="button" onClick={reabrir} className="min-h-11 px-2 text-xs font-medium text-ink-muted underline">
+      <button type="button" onClick={reabrir} className="toque min-h-11 px-2 text-xs font-medium text-ink-muted underline">
         reabrir
       </button>
     </div>

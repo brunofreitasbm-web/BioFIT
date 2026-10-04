@@ -156,9 +156,9 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
       </button>
 
       {expandido && (
-        <div id="bike-indoor-content" className="mt-3 pt-3 border-t border-line/50 transition-all">
+        <div id="bike-indoor-content" className="anim-revelar mt-3 border-t border-line/50 pt-3">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 rounded-lg border border-line bg-base-900 px-3 py-1.5">
+            <div className="flex min-h-11 items-center gap-1.5 rounded-lg border border-line bg-base-900 px-3 focus-within:border-brand">
               <span className="text-xs text-ink-faint" id="bike-duracao-label">
                 Duração:
               </span>
@@ -173,7 +173,7 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
                 placeholder="30"
                 aria-labelledby="bike-duracao-label"
                 aria-describedby="bike-duracao-unidade"
-                className="w-12 bg-transparent text-sm font-semibold text-ink text-center outline-none focus:border-brand"
+                className="w-14 bg-transparent py-2 text-center text-lg font-bold tabular-nums text-ink outline-none"
               />
               <span className="text-xs font-medium text-ink-muted" id="bike-duracao-unidade">
                 min
@@ -188,7 +188,7 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
                   onClick={() => handlePresetClick(m)}
                   aria-pressed={tempo === m.toString()}
                   className={cn(
-                    "min-h-11 rounded-lg border px-2.5 text-xs font-medium transition-colors",
+                    "toque min-h-11 min-w-11 rounded-lg border px-3 text-sm font-medium",
                     tempo === m.toString()
                       ? "border-brand bg-brand-soft font-semibold text-brand"
                       : "border-line bg-base-900 text-ink-muted hover:border-brand/40"
@@ -211,7 +211,7 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
             disabled={!tempo || parseInt(tempo, 10) <= 0}
             onClick={handleCheckToggle}
             className={cn(
-              "mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all active:scale-[0.99]",
+              "toque mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold",
               !tempo || parseInt(tempo, 10) <= 0
                 ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-50"
                 : concluido
