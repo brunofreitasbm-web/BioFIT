@@ -38,7 +38,7 @@ export function SeletorSessao({
               className={cn(
                 "toque flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-semibold",
                 selecionado
-                  ? "border-brand bg-brand text-white shadow-sm"
+                  ? "border-brand bg-brand text-on-solid shadow-sm"
                   : "border-line bg-base-800 text-ink-muted hover:border-brand/40 hover:text-ink",
               )}
             >
@@ -48,7 +48,7 @@ export function SeletorSessao({
                   aria-label="Grupo ainda em recuperação"
                   size={14}
                   strokeWidth={2.25}
-                  className={selecionado ? "text-white" : "text-danger"}
+                  className={selecionado ? "text-on-solid" : "text-danger"}
                 />
               )}
               {op.tipo === sessaoSugerida && !selecionado && (
@@ -64,7 +64,7 @@ export function SeletorSessao({
           className={cn(
             "toque min-h-11 rounded-full border px-4 text-sm font-semibold",
             efetivo === "DESCANSO"
-              ? "border-brand bg-brand text-white shadow-sm"
+              ? "border-brand bg-brand text-on-solid shadow-sm"
               : "border-line bg-base-800 text-ink-muted hover:border-brand/40 hover:text-ink",
           )}
         >

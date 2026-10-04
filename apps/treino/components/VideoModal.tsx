@@ -11,7 +11,7 @@ export function VideoModal({ youtubeId, titulo, onClose }: { youtubeId: string; 
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/90 text-ink"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/90 text-base-950"
             aria-label="Fechar vídeo"
           >
             <X aria-hidden="true" size={16} strokeWidth={2} />

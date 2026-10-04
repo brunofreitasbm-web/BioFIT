@@ -17,7 +17,7 @@ export function NavTabs() {
     <nav
       role="navigation"
       aria-label="Navegação Principal"
-      className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-xl border-t border-line bg-base-900/95 shadow-[0_-1px_8px_rgba(20,22,26,0.06)] backdrop-blur"
+      className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-xl border-t border-line bg-base-900/95 shadow-nav backdrop-blur"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="flex">

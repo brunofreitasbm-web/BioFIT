@@ -207,7 +207,7 @@ export function ExercicioCard({
               </span>
               <span className="truncate text-[15px] font-semibold tracking-tight text-ink">{exercicio.nome}</span>
               {completo && (
-                <span className="anim-confirmar flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-white">
+                <span className="anim-confirmar flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-on-solid">
                   <Check aria-hidden="true" size={12} strokeWidth={3.5} />
                 </span>
               )}
@@ -498,8 +498,8 @@ function LinhaReplicada({
           isDisabled
             ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-40"
             : todasFeitas
-            ? "anim-confirmar border-accent bg-accent text-white"
-            : "border-brand bg-brand text-white shadow-sm hover:bg-brand-hover",
+            ? "anim-confirmar border-accent bg-accent text-on-solid"
+            : "border-brand bg-brand text-on-solid shadow-sm hover:bg-brand-hover",
         )}
         aria-label={`Confirmar as ${totalSeries} séries`}
       >
@@ -575,8 +575,8 @@ function FragmentoLinha({
           isDisabled
             ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-40"
             : feita
-            ? "anim-confirmar border-accent bg-accent text-white"
-            : "border-brand bg-brand text-white shadow-sm hover:bg-brand-hover",
+            ? "anim-confirmar border-accent bg-accent text-on-solid"
+            : "border-brand bg-brand text-on-solid shadow-sm hover:bg-brand-hover",
         )}
         aria-label={`Confirmar série ${n}`}
       >
