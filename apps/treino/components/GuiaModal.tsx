@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { Info, X } from "lucide-react";
-import { toISODate } from "@/lib/program";
-import { getDataInicio, setDataInicio } from "@/lib/storage";
+import { erroMedioCalibracao, getDataInicio, setDataInicio } from "@/lib/storage";
 
 export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: string; onDataInicioChange: (iso: string) => void }) {
   const [aberto, setAberto] = useState(false);
   const [inputData, setInputData] = useState(dataInicio);
+  const [calibracao, setCalibracao] = useState<ReturnType<typeof erroMedioCalibracao>>({ amostras: 0, erroMedio: null });
 
   function salvar() {
     setDataInicio(inputData);
@@ -21,6 +21,7 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
         type="button"
         onClick={() => {
           setInputData(getDataInicio() ?? dataInicio);
+          setCalibracao(erroMedioCalibracao());
           setAberto(true);
         }}
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-base-800 text-ink-muted"
@@ -58,7 +59,10 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
 
             <section className="mb-4 rounded-xl border border-line bg-base-700 p-3">
               <h3 className="mb-1 text-sm font-medium">Início do programa</h3>
-              <p className="mb-2 text-xs text-ink-muted">Define a partir de qual data o app contabiliza os treinos concluídos do ciclo.</p>
+              <p className="mb-2 text-xs text-ink-muted">
+                A partir desta data o app conta as sessões da fila (rodadas, deload, troca de mesociclo) e abre a janela
+                de 14 dias da aderência.
+              </p>
               <div className="flex items-center gap-2">
                 <input
                   type="date"
@@ -72,78 +76,90 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
               </div>
             </section>
 
+            {calibracao.erroMedio !== null && (
+              <section className="mb-4 rounded-xl border border-line bg-base-700 p-3">
+                <h3 className="mb-1 text-sm font-medium">Calibração de esforço</h3>
+                <p className="text-xs text-ink-muted">
+                  Erro médio (real − palpite): <strong className="text-ink">{calibracao.erroMedio > 0 ? "+" : ""}{calibracao.erroMedio}</strong>{" "}
+                  reps em {calibracao.amostras} teste(s).{" "}
+                  {calibracao.erroMedio > 2
+                    ? "Você para cedo demais — ajuste o RIR estimado para cima."
+                    : "Estimativa dentro do aceitável."}
+                </p>
+              </section>
+            )}
+
             <div className="space-y-3 text-sm text-ink-muted">
               <p>
-                <strong className="text-ink">Estrutura e Periodização:</strong> Push / Pull / Legs (6 sessões por semana). A progressão de semanas (S1 a S8 e Deload) avança estritamente conforme a conclusão dos treinos: só se passa para a próxima etapa/semana após concluir as 6 sessões da semana atual.
+                <strong className="text-ink">Por que mudou:</strong> registro de 10/08 a 03/10 — 29 dias treinados em 8
+                semanas (~3,6/sem; 3/sem nas últimas 4). O PPL 6x virou 1x/semana por músculo na prática. Este programa
+                entrega ~2x/semana a 5 sessões e degrada sem buracos quando você treina menos.
               </p>
               <p>
-                <strong className="text-ink">Orçamento de tempo real:</strong> PUSH ~54 min · PULL ~57 min · LEGS ~57 min
-                (aquecimento 5-6 min + aproximações nos 2 primeiros exercícios 5-8 min + 19-21 séries de trabalho ~35 min +
-                trocas de aparelho ~7 min). No limite dos 60 min: se precisar cortar por falta de tempo, corte primeiro o 6º
-                exercício, depois a 4ª série do composto do slot 1 — nunca os slots diretos de postura (face pull, Y-raise,
-                crucifixo inverso, remadas).
+                <strong className="text-ink">Sequência:</strong> A Upper → B Lower → C Push → D Pull → E Legs → volta ao A.
+                Não existe &ldquo;treino de quarta&rdquo;. Faltou um dia? Faça o PRÓXIMO da fila. Nenhum grupo é pulado por
+                causa de agenda.
               </p>
               <p>
-                <strong className="text-ink">Séries de aproximação:</strong> 1º exercício (composto pesado, 6-9 reps): 2-3
-                aproximações subindo até a carga de trabalho (ex.: 50%×8, 70%×5, 85%×2, descanso curto entre elas). 2º
-                exercício: 1 aproximação. Do 3º em diante: nenhuma. Não contam no volume.
+                <strong className="text-ink">Rodada e mesociclo:</strong> 1 rodada = A+B+C+D+E (5 sessões; a 5x/semana, 1
+                rodada = 1 semana). Rodadas 1–4 = treino, rodada 5 = deload. Depois troca TODOS os exercícios (coluna
+                &ldquo;Meso 2&rdquo;). A rotação é por exposições (4 por exercício), não por calendário: se a semana for
+                fraca, o meso alonga, mas cada exercício recebe as mesmas 4 exposições — é o que permite medir progressão.
               </p>
               <p>
-                <strong className="text-ink">Banco de exercícios (sem troca automática):</strong> os 24 exercícios que
-                existiam nos antigos blocos de 15 dias viraram um banco de opções por posição (slot). O que você treina
-                agora é o Programa Atual — você troca um exercício quando decidir (estagnação, dor, falta de equipamento),
-                nunca por calendário, e a troca fica registrada no Log de Trocas. Trocar sem necessidade reinicia a
-                referência de carga daquele exercício; não troque só por variedade.
+                <strong className="text-ink">Rodada 1 — calibração:</strong> na ÚLTIMA série de cada exercício marcado
+                &ldquo;teste de falha&rdquo;, vá até a falha técnica (a repetição fica visivelmente lenta ou a técnica
+                quebra). Antes da série, anote quantas reps você ACHA que faria. A diferença entre o palpite e o real é o
+                seu erro de estimativa. Só em máquina/polia — nunca em halter acima da cabeça ou búlgaro.
               </p>
               <p>
-                <strong className="text-ink">Progressão de RIR (contínua):</strong> não existe mais &ldquo;exposição 1 a 4
-                dentro do bloco&rdquo; — a progressão acompanha o tempo de uso de CADA exercício. Sessões 1-2 de um exercício novo (ou
-                recém-trocado) = RIR 2-3 (aprendizado motor); sessões 3-6 = RIR 2; sessão 7 em diante = RIR 1 (isoladores
-                podem ir à falha; compostos param em RIR 1). Ao trocar um exercício, só a progressão DAQUELE exercício
-                reinicia — os outros 5 da sessão continuam de onde estavam.
+                <strong className="text-ink">Rodadas 2–4 — esforço:</strong> compostos (exercícios 1–2 de cada sessão):
+                parar quando sobrarem 1–2 reps. Isolados: parar quando sobrar 0–1. Se todas as séries saem com as MESMAS
+                reps, você está longe da falha — o normal em esforço real é a última série cair 1–3 reps.
               </p>
               <p>
-                <strong className="text-ink">Progressão de carga:</strong> ao fechar o topo da faixa de reps no RIR alvo em
-                todas as séries, suba 2,5% (superiores) ou 5% (inferiores) na sessão seguinte — progressão contínua, sem
-                limite de sessões e sem reset por calendário. Ao trocar um exercício, comece o novo com carga conservadora
-                (RIR 3-4 na 1ª sessão).
+                <strong className="text-ink">Progressão (dupla):</strong> trabalhe dentro da faixa de reps. Quando TODAS as
+                séries baterem o topo da faixa com o esforço-alvo, suba a carga na próxima exposição: menor incremento
+                disponível no superior (máquina 2–5 kg; halter +1–2 kg cada), +5% no inferior. Voltou para o fundo da
+                faixa? Normal. Suba as reps de novo. O e1RM (Epley) compara exposições com reps diferentes: se ele sobe,
+                você progrediu.
               </p>
               <p>
-                <strong className="text-ink">Deload:</strong> a cada 48 sessões de trabalho concluídas (8 semanas × 6 treinos), você realiza 6 sessões de deload (1 semana): metade das séries, RIR 4, cargas atuais reduzidas em 10%. Depois do deload as cargas seguem progredindo de onde pararam, e o ciclo recomeça.
+                <strong className="text-ink">Deload (rodada 5):</strong> metade das séries, mesmas reps, carga −10%, longe
+                da falha. Serve para dissipar fadiga antes de trocar os exercícios.
               </p>
               <p>
-                <strong className="text-ink">Execução:</strong> Sem cadência numérica prescrita — subir com intenção de força
-                máxima, descer sem largar o peso. Atenção extra em 3 casos: posição alongada (sem impulso na virada, é onde
-                está o melhor estímulo e o maior risco), remadas/posterior (1 s de pausa na contração, é trabalho postural
-                direto) e bloco postural (controle total, ali o objetivo é controle motor, não hipertrofia).
+                <strong className="text-ink">Registro de carga:</strong> CARGA TOTAL, como o número da máquina/pino mostra.
+                Registre sempre na MESMA máquina. Graviton: registrar a ASSISTÊNCIA (quanto MENOR, mais difícil —
+                progressão é descer o número). Leg press 45° com 50 kg &ldquo;total&rdquo; está incoerente com hack de 30
+                kg: confirme se o carrinho entra no total e mantenha o critério.
               </p>
               <p>
-                <strong className="text-ink">Papel postural — leitura honesta:</strong> cada exercício carrega um papel
-                DIRETO (treina musculatura ligada à cifose: retratores escapulares, trapézio inferior, extensores
-                torácicos), INDIRETO (ajuda por mecanismo secundário) ou NEUTRO (não serve à postura — a única exigência é
-                não reforçar o padrão errado: tronco ereto, cabeça neutra, ombro sem encolher). PULL concentra a maior parte
-                dos exercícios diretos da semana (4 de 6).
+                <strong className="text-ink">Postural:</strong> saiu do bloco diário (abandonado após 19/08) e entrou
+                DENTRO das sessões A e D: face pull, Y-raise e extensão torácica em prono. Não são opcionais: são o que
+                justifica o volume de puxada.
               </p>
               <p>
-                <strong className="text-ink">Postura (cifose):</strong> Bloco Postural em casa, 7 dias/semana (o exercício 5
-                — extensão torácica em prono, o mais importante da aba — é 3-4x/semana, por ser treino de força e precisar
-                de recuperação) + razão puxar:empurrar ~1,5:1 + cues de retração escapular e extensão torácica. Melhora
-                realista em 8-12 semanas com adesão — musculação não remodela curvatura estrutural.
+                <strong className="text-ink">Execução:</strong> descida controlada, sem impulso, amplitude completa. Nos
+                exercícios de costas: segurar 1 s na contração.
               </p>
               <p>
-                <strong className="text-ink">Lombar:</strong> terra romeno, stiff, good morning e agachamento livre saíram do
-                programa por dor lombar relatada — o slot 2 de perna virou trabalho de posterior/glúteo sem carga axial na
-                coluna (flexora, elevação pélvica, extensão de quadril), e o slot 1 passou a ser goblet/belt squat.
-                Agachamento frontal, hack e Smith seguem sob observação: carga anterior ou guiada reduz o braço de momento na
-                lombar, mas não zera a compressão axial.
+                <strong className="text-ink">Gatilho de aderência:</strong> meta de 10 sessões nas primeiras 2 semanas.
+                Menos de 8 → o programa cai para Upper/Lower 4x, sem renegociação.
               </p>
               <p>
-                <strong className="text-ink">Cardio Zona 2:</strong> 2-3x/semana, 30-40 min a 60-70% FCmáx, em horário
-                separado da musculação, nos dias de PUSH e/ou domingo — longe dos dias de perna.
+                <strong className="text-ink">Restrições respeitadas:</strong> sem terra, stiff, good morning, RDL ou
+                agachamento livre. Remadas com apoio de tronco (sem carga em flexão lombar).
               </p>
               <p>
-                <strong className="text-ink">Autorregulação:</strong> Se 2 sessões seguidas com RIR real muito abaixo do
-                previsto, sono ruim ou FC de repouso elevada: corte 1 série de cada exercício naquela semana.
+                <strong className="text-ink">Volume por rodada:</strong> costas 15 · quadríceps 15 · peito 10 · deltoide
+                lateral/anterior 9 · panturrilha 8 · deltoide posterior/trapézio inferior 6 · posterior de coxa 6 · bíceps 5
+                · tríceps 5 · core 5 · glúteo 3 (87 séries). Costas &gt; peito de propósito (puxar:empurrar ~1,5:1 por
+                causa da cifose). Se a frequência cair para 3x/semana, divida por ~1,7.
+              </p>
+              <p>
+                <strong className="text-ink">Cardio Z2:</strong> 2x/semana, 30–40 min, 60–70% FCmáx, longe das sessões B e
+                E.
               </p>
             </div>
           </div>
@@ -151,8 +167,4 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
       )}
     </>
   );
-}
-
-export function dataInicioPadrao(): string {
-  return toISODate(new Date());
 }

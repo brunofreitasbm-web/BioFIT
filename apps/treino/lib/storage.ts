@@ -1,20 +1,22 @@
 import type {
   EscolhaDoDia,
-  LogTroca,
+  PalpiteCalibracao,
   RegistroBikeIndoor,
   RegistroSessao,
   SerieRegistrada,
   SessaoTreino,
 } from "./tipos";
-import { getExercicio } from "./exercicios";
+import { CHAVES_STORAGE_PPL_V4 } from "./arquivo/pplV4";
 
 const KEY_LOG = "treino:log";
 const KEY_INICIO = "treino:dataInicio";
 const KEY_SESSOES = "treino:sessoesPorDia";
 const KEY_ESCOLHAS = "treino:escolhaPorDia";
-const KEY_PROGRAMA_ATUAL = "treino:programaAtual";
-const KEY_LOG_TROCAS = "treino:logTrocas";
 const KEY_BIKE = "treino:bikeIndoor";
+const KEY_CALIBRACAO = "treino:calibracaoRIR";
+const KEY_VERSAO = "treino:versaoPrograma";
+const KEY_ARQUIVO_PPL = "treino:arquivo:ppl-v4";
+const VERSAO_PROGRAMA = "ulppl-meso1";
 
 
 export function getDataInicio(): string | null {
@@ -182,65 +184,38 @@ export function limparSessaoEscolhida(data: string): boolean {
   }
 }
 
-// ===== Programa Atual (escolha persistente por slot) e Log de Trocas =====
-// Substitui o antigo esquema de "substituição só por hoje": na v4 trocar um exercício é
-// uma decisão do programa (estagnação, dor, falta de equipamento), não um ajuste diário.
+// ===== Sessões concluídas do programa (fila A → E) =====
 
-export function getEscolhaPrograma(): Record<string, string> {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = window.localStorage.getItem(KEY_PROGRAMA_ATUAL);
-    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
-  } catch {
-    return {};
-  }
+const SESSOES_PROGRAMA: SessaoTreino[] = ["A", "B", "C", "D", "E"];
+
+function ehSessaoDoPrograma(tipo: string): tipo is SessaoTreino {
+  return (SESSOES_PROGRAMA as string[]).includes(tipo);
 }
 
-export function setEscolhaPrograma(map: Record<string, string>): boolean {
-  try {
-    window.localStorage.setItem(KEY_PROGRAMA_ATUAL, JSON.stringify(map));
-    return true;
-  } catch {
-    return false;
-  }
+export interface SessaoConcluida {
+  data: string;
+  tipo: SessaoTreino;
+  quando: string; // ISO — para ordenar sessões do mesmo dia
 }
 
-export function getLogTrocas(): LogTroca[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(KEY_LOG_TROCAS);
-    return raw ? (JSON.parse(raw) as LogTroca[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-export function adicionarLogTroca(entry: LogTroca): boolean {
-  const log = getLogTrocas();
-  log.push(entry);
-  try {
-    window.localStorage.setItem(KEY_LOG_TROCAS, JSON.stringify(log));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// ===== Histórico por tipo de sessão (para descanso por grupo muscular e exposição real) =====
-
-export function diasTreinadosPorTipo(tipo: SessaoTreino): string[] {
-  const dias = new Set<string>();
-  for (const s of getLog()) {
-    if (s.cargaKg === null && s.reps === null) continue;
-    const exercicio = getExercicio(s.exercicioId);
-    if (exercicio?.sessao === tipo) dias.add(s.data);
-  }
+// Uma sessão conta como concluída se foi terminada no timer OU se tem série registrada
+// (quem esquece de apertar "Terminar" não perde a sessão). Registros do PPL não entram:
+// têm tipo PUSH/PULL/LEGS e séries sem `sessao`.
+export function sessoesConcluidas(dataInicioISO: string): SessaoConcluida[] {
+  const porChave = new Map<string, SessaoConcluida>();
   for (const lista of Object.values(getTodasSessoes())) {
-    for (const sessao of lista) {
-      if (sessao.sessaoTipo === tipo && sessao.fimISO) dias.add(sessao.data);
+    for (const r of lista) {
+      if (!r.fimISO || r.data < dataInicioISO || !ehSessaoDoPrograma(r.sessaoTipo)) continue;
+      porChave.set(`${r.data}:${r.sessaoTipo}`, { data: r.data, tipo: r.sessaoTipo, quando: r.fimISO });
     }
   }
-  return Array.from(dias).sort();
+  for (const s of getLog()) {
+    if (!s.sessao || s.data < dataInicioISO || (s.cargaKg === null && s.reps === null)) continue;
+    const chave = `${s.data}:${s.sessao}`;
+    const atual = porChave.get(chave);
+    if (!atual || s.registradoEm > atual.quando) porChave.set(chave, { data: s.data, tipo: s.sessao, quando: s.registradoEm });
+  }
+  return Array.from(porChave.values()).sort((a, b) => (a.quando < b.quando ? -1 : 1));
 }
 
 export function diasTreinadosUnicos(): string[] {
@@ -253,28 +228,81 @@ export function diasTreinadosUnicos(): string[] {
   return Array.from(dias).sort();
 }
 
-export function contarSessoesConcluidasTotal(dataInicioISO?: string): number {
-  const chaves = new Set<string>();
-  for (const lista of Object.values(getTodasSessoes())) {
-    for (const sessao of lista) {
-      if (sessao.fimISO && (!dataInicioISO || sessao.data >= dataInicioISO)) {
-        if (sessao.sessaoTipo === "PUSH" || sessao.sessaoTipo === "PULL" || sessao.sessaoTipo === "LEGS") {
-          chaves.add(`${sessao.data}:${sessao.sessaoTipo}`);
-        }
-      }
-    }
+// ===== Calibração RIR (rodada 1) =====
+
+export function getPalpites(): PalpiteCalibracao[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(KEY_CALIBRACAO);
+    return raw ? (JSON.parse(raw) as PalpiteCalibracao[]) : [];
+  } catch {
+    return [];
   }
-  for (const s of getLog()) {
-    if ((s.cargaKg !== null || s.reps !== null) && (!dataInicioISO || s.data >= dataInicioISO)) {
-      const exercicio = getExercicio(s.exercicioId);
-      if (exercicio && (exercicio.sessao === "PUSH" || exercicio.sessao === "PULL" || exercicio.sessao === "LEGS")) {
-        chaves.add(`${s.data}:${exercicio.sessao}`);
-      }
-    }
-  }
-  return chaves.size;
 }
 
+export function getPalpite(exercicioId: string, data: string): number | null {
+  return getPalpites().find((p) => p.exercicioId === exercicioId && p.data === data)?.palpite ?? null;
+}
+
+export function salvarPalpite(entry: PalpiteCalibracao): boolean {
+  const lista = getPalpites().filter((p) => !(p.exercicioId === entry.exercicioId && p.data === entry.data));
+  lista.push(entry);
+  try {
+    window.localStorage.setItem(KEY_CALIBRACAO, JSON.stringify(lista));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Erro médio (real − palpite) da calibração. O "real" é a última série registrada do
+// exercício naquele dia. Erro médio > 2 = você para cedo demais.
+export function erroMedioCalibracao(): { amostras: number; erroMedio: number | null } {
+  const log = getLog();
+  const erros: number[] = [];
+  for (const p of getPalpites()) {
+    const doDia = log.filter((s) => s.exercicioId === p.exercicioId && s.data === p.data && s.reps !== null);
+    if (doDia.length === 0) continue;
+    const ultima = doDia.reduce((a, b) => (b.serieNumero > a.serieNumero ? b : a));
+    erros.push((ultima.reps as number) - p.palpite);
+  }
+  if (erros.length === 0) return { amostras: 0, erroMedio: null };
+  return { amostras: erros.length, erroMedio: Math.round((erros.reduce((a, b) => a + b, 0) / erros.length) * 10) / 10 };
+}
+
+// ===== Migração PPL → U/L/PPL Meso 1 =====
+// Roda uma vez por dispositivo. Tira um snapshot de TODAS as chaves do app para
+// `treino:arquivo:ppl-v4` (nada se perde), apaga as chaves que só existiam no PPL e
+// recomeça a contagem do programa a partir de hoje. Séries, sessões e bike continuam:
+// são histórico real e aparecem nos relatórios.
+
+export function migrarParaMeso1(hojeISO: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const ls = window.localStorage;
+    if (ls.getItem(KEY_VERSAO) === VERSAO_PROGRAMA) return;
+
+    const snapshot: Record<string, string> = {};
+    for (let i = 0; i < ls.length; i++) {
+      const chave = ls.key(i);
+      if (chave && (chave.startsWith("treino:") || chave.startsWith("draft_session_"))) {
+        snapshot[chave] = ls.getItem(chave) ?? "";
+      }
+    }
+    if (Object.keys(snapshot).length > 0) {
+      ls.setItem(KEY_ARQUIVO_PPL, JSON.stringify({ arquivadoEm: new Date().toISOString(), chaves: snapshot }));
+    }
+
+    for (const chave of CHAVES_STORAGE_PPL_V4) ls.removeItem(chave);
+    for (const chave of Object.keys(snapshot)) {
+      if (chave.startsWith("draft_session_")) ls.removeItem(chave);
+    }
+    ls.setItem(KEY_INICIO, hojeISO);
+    ls.setItem(KEY_VERSAO, VERSAO_PROGRAMA);
+  } catch {
+    // sem storage (aba privada, cota cheia): o app segue funcionando sem migrar
+  }
+}
 
 // ===== Bike Indoor =====
 

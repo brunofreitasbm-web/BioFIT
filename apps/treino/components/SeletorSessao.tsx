@@ -3,13 +3,10 @@
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { statusDescansoPorSessao } from "@/lib/descanso";
+import { SESSOES, SESSAO_NOME } from "@/lib/exercicios";
 import type { EscolhaDoDia, SessaoTreino } from "@/lib/tipos";
 
-const OPCOES: { tipo: SessaoTreino; label: string }[] = [
-  { tipo: "PUSH", label: "Push" },
-  { tipo: "PULL", label: "Pull" },
-  { tipo: "LEGS", label: "Legs" },
-];
+const OPCOES = SESSOES.map((tipo) => ({ tipo, label: `${tipo} · ${SESSAO_NOME[tipo]}` }));
 
 export function SeletorSessao({
   hojeISO,
@@ -18,15 +15,15 @@ export function SeletorSessao({
   onEscolher,
 }: {
   hojeISO: string;
-  sessaoSugerida: SessaoTreino | null;
+  sessaoSugerida: SessaoTreino;
   valorAtual: EscolhaDoDia | null;
   onEscolher: (valor: EscolhaDoDia) => void;
 }) {
-  const efetivo: EscolhaDoDia | null = valorAtual ?? sessaoSugerida ?? "DESCANSO";
+  const efetivo: EscolhaDoDia = valorAtual ?? sessaoSugerida;
 
   return (
     <div className="mb-3">
-      <p className="mb-1.5 text-xs font-medium text-ink-muted">Treino de hoje</p>
+      <p className="mb-1.5 text-xs font-medium text-ink-muted">Treino de hoje — siga a fila A → E</p>
       <div className="flex flex-wrap gap-2">
         {OPCOES.map((op) => {
           const status = statusDescansoPorSessao(op.tipo, hojeISO);
@@ -52,7 +49,7 @@ export function SeletorSessao({
                 />
               )}
               {op.tipo === sessaoSugerida && !selecionado && (
-                <span className="text-[10px] font-normal opacity-70">sugestão</span>
+                <span className="text-[10px] font-normal opacity-70">próximo</span>
               )}
             </button>
           );

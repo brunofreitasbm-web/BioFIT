@@ -10,7 +10,7 @@ import {
 } from "@/lib/relatorio";
 import { corCalor } from "@/lib/cor";
 import { cn } from "@/lib/cn";
-import { ArrowUpCircle, ArrowDownCircle, Footprints, type LucideIcon } from "lucide-react";
+import { SESSAO_NOME } from "@/lib/exercicios";
 
 const PERIODOS: { label: string; valor: number | "tudo" }[] = [
   { label: "7 dias", valor: 7 },
@@ -18,11 +18,9 @@ const PERIODOS: { label: string; valor: number | "tudo" }[] = [
   { label: "Tudo", valor: "tudo" },
 ];
 
-const ICONE_SESSAO: Record<FrequenciaSessao["tipo"], LucideIcon> = {
-  PUSH: ArrowUpCircle,
-  PULL: ArrowDownCircle,
-  LEGS: Footprints,
-};
+function nomeTipo(tipo: FrequenciaSessao["tipo"]): string {
+  return tipo === "PPL" ? "Programa anterior (PPL)" : SESSAO_NOME[tipo];
+}
 
 function formatarDataBR(dataIso: string | null): string {
   if (!dataIso) return "—";
@@ -88,15 +86,14 @@ export default function FrequenciaPage() {
         {totalSessoes === 0 ? (
           <p className="py-4 text-center text-xs text-ink-muted">Nenhum treino concluído no período selecionado.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {porSessao.map((s) => (
               <div key={s.tipo} className="rounded-lg border border-line/60 bg-base-900 p-3">
                 <div className="flex items-center gap-2">
-                  {(() => {
-                    const Icone = ICONE_SESSAO[s.tipo];
-                    return <Icone aria-hidden="true" size={18} strokeWidth={2} className="text-brand" />;
-                  })()}
-                  <span className="text-xs font-bold text-ink">{s.tipo}</span>
+                  <span className="flex h-6 min-w-6 items-center justify-center rounded-md bg-brand-soft px-1 text-xs font-bold text-brand">
+                    {s.tipo === "PPL" ? "—" : s.tipo}
+                  </span>
+                  <span className="text-xs font-semibold text-ink">{nomeTipo(s.tipo)}</span>
                 </div>
                 <p className="mt-2 text-2xl font-semibold text-ink">{s.sessoesConcluidas}</p>
                 <p className="text-[11px] text-ink-muted">

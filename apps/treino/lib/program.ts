@@ -1,34 +1,15 @@
-import type { Sessao, SessaoTreino } from "./tipos";
-import { contarSessoesConcluidasTotal } from "./storage";
+import type { SessaoTreino } from "./tipos";
+import { SESSOES } from "./exercicios";
+import { getSessoesDoDia, sessoesConcluidas } from "./storage";
 
-// A progressão da periodização é baseada na execução dos treinos (e não em calendário).
-// Cada semana do ciclo de treino exige 6 sessões concluídas (Push/Pull/Legs 2x).
-// Ciclo total: 8 semanas de treino (48 sessões) + 1 semana de deload (6 sessões) = 54 sessões no total.
-export const SESSOES_POR_SEMANA = 6;
-export const SEMANAS_TRABALHO = 8;
-export const DIAS_TRABALHO = 56; // Mantido para compatibilidade de tipos/labels
-export const DIAS_DELOAD = 7;
-export const CICLO_TOTAL_DIAS = 63;
-export const SESSOES_TRABALHO = SEMANAS_TRABALHO * SESSOES_POR_SEMANA; // 48 sessões
-export const SESSOES_DELOAD = 6;
-export const CICLO_TOTAL_SESSOES = SESSOES_TRABALHO + SESSOES_DELOAD; // 54 sessões
-
-export const SEQUENCIA_SESSAO: SessaoTreino[] = ["PUSH", "PULL", "LEGS", "PUSH", "PULL", "LEGS"];
-
-// Seg/Qui = PUSH, Ter/Sex = PULL, Qua/Sáb = LEGS, Dom = OFF — usado apenas como fallback de calendário.
-const SESSAO_POR_DIA_SEMANA: Record<number, SessaoTreino | null> = {
-  0: null, // domingo
-  1: "PUSH",
-  2: "PULL",
-  3: "LEGS",
-  4: "PUSH",
-  5: "PULL",
-  6: "LEGS",
-};
-
-export function sessaoDoDia(data: Date): SessaoTreino | null {
-  return SESSAO_POR_DIA_SEMANA[data.getDay()];
-}
+// Programa sequencial: 1 rodada = A+B+C+D+E (5 sessões). Rodadas 1–4 = treino, rodada 5 =
+// deload, depois troca de mesociclo (todos os exercícios mudam). A contagem é por sessões
+// concluídas, não por calendário: semana fraca alonga o meso, mas cada exercício recebe as
+// mesmas 4 exposições.
+export const SESSOES_POR_RODADA = 5;
+export const RODADAS_TREINO = 4;
+export const RODADA_DELOAD = 5;
+export const SESSOES_POR_MESO = SESSOES_POR_RODADA * RODADA_DELOAD; // 25
 
 export function toISODate(d: Date): string {
   const y = d.getFullYear();
@@ -37,59 +18,85 @@ export function toISODate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-function startOfDay(d: Date): Date {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+export function addDiasISO(iso: string, dias: number): string {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + dias);
+  return toISODate(d);
 }
 
-function diffDays(a: Date, b: Date): number {
-  return Math.round((startOfDay(a).getTime() - startOfDay(b).getTime()) / 86400000);
+export function proximaDaFila(sessao: SessaoTreino): SessaoTreino {
+  return SESSOES[(SESSOES.indexOf(sessao) + 1) % SESSOES.length];
+}
+
+// Sessão sugerida para hoje: se hoje já começou/terminou alguma sessão do programa, é ela
+// (o app não pula para a próxima no meio do dia). Senão, a seguinte à última concluída.
+export function sessaoSugerida(dataInicioISO: string, hojeISO: string): SessaoTreino {
+  const deHoje = getSessoesDoDia(hojeISO).filter((r) => (SESSOES as string[]).includes(r.sessaoTipo));
+  if (deHoje.length > 0) return deHoje[deHoje.length - 1].sessaoTipo as SessaoTreino;
+  const concluidas = sessoesConcluidas(dataInicioISO);
+  const ultima = concluidas[concluidas.length - 1];
+  return ultima ? proximaDaFila(ultima.tipo) : "A";
 }
 
 export interface StatusPrograma {
-  diasDesdeInicio: number;
   totalConcluidas: number;
-  concluidasNaSemana: number;
-  esperadoNaSemana: number;
+  meso: number; // 1, 2, 3...
+  rodada: number; // 1–5 (5 = deload)
   isDeload: boolean;
-  semana: number; // 1-8 (semana de trabalho ou 8 no deload)
-  cicloStartDate: Date;
-  proximaSessaoLabel: string;
-  proximaSessaoTipo: SessaoTreino | null;
+  concluidasNaRodada: number; // 0–4, sem contar a sessão de hoje
 }
 
-export function getStatusPrograma(dataInicioISO: string, hoje: Date = new Date()): StatusPrograma | null {
-  const inicio = startOfDay(new Date(dataInicioISO + "T00:00:00"));
-  const t = startOfDay(hoje);
-  const dias = diffDays(t, inicio);
-  if (dias < 0) return null;
-
-  const totalConcluidas = contarSessoesConcluidasTotal(dataInicioISO);
-  const posNoCiclo = totalConcluidas % CICLO_TOTAL_SESSOES;
-  const isDeload = posNoCiclo >= SESSOES_TRABALHO;
-  const semana = isDeload ? SEMANAS_TRABALHO : Math.floor(posNoCiclo / SESSOES_POR_SEMANA) + 1;
-  const concluidasNaSemana = isDeload
-    ? posNoCiclo - SESSOES_TRABALHO
-    : posNoCiclo % SESSOES_POR_SEMANA;
-
-  const proximaSessaoTipo = SEQUENCIA_SESSAO[concluidasNaSemana % SESSOES_POR_SEMANA];
-  const proximaSessaoLabel = proximaSessaoTipo;
-
+// Status da sessão que está sendo feita hoje. A própria sessão de hoje não entra na conta —
+// senão, ao terminar a 5ª sessão da rodada, a tela pularia para a rodada seguinte.
+export function getStatusPrograma(dataInicioISO: string, hojeISO: string, sessaoHoje: SessaoTreino | null): StatusPrograma {
+  const anteriores = sessoesConcluidas(dataInicioISO).filter((s) => !(s.data === hojeISO && s.tipo === sessaoHoje));
+  const total = anteriores.length;
+  const posNoMeso = total % SESSOES_POR_MESO;
+  const rodada = Math.floor(posNoMeso / SESSOES_POR_RODADA) + 1;
   return {
-    diasDesdeInicio: dias,
-    totalConcluidas,
-    concluidasNaSemana,
-    esperadoNaSemana: SESSOES_POR_SEMANA,
-    isDeload,
-    semana,
-    cicloStartDate: inicio,
-    proximaSessaoLabel,
-    proximaSessaoTipo,
+    totalConcluidas: total,
+    meso: Math.floor(total / SESSOES_POR_MESO) + 1,
+    rodada,
+    isDeload: rodada === RODADA_DELOAD,
+    concluidasNaRodada: posNoMeso % SESSOES_POR_RODADA,
   };
 }
 
-export const SESSAO_LABEL: Record<Sessao, string> = {
-  PUSH: "Push (peito, ombro, tríceps)",
-  PULL: "Pull (costas, posterior de ombro, bíceps)",
-  LEGS: "Legs (pernas, panturrilha)",
-  POSTURAL: "Postural",
-};
+// Deload: metade das séries (arredondando para cima, mínimo 1).
+export function seriesDaRodada(series: number, isDeload: boolean): number {
+  return isDeload ? Math.max(1, Math.ceil(series / 2)) : series;
+}
+
+// ===== Gatilho de aderência (aba "Aderência") =====
+// Janela de 14 dias a partir do início. Meta 10 sessões; menos de 8 → o programa cai
+// para Upper/Lower 4x, sem renegociação.
+export const ADERENCIA_JANELA_DIAS = 14;
+export const ADERENCIA_META = 10;
+export const ADERENCIA_MINIMO = 8;
+
+export type DecisaoAderencia = "EM_ANDAMENTO" | "MANTER_5X" | "CAIR_UPPER_LOWER";
+
+export interface StatusAderencia {
+  inicio: string;
+  fim: string; // último dia da janela (inclusivo)
+  realizadas: number;
+  diasRestantes: number; // 0 quando a janela acabou
+  decisao: DecisaoAderencia;
+}
+
+// TODO(human): decidir a aderência.
+// Entradas: `realizadas` (sessões A–E concluídas dentro da janela) e `diasRestantes`
+// (dias da janela que ainda não passaram, contando hoje; 0 = janela encerrada).
+// Deve devolver "EM_ANDAMENTO", "MANTER_5X" ou "CAIR_UPPER_LOWER".
+export function decidirAderencia(realizadas: number, diasRestantes: number): DecisaoAderencia {
+  return "EM_ANDAMENTO";
+}
+
+export function getStatusAderencia(dataInicioISO: string, hojeISO: string): StatusAderencia {
+  const fim = addDiasISO(dataInicioISO, ADERENCIA_JANELA_DIAS - 1);
+  const realizadas = sessoesConcluidas(dataInicioISO).filter((s) => s.data <= fim).length;
+  const msPorDia = 86400000;
+  const diasAteFim = Math.round((new Date(fim + "T00:00:00").getTime() - new Date(hojeISO + "T00:00:00").getTime()) / msPorDia);
+  const diasRestantes = Math.max(0, Math.min(ADERENCIA_JANELA_DIAS, diasAteFim + 1));
+  return { inicio: dataInicioISO, fim, realizadas, diasRestantes, decisao: decidirAderencia(realizadas, diasRestantes) };
+}

@@ -10,6 +10,7 @@ const GRUPO_CLASSE: Record<GrupoMuscular, string> = {
   "Tríceps": "bg-[#E0E7FF] text-[#4338CA] border-[#C7D2FE]",
   "Quadríceps": "bg-[#E0F2FE] text-[#0369A1] border-[#BAE6FD]", // Sky-100 / Sky-700 / Sky-200 (~5.8:1)
   Posterior: "bg-[#EDE9FE] text-[#6D28D9] border-[#DDD6FE]", // Violet-100 / Violet-700 / Violet-200 (~6.1:1)
+  "Glúteo": "bg-[#FFEDD5] text-[#C2410C] border-[#FED7AA]", // Orange-100 / Orange-700 / Orange-200
   Panturrilha: "bg-[#CCFBF1] text-[#0F766E] border-[#99F6E4]",
   Postura: "bg-[#FAE8FF] text-[#A21CAF] border-[#F5D0FE]",
   Core: "bg-[#FFE4E6] text-[#BE123C] border-[#FECDD3]",

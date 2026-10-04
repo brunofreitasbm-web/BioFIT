@@ -1,22 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getDataInicio, getSessaoEscolhida, setSessaoEscolhida } from "@/lib/storage";
-import { getStatusPrograma, sessaoDoDia, toISODate, SESSAO_LABEL, type StatusPrograma } from "@/lib/program";
-import { POSTURAL } from "@/lib/exercicios";
-import { getSessaoCompleta } from "@/lib/programaAtual";
-import { gerarInsightHoje, gerarInsightAmanha } from "@/lib/motivacao";
-import { progressoSemana, progressoCiclo } from "@/lib/progresso";
+import { getDataInicio, getSessaoEscolhida, migrarParaMeso1, setSessaoEscolhida } from "@/lib/storage";
+import { addDiasISO, getStatusAderencia, getStatusPrograma, sessaoSugerida as calcularSessaoSugerida, toISODate } from "@/lib/program";
+import { getSessaoCompleta, SESSAO_LABEL, SESSAO_NOME } from "@/lib/exercicios";
+import { gerarInsightHoje, gerarInsightProximo } from "@/lib/motivacao";
 import { ExercicioCard } from "@/components/ExercicioCard";
-import { ExercicioPosturalCard } from "@/components/ExercicioPosturalCard";
-import { GuiaModal, dataInicioPadrao } from "@/components/GuiaModal";
+import { GuiaModal } from "@/components/GuiaModal";
 import { SeletorSessao } from "@/components/SeletorSessao";
 import { TreinoTimer } from "@/components/TreinoTimer";
 import { BikeIndoorCard } from "@/components/BikeIndoorCard";
-import { ProgressoBloco } from "@/components/ProgressoBloco";
-import { ProgressoCiclo } from "@/components/ProgressoCiclo";
+import { ProgressoMeso } from "@/components/ProgressoMeso";
+import { AderenciaCard } from "@/components/AderenciaCard";
 import type { EscolhaDoDia } from "@/lib/tipos";
-import { AlertTriangle, ChevronDown, ChevronUp, Coffee, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, Coffee, CheckCircle2 } from "lucide-react";
 
 
 const DIAS_SEMANA_LABEL = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -25,28 +22,28 @@ export default function HojePage() {
   const [pronto, setPronto] = useState(false);
   const [dataInicio, setDataInicioState] = useState<string>("");
   const [hoje] = useState(() => new Date());
-  const [postural, setPostural] = useState(false);
   const [escolha, setEscolha] = useState<EscolhaDoDia | null>(null);
   const [exercicioAbertoId, setExercicioAbertoId] = useState<string | null>(null);
-  const [posturalAbertoId, setPosturalAbertoId] = useState<string | null>(null);
   const [progressoPorExercicio, setProgressoPorExercicio] = useState<Record<string, { feitas: number; total: number }>>({});
 
   const hojeISO = toISODate(hoje);
 
   useEffect(() => {
-    setDataInicioState(getDataInicio() ?? dataInicioPadrao());
+    migrarParaMeso1(hojeISO);
+    setDataInicioState(getDataInicio() ?? hojeISO);
     setEscolha(getSessaoEscolhida(hojeISO));
     setPronto(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const status: StatusPrograma | null = pronto ? getStatusPrograma(dataInicio, hoje) : null;
-  const sessaoSugerida = status?.proximaSessaoTipo ?? sessaoDoDia(hoje);
+  const sessaoSugerida = pronto ? calcularSessaoSugerida(dataInicio, hojeISO) : "A";
   const sessaoEfetiva = escolha === "DESCANSO" ? null : (escolha ?? sessaoSugerida);
-  const exercicios = sessaoEfetiva ? getSessaoCompleta(sessaoEfetiva) : [];
+  const status = pronto ? getStatusPrograma(dataInicio, hojeISO, sessaoEfetiva) : null;
+  const aderencia = pronto ? getStatusAderencia(dataInicio, hojeISO) : null;
+  const exercicios = sessaoEfetiva && status ? getSessaoCompleta(sessaoEfetiva, status.meso) : [];
 
   const insightHoje = status ? gerarInsightHoje(status, hojeISO, sessaoEfetiva) : null;
-  const insightAmanha = status ? gerarInsightAmanha(status) : null;
+  const insightProximo = status ? gerarInsightProximo(sessaoEfetiva, sessaoSugerida, status.meso) : null;
 
   // Fluxo guiado: mantém só um exercício da sessão principal aberto por vez. Ao completar
   // todas as séries do exercício aberto, avança sozinho para o próximo pendente da lista.
@@ -72,10 +69,6 @@ export default function HojePage() {
 
   const handleToggleExercicio = useCallback((id: string) => {
     setExercicioAbertoId((atual) => (atual === id ? null : id));
-  }, []);
-
-  const handleTogglePostural = useCallback((id: string) => {
-    setPosturalAbertoId((atual) => (atual === id ? null : id));
   }, []);
 
   function escolher(valor: EscolhaDoDia) {
@@ -126,7 +119,7 @@ export default function HojePage() {
         <div>
           <p className="text-xs font-medium text-ink-faint">{DIAS_SEMANA_LABEL[hoje.getDay()]}</p>
           <h1 className="text-xl font-bold tracking-tight text-ink">
-            {sessaoEfetiva ? `Treino de hoje: ${sessaoEfetiva}` : "Hoje é dia de descanso"}
+            {sessaoEfetiva ? `Treino ${sessaoEfetiva} · ${SESSAO_NOME[sessaoEfetiva]}` : "Hoje é dia de descanso"}
           </h1>
         </div>
         <GuiaModal dataInicio={dataInicio} onDataInicioChange={setDataInicioState} />
@@ -183,53 +176,20 @@ export default function HojePage() {
 
       {sessaoEfetiva && status && <TreinoTimer hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} />}
 
-      {status && (
-        <>
-          <ProgressoBloco info={progressoSemana(status)} />
-          <ProgressoCiclo segmentos={progressoCiclo(status)} />
-        </>
-      )}
+      {status && <ProgressoMeso status={status} />}
+      {aderencia && hojeISO <= addDiasISO(aderencia.fim, 7) && <AderenciaCard aderencia={aderencia} />}
       {status?.isDeload && sessaoEfetiva && (
         <div className="mb-4 flex items-start gap-2 rounded-xl border border-danger/30 bg-danger-soft px-3 py-2.5">
           <AlertTriangle aria-hidden="true" size={16} strokeWidth={2.25} className="mt-0.5 shrink-0 text-danger" />
           <p className="text-xs font-medium text-danger">
-            Semana de deload — metade das séries, esforço leve, cargas reduzidas em 10%.
+            Rodada de deload — metade das séries, mesmas reps, carga −10%, longe da falha. Depois dela, todos os
+            exercícios trocam.
           </p>
         </div>
       )}
 
-      {sessaoEfetiva && (
+      {sessaoEfetiva && status && (
         <>
-          <section className="mb-4">
-            <button
-              type="button"
-              onClick={() => setPostural((v) => !v)}
-              aria-expanded={postural}
-              aria-controls="bloco-postural-container"
-              className="mb-2 flex min-h-11 w-full items-center justify-between text-sm font-medium text-ink-muted focus-visible:outline-none"
-            >
-              <span>Bloco postural diário (em casa, fora da academia)</span>
-              {postural ? (
-                <ChevronUp aria-hidden="true" size={16} />
-              ) : (
-                <ChevronDown aria-hidden="true" size={16} />
-              )}
-            </button>
-            {postural && (
-              <div id="bloco-postural-container" className="space-y-2">
-                {POSTURAL.map((ex) => (
-                  <ExercicioPosturalCard
-                    key={ex.id}
-                    exercicio={ex}
-                    data={hojeISO}
-                    expandido={posturalAbertoId === ex.id}
-                    onToggleExpandido={() => handleTogglePostural(ex.id)}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-
           <section className="mb-4">
             <h2 className="mb-2 text-sm font-semibold text-ink">{SESSAO_LABEL[sessaoEfetiva]}</h2>
             <div className="space-y-2">
@@ -237,6 +197,7 @@ export default function HojePage() {
                 <ExercicioCard
                   key={ex.id}
                   exercicio={ex}
+                  status={status}
                   data={hojeISO}
                   expandido={exercicioAbertoId === ex.id}
                   onToggleExpandido={() => handleToggleExercicio(ex.id)}
@@ -248,10 +209,10 @@ export default function HojePage() {
         </>
       )}
 
-      {insightAmanha && (
+      {insightProximo && (
         <div className="mt-2 rounded-xl border border-line bg-base-800 p-3 shadow-panel">
-          <p className="text-sm font-semibold text-ink">{insightAmanha.titulo}</p>
-          <p className="mt-1 text-sm text-ink-muted">{insightAmanha.mensagem}</p>
+          <p className="text-sm font-semibold text-ink">{insightProximo.titulo}</p>
+          <p className="mt-1 text-sm text-ink-muted">{insightProximo.mensagem}</p>
         </div>
       )}
     </div>

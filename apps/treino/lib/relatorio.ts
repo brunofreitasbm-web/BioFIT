@@ -17,6 +17,7 @@ const TODOS_GRUPOS: GrupoMuscular[] = [
   "Tríceps",
   "Quadríceps",
   "Posterior",
+  "Glúteo",
   "Panturrilha",
   "Postura",
   "Core",
@@ -55,29 +56,38 @@ export function totalSeriesNoPeriodo(volumes: VolumeGrupo[]): number {
   return volumes.reduce((sum, v) => sum + v.seriesFeitas, 0);
 }
 
+export type TipoFrequencia = SessaoTreino | "PPL";
+
 export interface FrequenciaSessao {
-  tipo: SessaoTreino;
+  tipo: TipoFrequencia;
   sessoesConcluidas: number;
   ultimaData: string | null;
 }
 
-const TIPOS_SESSAO: SessaoTreino[] = ["PUSH", "PULL", "LEGS"];
+// A–E do programa atual + um balde "PPL" para as sessões do programa arquivado, para o
+// período "Tudo" não esconder o histórico anterior.
+const TIPOS_SESSAO: TipoFrequencia[] = ["A", "B", "C", "D", "E", "PPL"];
 
-// Frequência de treinos por tipo (PUSH/PULL/LEGS): quantas sessões concluídas no
-// período e a data mais recente de cada uma, para ver "quais treinos" o usuário fez.
+function tipoFrequencia(sessaoTipo: string): TipoFrequencia {
+  return (TIPOS_SESSAO as string[]).includes(sessaoTipo) ? (sessaoTipo as TipoFrequencia) : "PPL";
+}
+
+// Frequência de treinos por tipo: quantas sessões concluídas no período e a data mais
+// recente de cada uma, para ver "quais treinos" o usuário fez.
 export function calcularFrequenciaPorSessao(periodoDias: number | "tudo", hoje: Date = new Date()): FrequenciaSessao[] {
   const dataLimite = periodoDias === "tudo" ? null : toISODate(addDays(hoje, -periodoDias + 1));
-  const contagem = new Map<SessaoTreino, number>();
-  const ultima = new Map<SessaoTreino, string>();
+  const contagem = new Map<TipoFrequencia, number>();
+  const ultima = new Map<TipoFrequencia, string>();
   for (const tipo of TIPOS_SESSAO) contagem.set(tipo, 0);
 
   for (const lista of Object.values(getTodasSessoes())) {
     for (const sessao of lista) {
       if (!sessao.fimISO) continue;
       if (dataLimite && sessao.data < dataLimite) continue;
-      contagem.set(sessao.sessaoTipo, (contagem.get(sessao.sessaoTipo) ?? 0) + 1);
-      const atual = ultima.get(sessao.sessaoTipo);
-      if (!atual || sessao.data > atual) ultima.set(sessao.sessaoTipo, sessao.data);
+      const tipo = tipoFrequencia(sessao.sessaoTipo);
+      contagem.set(tipo, (contagem.get(tipo) ?? 0) + 1);
+      const atual = ultima.get(tipo);
+      if (!atual || sessao.data > atual) ultima.set(tipo, sessao.data);
     }
   }
 
@@ -85,7 +95,7 @@ export function calcularFrequenciaPorSessao(periodoDias: number | "tudo", hoje: 
     tipo,
     sessoesConcluidas: contagem.get(tipo) ?? 0,
     ultimaData: ultima.get(tipo) ?? null,
-  }));
+  })).filter((f) => f.tipo !== "PPL" || f.sessoesConcluidas > 0);
 }
 
 export interface FrequenciaGrupo {

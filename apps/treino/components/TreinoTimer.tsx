@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Play, Square, CheckCircle2 } from "lucide-react";
 import { getSessaoAtiva, iniciarSessao, reabrirSessao, terminarSessao } from "@/lib/storage";
+import { SESSAO_NOME } from "@/lib/exercicios";
 import type { RegistroSessao, SessaoTreino } from "@/lib/tipos";
 
 function formatarDuracao(ms: number): string {
@@ -15,6 +16,7 @@ function formatarDuracao(ms: number): string {
 }
 
 export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTipo: SessaoTreino }) {
+  const nome = `${sessaoTipo} · ${SESSAO_NOME[sessaoTipo]}`;
   const [registro, setRegistro] = useState<RegistroSessao | null>(null);
   const [agora, setAgora] = useState<number>(0);
 
@@ -36,7 +38,7 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
   }
 
   function terminar() {
-    if (!window.confirm(`Terminar o treino de ${sessaoTipo} agora? Dá pra reabrir depois se precisar.`)) return;
+    if (!window.confirm(`Terminar o treino ${nome} agora? Dá pra reabrir depois se precisar.`)) return;
     terminarSessao(hojeISO, sessaoTipo);
     setRegistro(getSessaoAtiva(hojeISO, sessaoTipo));
   }
@@ -55,7 +57,7 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
         className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 text-center text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-hover active:scale-[0.99]"
       >
         <Play aria-hidden="true" size={17} strokeWidth={2.25} fill="currentColor" />
-        Iniciar treino de {sessaoTipo}
+        Iniciar treino {nome}
       </button>
     );
   }
@@ -67,7 +69,7 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
         <div className="flex flex-1 items-center justify-between rounded-xl border border-line bg-base-800 px-4 py-3">
           <span className="flex items-center gap-1.5 text-sm text-ink-muted">
             <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-danger" aria-hidden="true" />
-            Treino de {sessaoTipo} em andamento
+            Treino {nome} em andamento
           </span>
           <span className="tabular-nums text-sm font-semibold text-ink">{formatarDuracao(decorrido)}</span>
         </div>
@@ -88,7 +90,7 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
     <div className="mb-4 flex items-center justify-between rounded-xl border border-accent/30 bg-accent-soft px-4 py-3">
       <span className="flex items-center gap-1.5 text-sm font-medium text-accent">
         <CheckCircle2 aria-hidden="true" size={17} strokeWidth={2} />
-        Treino de {sessaoTipo} concluído · {formatarDuracao(duracaoFinal)}
+        Treino {nome} concluído · {formatarDuracao(duracaoFinal)}
       </span>
       <button type="button" onClick={reabrir} className="min-h-11 px-2 text-xs font-medium text-ink-muted underline">
         reabrir

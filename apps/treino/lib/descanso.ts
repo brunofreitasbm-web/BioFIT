@@ -1,6 +1,7 @@
-import type { GrupoMuscular, SessaoTreino } from "./tipos";
-import { getExercicio, SLOTS } from "./exercicios";
+import type { ExercicioEfetivo, GrupoMuscular, SessaoTreino } from "./tipos";
+import { getExercicio, gruposDaSessao } from "./exercicios";
 import { getLog } from "./storage";
+import type { StatusPrograma } from "./program";
 
 // Recomendação geral de hipertrofia: pelo menos 48h entre sessões que treinam o mesmo grupo muscular.
 export const MIN_DIAS_DESCANSO = 2;
@@ -18,12 +19,6 @@ function diasEntre(dataAnteriorISO: string, dataAtualISO: string): number {
   return Math.round((b - a) / 86400000);
 }
 
-// Os grupos musculares de cada slot são fixos (pertencem à prescrição do slot, não ao
-// exercício escolhido nele), então dá pra ler direto de SLOTS.
-export function gruposDaSessao(tipo: SessaoTreino): GrupoMuscular[] {
-  return Array.from(new Set(SLOTS.filter((s) => s.sessao === tipo).map((s) => s.grupoMuscular)));
-}
-
 export function statusDescansoPorSessao(tipo: SessaoTreino, hojeISO: string): StatusGrupo[] {
   const grupos = gruposDaSessao(tipo);
   const log = getLog().filter((s) => (s.cargaKg !== null || s.reps !== null) && s.data < hojeISO);
@@ -31,8 +26,7 @@ export function statusDescansoPorSessao(tipo: SessaoTreino, hojeISO: string): St
   return grupos.map((grupo) => {
     let ultimaData: string | null = null;
     for (const s of log) {
-      const exercicio = getExercicio(s.exercicioId);
-      if (exercicio?.grupoMuscular === grupo && (!ultimaData || s.data > ultimaData)) {
+      if (getExercicio(s.exercicioId)?.grupoMuscular === grupo && (!ultimaData || s.data > ultimaData)) {
         ultimaData = s.data;
       }
     }
@@ -46,25 +40,32 @@ export function statusDescansoPorSessao(tipo: SessaoTreino, hojeISO: string): St
   });
 }
 
-// Progressão de RIR: acompanha o número de sessões já registradas NAQUELE exercício
-// específico (não a sessão de treino em geral). Como trocar um exercício do banco troca
-// também o id usado no histórico, a progressão de um exercício recém-trocado reinicia
-// sozinha — sem precisar de nenhum reset manual.
-//   sessões 1-2 = RIR 2-3 (aprendizado motor) · sessões 3-6 = RIR 2 · sessão 7+ = RIR 1
-//   (isoladores podem ir à falha; compostos param em RIR 1)
-export interface EstagioRIR {
-  sessoesFeitas: number;
+// Alvo de esforço por rodada (aba "Guia"):
+//   rodada 1 + "Teste falha" = última série até a falha técnica (calibração do RIR)
+//   rodadas 1–4 = compostos (exercícios 1–2) param com 1–2 reps sobrando; isolados com 0–1
+//   rodada 5 (deload) = longe da falha
+export interface AlvoEsforco {
   rirAlvo: string;
   label: string;
+  testeFalha: boolean;
 }
 
-export function calcularEstagioRIR(sessoesFeitas: number): EstagioRIR {
-  if (sessoesFeitas < 2) return { sessoesFeitas, rirAlvo: "2-3", label: "Aprendizado motor" };
-  if (sessoesFeitas < 6) return { sessoesFeitas, rirAlvo: "2", label: "Progressão" };
-  return { sessoesFeitas, rirAlvo: "1", label: "Carga plena" };
+export function alvoDeEsforco(exercicio: ExercicioEfetivo, status: StatusPrograma): AlvoEsforco {
+  if (status.isDeload) return { rirAlvo: "3-4", label: "Deload: carga −10%, longe da falha", testeFalha: false };
+  if (status.rodada === 1 && exercicio.testeFalha) {
+    return { rirAlvo: "0 na última", label: "Calibração: última série até a falha técnica", testeFalha: true };
+  }
+  return exercicio.composto
+    ? { rirAlvo: "1-2", label: "Composto", testeFalha: false }
+    : { rirAlvo: "0-1", label: "Isolado", testeFalha: false };
 }
 
-// Converte o texto de descanso da planilha ("2-3 min", "90 s", "60-90 s", "-") em segundos,
+// e1RM (Epley), como na aba "Registro": compara exposições com reps diferentes.
+export function e1rm(cargaKg: number, reps: number): number {
+  return Math.round(cargaKg * (1 + reps / 30) * 10) / 10;
+}
+
+// Converte o texto de descanso da planilha ("2-3 min", "90 s", "60-90 s") em segundos,
 // usando o maior valor da faixa (o timer de descanso deve dar o tempo cheio, não o mínimo).
 export function parseDescansoSegundos(descanso: string): number | null {
   const matches = [...descanso.matchAll(/(\d+)\s*(min|s)/g)];

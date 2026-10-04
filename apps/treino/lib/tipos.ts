@@ -1,3 +1,5 @@
+import type { SessaoLegada } from "./arquivo/pplV4";
+
 export type GrupoMuscular =
   | "Peito"
   | "Costas"
@@ -6,63 +8,46 @@ export type GrupoMuscular =
   | "Tríceps"
   | "Quadríceps"
   | "Posterior"
+  | "Glúteo"
   | "Panturrilha"
   | "Postura"
   | "Core";
 
-export type SessaoTreino = "PUSH" | "PULL" | "LEGS";
-export type Sessao = SessaoTreino | "POSTURAL";
+// Sequência fixa A → B → C → D → E → A. Não existe "treino de quarta": faltou um dia, faz o
+// próximo da fila.
+export type SessaoTreino = "A" | "B" | "C" | "D" | "E";
 export type EscolhaDoDia = SessaoTreino | "DESCANSO";
 
-// DIRETO = treina musculatura/padrão ligado à hipercifose (retratores escapulares,
-// trapézio inferior, extensores torácicos). INDIRETO = ajuda por mecanismo secundário.
-// NEUTRO = não serve à postura — a única exigência é não reforçar o padrão errado.
-export type PapelPostural = "DIRETO" | "INDIRETO" | "NEUTRO";
+// Uma variação de exercício para uma posição da sessão. Cada posição tem uma variação para o
+// Mesociclo 1 e outra para o Mesociclo 2 (coluna "Meso 2 (troca)" da planilha).
+// O `id` é do EXERCÍCIO, não da posição: o mesmo exercício em sessões/mesos diferentes
+// (ex.: Hack squat em B no meso 1 e em E no meso 2) compartilha o histórico de carga.
+export interface VariacaoExercicio {
+  id: string;
+  nome: string;
+  partida: string; // "45", "42,5", "calibrar", "peso corporal"
+  notas: string;
+  youtubeId: string | null;
+}
 
-// A prescrição (séries, reps, descanso, execução, papel postural) pertence à POSIÇÃO
-// (slot) dentro da sessão, não ao exercício em si — vale para qualquer opção do banco
-// escolhida naquele slot. Ex.: PUSH slot 1 é sempre 4x6-9, seja supino com barra ou
-// supino com halteres.
+// Prescrição de uma posição dentro da sessão — vale para as duas variações (meso 1 e 2).
 export interface SlotPrograma {
   sessao: SessaoTreino;
-  slot: number; // 1-6
+  ordem: number;
   grupoMuscular: GrupoMuscular;
   series: number;
   reps: string;
   descanso: string;
-  execucao: string; // coluna "Execução" da planilha (cue de execução, não tempo numérico)
-  papelPostural: PapelPostural;
-  papelPosturalNota: string;
-  notas: string;
+  testeFalha: boolean; // "Teste falha (rod.1)" = SIM
+  composto: boolean; // exercícios 1–2 de cada sessão: alvo de esforço RIR 1–2 (isolados: 0–1)
+  pesoCorporal: boolean; // carga opcional no registro
+  bisetCom?: number; // ordem do par no biset (A6 rosca + tríceps)
+  meso1: VariacaoExercicio;
+  meso2: VariacaoExercicio;
 }
 
-// Uma opção do banco de exercícios para uma posição (slot). `origem` é só rótulo de
-// procedência (de qual antigo "Bloco" da v3 a opção veio) — não representa calendário.
-export interface Exercicio {
-  id: string;
-  origem: number;
-  sessao: SessaoTreino;
-  slot: number; // 1-6
-  nome: string;
-  grupoMuscular: GrupoMuscular;
-  youtubeId: string | null;
-}
-
-// Exercício do banco já mesclado com a prescrição do slot — é o formato que a UI consome.
-export interface ExercicioEfetivo extends Exercicio, Omit<SlotPrograma, "sessao" | "slot" | "grupoMuscular"> {}
-
-// Bloco postural: não rotaciona e carrega a própria prescrição (não usa o conceito de slot).
-export interface ExercicioPostural {
-  id: string;
-  ordem: number;
-  nome: string;
-  grupoMuscular: GrupoMuscular;
-  series: number;
-  reps: string;
-  frequencia: string; // "7x/semana" ou "3-4x/semana"
-  notas: string;
-  youtubeId: string | null;
-}
+// Slot já resolvido para o mesociclo corrente — é o formato que a UI consome.
+export interface ExercicioEfetivo extends Omit<SlotPrograma, "meso1" | "meso2">, VariacaoExercicio {}
 
 export interface SerieRegistrada {
   exercicioId: string;
@@ -70,13 +55,15 @@ export interface SerieRegistrada {
   serieNumero: number;
   cargaKg: number | null;
   reps: number | null;
+  rir?: number | null; // só na última série
+  sessao?: SessaoTreino; // a partir do meso 1; registros do PPL não têm
   observacoes?: string;
   registradoEm: string; // ISO timestamp
 }
 
 export interface RegistroSessao {
   data: string; // YYYY-MM-DD
-  sessaoTipo: SessaoTreino;
+  sessaoTipo: SessaoTreino | SessaoLegada;
   inicioISO: string;
   fimISO: string | null;
 }
@@ -88,14 +75,10 @@ export interface RegistroBikeIndoor {
   registradoEm: string; // ISO timestamp
 }
 
-// Registro de troca de exercício de um slot do Programa Atual — espelha a aba "Log de Trocas".
-export interface LogTroca {
+// Aba "Calibração RIR": na rodada 1, antes da última série de um exercício "Teste falha",
+// anota-se o palpite de reps até a falha. O real vem da própria série registrada.
+export interface PalpiteCalibracao {
   data: string; // YYYY-MM-DD
-  sessao: SessaoTreino;
-  slot: number;
-  exercicioAnteriorId: string;
-  exercicioNovoId: string;
-  sessoesNoAnterior: number;
-  cargaReferenciaKg: number | null;
-  motivo: string;
+  exercicioId: string;
+  palpite: number;
 }
