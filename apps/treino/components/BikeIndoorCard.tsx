@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bike, Check, Circle } from "lucide-react";
+import { Bike, Check, Circle, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { getBikeIndoor, saveBikeIndoor, removerBikeIndoor } from "@/lib/storage";
 
@@ -16,6 +16,7 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
   const [tempo, setTempo] = useState<string>("30");
   const [concluido, setConcluido] = useState<boolean>(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [expandido, setExpandido] = useState<boolean>(false);
 
   useEffect(() => {
     const reg = getBikeIndoor(hojeISO);
@@ -106,7 +107,13 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
           : "border-line bg-base-800"
       )}
     >
-      <div className="flex items-center justify-between">
+      <button
+        type="button"
+        onClick={() => setExpandido((prev) => !prev)}
+        aria-expanded={expandido}
+        aria-controls="bike-indoor-content"
+        className="flex w-full items-center justify-between text-left focus:outline-none"
+      >
         <div className="flex items-center gap-2.5">
           <div
             aria-hidden="true"
@@ -138,73 +145,92 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
             </p>
           </div>
         </div>
-      </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1.5 rounded-lg border border-line bg-base-900 px-3 py-1.5">
-          <span className="text-xs text-ink-faint" id="bike-duracao-label">Duração:</span>
-          <input
-            type="number"
-            inputMode="numeric"
-            min="1"
-            max="300"
-            step="1"
-            value={tempo}
-            onChange={handleTempoChange}
-            placeholder="30"
-            aria-labelledby="bike-duracao-label"
-            aria-describedby="bike-duracao-unidade"
-            className="w-12 bg-transparent text-sm font-semibold text-ink text-center outline-none focus:border-brand"
-          />
-          <span className="text-xs font-medium text-ink-muted" id="bike-duracao-unidade">min</span>
+        <div className="flex items-center gap-1 text-ink-faint">
+          {expandido ? (
+            <ChevronUp aria-hidden="true" size={18} />
+          ) : (
+            <ChevronDown aria-hidden="true" size={18} />
+          )}
         </div>
-
-        <div className="flex items-center gap-1">
-          {PRESETS.map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => handlePresetClick(m)}
-              aria-pressed={tempo === m.toString()}
-              className={cn(
-                "min-h-11 rounded-lg border px-2.5 text-xs font-medium transition-colors",
-                tempo === m.toString()
-                  ? "border-brand bg-brand-soft font-semibold text-brand"
-                  : "border-line bg-base-900 text-ink-muted hover:border-brand/40"
-              )}
-            >
-              {m}m
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {erro && (
-        <p role="alert" className="mt-2 text-xs font-medium text-danger">{erro}</p>
-      )}
-
-      <button
-        type="button"
-        disabled={!tempo || parseInt(tempo, 10) <= 0}
-        onClick={handleCheckToggle}
-        className={cn(
-          "mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all active:scale-[0.99]",
-          !tempo || parseInt(tempo, 10) <= 0
-            ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-50"
-            : concluido
-            ? "bg-accent text-white shadow-sm hover:bg-accent/90"
-            : "bg-brand text-white hover:bg-brand-hover shadow-sm"
-        )}
-      >
-        {concluido ? (
-          <Check aria-hidden="true" size={16} strokeWidth={3} />
-        ) : (
-          <Circle aria-hidden="true" size={15} strokeWidth={2.25} />
-        )}
-        <span>
-          {concluido ? `Concluído (${tempo} min)` : "Marcar como Concluído"}
-        </span>
       </button>
+
+      {expandido && (
+        <div id="bike-indoor-content" className="mt-3 pt-3 border-t border-line/50 transition-all">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1.5 rounded-lg border border-line bg-base-900 px-3 py-1.5">
+              <span className="text-xs text-ink-faint" id="bike-duracao-label">
+                Duração:
+              </span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min="1"
+                max="300"
+                step="1"
+                value={tempo}
+                onChange={handleTempoChange}
+                placeholder="30"
+                aria-labelledby="bike-duracao-label"
+                aria-describedby="bike-duracao-unidade"
+                className="w-12 bg-transparent text-sm font-semibold text-ink text-center outline-none focus:border-brand"
+              />
+              <span className="text-xs font-medium text-ink-muted" id="bike-duracao-unidade">
+                min
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              {PRESETS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => handlePresetClick(m)}
+                  aria-pressed={tempo === m.toString()}
+                  className={cn(
+                    "min-h-11 rounded-lg border px-2.5 text-xs font-medium transition-colors",
+                    tempo === m.toString()
+                      ? "border-brand bg-brand-soft font-semibold text-brand"
+                      : "border-line bg-base-900 text-ink-muted hover:border-brand/40"
+                  )}
+                >
+                  {m}m
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {erro && (
+            <p role="alert" className="mt-2 text-xs font-medium text-danger">
+              {erro}
+            </p>
+          )}
+
+          <button
+            type="button"
+            disabled={!tempo || parseInt(tempo, 10) <= 0}
+            onClick={handleCheckToggle}
+            className={cn(
+              "mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all active:scale-[0.99]",
+              !tempo || parseInt(tempo, 10) <= 0
+                ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-50"
+                : concluido
+                ? "bg-accent text-white shadow-sm hover:bg-accent/90"
+                : "bg-brand text-white hover:bg-brand-hover shadow-sm"
+            )}
+          >
+            {concluido ? (
+              <Check aria-hidden="true" size={16} strokeWidth={3} />
+            ) : (
+              <Circle aria-hidden="true" size={15} strokeWidth={2.25} />
+            )}
+            <span>
+              {concluido ? `Concluído (${tempo} min)` : "Marcar como Concluído"}
+            </span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
+
