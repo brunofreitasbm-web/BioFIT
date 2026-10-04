@@ -133,7 +133,7 @@ export default function RelatorioPage() {
             aria-pressed={periodo === p.valor}
             className={cn(
               "min-h-11 rounded-full border px-3.5 text-xs font-medium transition-colors",
-              periodo === p.valor ? "border-brand bg-brand text-white shadow-sm" : "border-line bg-base-800 text-ink-muted hover:text-ink",
+              periodo === p.valor ? "border-brand bg-brand text-on-solid shadow-sm" : "border-line bg-base-800 text-ink-muted hover:text-ink",
             )}
           >
             {p.label}
@@ -248,7 +248,7 @@ export default function RelatorioPage() {
                       <span className="font-medium text-ink">{v.grupo}</span>
                       <span className="text-ink-faint">{v.seriesFeitas} séries</span>
                     </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-base-900">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-base-900 dark:bg-base-700">
                       <div
                         className="h-full rounded-full transition-[width]"
                         style={{ width: `${v.pct}%`, backgroundColor: corCalor(v.pct / 100) }}

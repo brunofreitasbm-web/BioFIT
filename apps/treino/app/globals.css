@@ -2,6 +2,64 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tokens de cor como triplas RGB (consumidas em tailwind.config.ts com <alpha-value>).
+   O tema escuro segue o sistema (prefers-color-scheme). Pares texto/fundo validados a
+   >= 4,5:1 (texto) e >= 3:1 (ícones/UI) em cada tema separadamente. */
+:root {
+  color-scheme: light dark;
+
+  --c-base-950: 20 22 26;
+  --c-base-900: 244 245 247;
+  --c-base-800: 255 255 255;
+  --c-base-700: 241 242 245;
+  --c-base-600: 230 232 236;
+  --c-base-500: 216 219 225;
+  --c-line: 226 228 233;
+  --c-ink: 26 29 35;
+  --c-ink-muted: 91 96 108;
+  --c-ink-faint: 101 107 120;
+  --c-brand: 61 99 224;
+  --c-brand-soft: 233 240 255;
+  --c-brand-hover: 47 79 192;
+  --c-accent: 18 121 58;
+  --c-accent-soft: 231 246 236;
+  --c-danger: 194 45 63;
+  --c-danger-soft: 252 234 236;
+  --c-on-solid: 255 255 255;
+
+  --shadow-panel: 0 1px 2px 0 rgba(20, 22, 26, 0.04), 0 8px 24px -12px rgba(20, 22, 26, 0.12);
+  --shadow-nav: 0 -1px 8px rgba(20, 22, 26, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Superfícies sobem de luminosidade com a elevação: página < card < campo < trilho. */
+    --c-base-950: 20 22 26;
+    --c-base-900: 13 15 20;
+    --c-base-800: 22 25 32;
+    --c-base-700: 30 34 43;
+    --c-base-600: 41 46 58;
+    --c-base-500: 55 61 76;
+    --c-line: 44 49 61;
+    --c-ink: 235 237 241;
+    --c-ink-muted: 164 170 183;
+    --c-ink-faint: 136 143 158;
+    /* Preenchimentos ficam mais claros no escuro; o texto sobre eles inverte (on-solid). */
+    --c-brand: 122 150 255;
+    --c-brand-soft: 27 36 66;
+    --c-brand-hover: 160 181 255;
+    --c-accent: 61 204 117;
+    --c-accent-soft: 18 40 28;
+    --c-danger: 255 107 122;
+    --c-danger-soft: 52 24 30;
+    --c-on-solid: 10 12 18;
+
+    /* Sombra some sobre fundo escuro: ganha um fio de luz no topo para separar o card. */
+    --shadow-panel: inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 8px 24px -12px rgba(0, 0, 0, 0.7);
+    --shadow-nav: 0 -1px 0 rgba(255, 255, 255, 0.04), 0 -8px 24px -12px rgba(0, 0, 0, 0.7);
+  }
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -134,14 +192,14 @@ textarea:focus-visible {
 @keyframes pr-brilho {
   0% {
     transform: scale(0.7);
-    box-shadow: 0 0 0 0 rgba(18, 121, 58, 0.45);
+    box-shadow: 0 0 0 0 rgb(var(--c-accent) / 0.45);
   }
   60% {
     transform: scale(1.08);
   }
   100% {
     transform: scale(1);
-    box-shadow: 0 0 0 10px rgba(18, 121, 58, 0);
+    box-shadow: 0 0 0 10px rgb(var(--c-accent) / 0);
   }
 }
 .anim-pr {
