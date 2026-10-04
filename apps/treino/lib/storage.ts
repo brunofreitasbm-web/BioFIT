@@ -354,3 +354,70 @@ export function getTodosBikeIndoor(): Record<string, RegistroBikeIndoor> {
 }
 
 
+
+// ===== Backup (export/import) =====
+// Tudo que o app guarda vive em chaves "treino:*" do localStorage deste navegador. O backup
+// é um JSON com o valor bruto de cada chave, para restaurar em outro aparelho ou após limpar
+// os dados do site.
+
+const CHAVES_BACKUP = [KEY_LOG, KEY_INICIO, KEY_SESSOES, KEY_ESCOLHAS, KEY_BIKE, KEY_CALIBRACAO, KEY_VERSAO, KEY_ARQUIVO_PPL];
+// Chaves que guardam texto puro (não JSON).
+const CHAVES_TEXTO = [KEY_INICIO, KEY_VERSAO];
+const BACKUP_FORMATO = "biofit-treino-backup";
+
+export interface BackupTreino {
+  formato: typeof BACKUP_FORMATO;
+  versao: 1;
+  exportadoEm: string; // ISO timestamp
+  dados: Record<string, string>;
+}
+
+export function exportarTudo(): BackupTreino {
+  const dados: Record<string, string> = {};
+  if (typeof window !== "undefined") {
+    for (const chave of CHAVES_BACKUP) {
+      const valor = window.localStorage.getItem(chave);
+      if (valor !== null) dados[chave] = valor;
+    }
+  }
+  return { formato: BACKUP_FORMATO, versao: 1, exportadoEm: new Date().toISOString(), dados };
+}
+
+// Valida o arquivo e SUBSTITUI os dados atuais (chaves ausentes no backup são apagadas).
+// Retorna uma mensagem de erro, ou null se deu certo.
+export function importarTudo(texto: string): string | null {
+  if (typeof window === "undefined") return "Indisponível fora do navegador.";
+  let backup: unknown;
+  try {
+    backup = JSON.parse(texto);
+  } catch {
+    return "Arquivo não é um JSON válido.";
+  }
+  const b = backup as Partial<BackupTreino>;
+  if (!b || b.formato !== BACKUP_FORMATO || b.versao !== 1 || typeof b.dados !== "object" || b.dados === null) {
+    return "Arquivo não é um backup do Treino.";
+  }
+  const dados = b.dados as Record<string, unknown>;
+  for (const [chave, valor] of Object.entries(dados)) {
+    // Backups feitos no PPL trazem chaves que não existem mais: são ignoradas.
+    if (CHAVES_STORAGE_PPL_V4.includes(chave)) continue;
+    if (!CHAVES_BACKUP.includes(chave) || typeof valor !== "string") return `Chave inválida no backup: ${chave}`;
+    if (!CHAVES_TEXTO.includes(chave)) {
+      try {
+        JSON.parse(valor);
+      } catch {
+        return `Conteúdo corrompido em ${chave}.`;
+      }
+    }
+  }
+  try {
+    for (const chave of CHAVES_BACKUP) {
+      const valor = dados[chave];
+      if (typeof valor === "string") window.localStorage.setItem(chave, valor);
+      else window.localStorage.removeItem(chave);
+    }
+  } catch {
+    return "Não foi possível gravar no armazenamento do dispositivo.";
+  }
+  return null;
+}

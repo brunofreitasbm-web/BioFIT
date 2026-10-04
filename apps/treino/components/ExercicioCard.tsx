@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronUp, Film, Lightbulb, Timer, Check, Link2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Film, Lightbulb, Timer, Check, Link2, TrendingUp, Trophy } from "lucide-react";
 import type { ExercicioEfetivo, SerieRegistrada } from "@/lib/tipos";
 import { GrupoBadge } from "./GrupoBadge";
 import { VideoModal } from "./VideoModal";
 import { cn } from "@/lib/cn";
 import { alvoDeEsforco, e1rm, parseDescansoSegundos } from "@/lib/descanso";
-import { partidaKg } from "@/lib/exercicios";
+import { EXERCICIOS_ASSISTIDOS, GRUPOS_INFERIORES, partidaKg } from "@/lib/exercicios";
+import { sugerirProximaCarga } from "@/lib/progressao";
+import { estimar1RM, recordesPessoais } from "@/lib/relatorio";
 import { seriesDaRodada, type StatusPrograma } from "@/lib/program";
 import { getPalpite, salvarPalpite, seriesDoExercicioNaData, ultimaExecucao, upsertSerie } from "@/lib/storage";
 
@@ -50,6 +52,10 @@ export function ExercicioCard({
 }) {
   const [series, setSeries] = useState<SerieRegistrada[]>([]);
   const [ultima, setUltima] = useState<SerieRegistrada[]>([]);
+  const [anterior, setAnterior] = useState<SerieRegistrada[]>([]);
+  const [recorde1RMAnterior, setRecorde1RMAnterior] = useState<number | null>(null);
+  // Incrementa a cada toque na sugestão para a linha de input repopular os campos.
+  const [preenchimento, setPreenchimento] = useState<{ kg: string; reps: string; n: number } | null>(null);
   const [videoAberto, setVideoAberto] = useState(false);
   const [descansoRestante, setDescansoRestante] = useState<number | null>(null);
   const [dicasAbertas, setDicasAbertas] = useState(false);
@@ -59,7 +65,11 @@ export function ExercicioCard({
 
   useEffect(() => {
     setSeries(seriesDoExercicioNaData(exercicio.id, data));
-    setUltima(ultimaExecucao(exercicio.id, data));
+    const ult = ultimaExecucao(exercicio.id, data);
+    setUltima(ult);
+    setAnterior(ult.length > 0 ? ultimaExecucao(exercicio.id, ult[0].data) : []);
+    setRecorde1RMAnterior(recordesPessoais(exercicio.id, data).melhor1RM?.kg ?? null);
+    setPreenchimento(null);
     setPalpite(getPalpite(exercicio.id, data)?.toString() ?? "");
     setDescansoRestante(null);
     setDicasAbertas(false);
@@ -78,6 +88,21 @@ export function ExercicioCard({
   const ultimaCarga = ultima.find((s) => s.serieNumero === 1)?.cargaKg ?? null;
   const cargaDeload = status.isDeload && ultimaCarga ? arredondarMeioKg(ultimaCarga * 0.9) : null;
   const cargaInicial = cargaDeload ?? ultimaCarga ?? partidaKg(exercicio.partida);
+
+  const assistencia = EXERCICIOS_ASSISTIDOS.has(exercicio.id);
+  const sugestao = sugerirProximaCarga(
+    exercicio.reps,
+    ultima,
+    anterior,
+    { inferior: GRUPOS_INFERIORES.has(exercicio.grupoMuscular), assistencia },
+    status.isDeload,
+  );
+  // PR de hoje: alguma série confirmada hoje supera o melhor 1RM estimado de antes de hoje.
+  // No Graviton o número é assistência, então "mais kg" não é recorde.
+  const bateuPR =
+    !assistencia &&
+    recorde1RMAnterior !== null &&
+    series.some((s) => s.cargaKg != null && s.reps != null && s.cargaKg > 0 && s.reps > 0 && estimar1RM(s.cargaKg, s.reps) > recorde1RMAnterior + 1e-9);
 
   useEffect(() => {
     onProgresso?.(exercicio.id, feitas, totalSeries);
@@ -172,6 +197,11 @@ export function ExercicioCard({
               </span>
               <span className="truncate font-medium">{exercicio.nome}</span>
               {completo && <Check aria-hidden="true" size={16} strokeWidth={3} className="shrink-0 text-accent" />}
+              {bateuPR && (
+                <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent">
+                  <Trophy aria-hidden="true" size={11} strokeWidth={2.5} /> PR
+                </span>
+              )}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <GrupoBadge grupo={exercicio.grupoMuscular} />
@@ -233,8 +263,24 @@ export function ExercicioCard({
             </div>
           )}
           <p className="mb-2 text-[11px] text-brand">{ultimaResumo ?? partidaTexto}</p>
-          {cargaDeload !== null && (
-            <p className="mb-2 text-[11px] font-medium text-danger">Carga de deload: {cargaDeload} kg (−10%)</p>
+          {sugestao && (
+            <button
+              type="button"
+              onClick={() =>
+                setPreenchimento((p) => ({ kg: String(sugestao.cargaKg), reps: String(sugestao.repsPreencher), n: (p?.n ?? 0) + 1 }))
+              }
+              className="mb-2 flex min-h-11 w-full items-center gap-2 rounded-lg border border-brand/30 bg-brand-soft px-3 py-2 text-left"
+              aria-label={`Usar sugestão: ${sugestao.cargaKg} kg por ${sugestao.repsAlvo} repetições`}
+            >
+              <TrendingUp aria-hidden="true" size={16} strokeWidth={2} className="shrink-0 text-brand" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-semibold text-brand">
+                  Hoje: {String(sugestao.cargaKg).replace(".", ",")} kg × {sugestao.repsAlvo}
+                </span>
+                <span className="block text-[11px] text-ink-muted">{sugestao.motivo}</span>
+              </span>
+              <span className="shrink-0 text-[11px] font-medium text-brand underline">usar</span>
+            </button>
           )}
 
           {alvo.testeFalha && (
@@ -321,6 +367,7 @@ export function ExercicioCard({
                 ultima={ultima}
                 cargaInicial={cargaInicial}
                 cargaOpcional={exercicio.pesoCorporal}
+                preenchimento={preenchimento}
                 onConfirmarTodas={confirmarTodas}
               />
             </div>
@@ -364,6 +411,7 @@ function LinhaReplicada({
   ultima,
   cargaInicial,
   cargaOpcional,
+  preenchimento,
   onConfirmarTodas,
 }: {
   totalSeries: number;
@@ -371,6 +419,7 @@ function LinhaReplicada({
   ultima: SerieRegistrada[];
   cargaInicial: number | null;
   cargaOpcional: boolean;
+  preenchimento: { kg: string; reps: string; n: number } | null;
   onConfirmarTodas: (kg: string, reps: string) => void;
 }) {
   const primeira = series.find((s) => s.serieNumero === 1);
@@ -385,6 +434,13 @@ function LinhaReplicada({
     setReps((primeira?.reps ?? ultimaPrimeira?.reps ?? "").toString());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [primeira?.cargaKg, primeira?.reps, cargaInicial, ultimaPrimeira?.reps]);
+
+  // Toque em "usar" na sugestão de progressão: sobrescreve os campos (sem confirmar).
+  useEffect(() => {
+    if (!preenchimento) return;
+    setKg(preenchimento.kg);
+    setReps(preenchimento.reps);
+  }, [preenchimento]);
 
   const isDisabled = !entradaValida(kg, reps, cargaOpcional);
   const kgPlaceholder = cargaOpcional ? "opcional" : "kg";

@@ -127,6 +127,12 @@ export const SLOTS: SlotPrograma[] = [
     meso2: v("prancha-frontal-carga", "Prancha frontal com carga", "calibrar", "", "0Mwk0RRUCxE") },
 ];
 
+// Exercícios em que o número registrado é a ASSISTÊNCIA (progredir = descer o número).
+export const EXERCICIOS_ASSISTIDOS = new Set(["graviton-neutra"]);
+
+// Grupos de membro inferior: na progressão a carga sobe +5% (superior: menor incremento).
+export const GRUPOS_INFERIORES = new Set<GrupoMuscular>(["Quadríceps", "Posterior", "Glúteo", "Panturrilha"]);
+
 export const SESSOES: SessaoTreino[] = ["A", "B", "C", "D", "E"];
 
 export const SESSAO_NOME: Record<SessaoTreino, string> = {

@@ -84,12 +84,11 @@ export interface StatusAderencia {
   decisao: DecisaoAderencia;
 }
 
-// TODO(human): decidir a aderência.
-// Entradas: `realizadas` (sessões A–E concluídas dentro da janela) e `diasRestantes`
-// (dias da janela que ainda não passaram, contando hoje; 0 = janela encerrada).
-// Deve devolver "EM_ANDAMENTO", "MANTER_5X" ou "CAIR_UPPER_LOWER".
+// Regra literal da planilha: a decisão só sai quando a janela de 14 dias fecha.
+// `diasRestantes` conta hoje; 0 = janela encerrada.
 export function decidirAderencia(realizadas: number, diasRestantes: number): DecisaoAderencia {
-  return "EM_ANDAMENTO";
+  if (diasRestantes > 0) return "EM_ANDAMENTO";
+  return realizadas >= ADERENCIA_MINIMO ? "MANTER_5X" : "CAIR_UPPER_LOWER";
 }
 
 export function getStatusAderencia(dataInicioISO: string, hojeISO: string): StatusAderencia {
