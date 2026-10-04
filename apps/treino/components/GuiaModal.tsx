@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Info, X } from "lucide-react";
+import { Info, Save, X } from "lucide-react";
+import { ICON } from "@/lib/icones";
 import { erroMedioCalibracao, getDataInicio, setDataInicio } from "@/lib/storage";
 
 export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: string; onDataInicioChange: (iso: string) => void }) {
@@ -27,7 +28,7 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-base-800 text-ink-muted"
         aria-label="Guia do programa e configurações"
       >
-        <Info aria-hidden="true" size={20} strokeWidth={1.75} />
+        <Info aria-hidden="true" size={ICON.md} />
       </button>
 
       {aberto && (
@@ -53,7 +54,7 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
                 className="flex h-11 w-11 shrink-0 items-center justify-center text-ink-muted"
                 aria-label="Fechar"
               >
-                <X aria-hidden="true" size={20} strokeWidth={1.75} />
+                <X aria-hidden="true" size={ICON.md} />
               </button>
             </div>
 
@@ -70,8 +71,12 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
                   onChange={(e) => setInputData(e.target.value)}
                   className="flex-1 rounded-lg border border-line bg-base-800 px-3 py-2 text-sm text-ink"
                 />
-                <button type="button" onClick={salvar} className="rounded-lg bg-brand px-3 py-2 text-sm font-medium text-on-solid">
-                  Salvar
+                <button
+                  type="button"
+                  onClick={salvar}
+                  className="toque flex min-h-11 items-center gap-1.5 rounded-lg bg-brand px-3 text-sm font-medium text-on-solid"
+                >
+                  <Save aria-hidden="true" size={ICON.sm} /> Salvar
                 </button>
               </div>
             </section>

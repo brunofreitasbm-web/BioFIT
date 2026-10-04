@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
+import { ICON } from "@/lib/icones";
 import { cn } from "@/lib/cn";
 import { statusDescansoPorSessao } from "@/lib/descanso";
 import { SESSOES, SESSAO_NOME } from "@/lib/exercicios";
@@ -46,8 +47,7 @@ export function SeletorSessao({
               {algumEmRecuperacao && (
                 <AlertTriangle
                   aria-label="Grupo ainda em recuperação"
-                  size={14}
-                  strokeWidth={2.25}
+                  size={ICON.sm}
                   className={selecionado ? "text-on-solid" : "text-danger"}
                 />
               )}
@@ -79,7 +79,7 @@ export function SeletorSessao({
           if (avisos.length === 0) return null;
           return (
             <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger">
-              <AlertTriangle aria-hidden="true" size={14} strokeWidth={2.25} className="mt-0.5 shrink-0" />
+              <AlertTriangle aria-hidden="true" size={ICON.sm} className="mt-0.5 shrink-0" />
               {avisos
                 .map((a) => `${a.grupo} treinado há ${a.diasDesdeUltimo === 0 ? "hoje" : `${a.diasDesdeUltimo} dia(s)`}`)
                 .join(" · ")}{" "}

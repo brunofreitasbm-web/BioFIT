@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { ICON } from "@/lib/icones";
 
 export function VideoModal({ youtubeId, titulo, onClose }: { youtubeId: string; titulo: string; onClose: () => void }) {
   return (
@@ -14,7 +15,7 @@ export function VideoModal({ youtubeId, titulo, onClose }: { youtubeId: string; 
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/90 text-base-950"
             aria-label="Fechar vídeo"
           >
-            <X aria-hidden="true" size={16} strokeWidth={2} />
+            <X aria-hidden="true" size={ICON.sm} />
           </button>
         </div>
         <div className="overflow-hidden rounded-xl bg-black shadow-panel" style={{ aspectRatio: "16 / 9" }}>

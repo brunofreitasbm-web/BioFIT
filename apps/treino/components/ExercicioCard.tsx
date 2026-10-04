@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronUp, Film, Lightbulb, Timer, Check, Link2, TrendingUp, Trophy } from "lucide-react";
+import { ArrowRight, ChevronDown, Film, Layers, Lightbulb, ListOrdered, SkipForward, Timer, Check, Link2, TrendingUp, Trophy, Zap } from "lucide-react";
+import { ICON, STROKE } from "@/lib/icones";
 import type { ExercicioEfetivo, SerieRegistrada } from "@/lib/tipos";
 import { GrupoBadge } from "./GrupoBadge";
 import { VideoModal } from "./VideoModal";
@@ -208,12 +209,12 @@ export function ExercicioCard({
               <span className="truncate text-[15px] font-semibold tracking-tight text-ink">{exercicio.nome}</span>
               {completo && (
                 <span className="anim-confirmar flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-on-solid">
-                  <Check aria-hidden="true" size={12} strokeWidth={3.5} />
+                  <Check aria-hidden="true" size={ICON.xs} strokeWidth={STROKE.forte} />
                 </span>
               )}
               {bateuPR && (
                 <span className="anim-pr inline-flex shrink-0 items-center gap-0.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold text-accent">
-                  <Trophy aria-hidden="true" size={11} strokeWidth={2.5} /> PR
+                  <Trophy aria-hidden="true" size={ICON.xs} strokeWidth={STROKE.forte} /> PR
                 </span>
               )}
             </div>
@@ -224,17 +225,21 @@ export function ExercicioCard({
               </span>
               {exercicio.bisetCom && (
                 <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-brand">
-                  <Link2 aria-hidden="true" size={12} strokeWidth={2.25} /> biset
+                  <Link2 aria-hidden="true" size={ICON.xs} /> biset
                 </span>
               )}
-              {alvo.testeFalha && <span className="text-[11px] font-medium text-danger">teste de falha</span>}
+              {alvo.testeFalha && (
+                <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-danger">
+                  <Zap aria-hidden="true" size={ICON.xs} /> teste de falha
+                </span>
+              )}
             </div>
           </div>
-          {expandido ? (
-            <ChevronUp aria-hidden="true" size={18} className="shrink-0 text-ink-faint" />
-          ) : (
-            <ChevronDown aria-hidden="true" size={18} className="shrink-0 text-ink-faint" />
-          )}
+          <ChevronDown
+            aria-hidden="true"
+            size={ICON.md}
+            className={cn("shrink-0 text-ink-faint transition-transform duration-200", expandido && "rotate-180")}
+          />
         </button>
 
         {exercicio.youtubeId && (
@@ -247,7 +252,7 @@ export function ExercicioCard({
             className="toque flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-line bg-base-700 text-ink-muted hover:border-brand/40 hover:text-brand"
             aria-label={`Ver vídeo de ${exercicio.nome}`}
           >
-            <Film aria-hidden="true" size={18} strokeWidth={1.75} />
+            <Film aria-hidden="true" size={ICON.md} />
           </button>
         )}
       </div>
@@ -270,8 +275,12 @@ export function ExercicioCard({
                 className="flex min-h-11 items-center gap-1 text-[11px] text-ink-faint"
                 aria-expanded={dicasAbertas}
               >
-                {dicasAbertas ? <ChevronUp aria-hidden="true" size={14} /> : <ChevronDown aria-hidden="true" size={14} />}
-                <Lightbulb aria-hidden="true" size={13} strokeWidth={2} /> Notas
+                <ChevronDown
+                  aria-hidden="true"
+                  size={ICON.sm}
+                  className={cn("transition-transform duration-200", dicasAbertas && "rotate-180")}
+                />
+                <Lightbulb aria-hidden="true" size={ICON.sm} /> Notas
               </button>
               {dicasAbertas && <p className="mt-1.5 text-sm text-ink-muted">{exercicio.notas}</p>}
             </div>
@@ -286,14 +295,16 @@ export function ExercicioCard({
               className="mb-2 flex min-h-11 w-full items-center gap-2 rounded-lg border border-brand/30 bg-brand-soft px-3 py-2 text-left"
               aria-label={`Usar sugestão: ${sugestao.cargaKg} kg por ${sugestao.repsAlvo} repetições`}
             >
-              <TrendingUp aria-hidden="true" size={16} strokeWidth={2} className="shrink-0 text-brand" />
+              <TrendingUp aria-hidden="true" size={ICON.sm} className="shrink-0 text-brand" />
               <span className="min-w-0 flex-1">
                 <span className="block text-xs font-semibold text-brand">
                   Hoje: {String(sugestao.cargaKg).replace(".", ",")} kg × {sugestao.repsAlvo}
                 </span>
                 <span className="block text-[11px] text-ink-muted">{sugestao.motivo}</span>
               </span>
-              <span className="shrink-0 text-[11px] font-medium text-brand underline">usar</span>
+              <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-brand">
+                usar <ArrowRight aria-hidden="true" size={ICON.xs} />
+              </span>
             </button>
           )}
 
@@ -326,14 +337,14 @@ export function ExercicioCard({
           {descansoRestante !== null && descansoRestante > 0 && (
             <div className="mb-3 flex items-center justify-between rounded-lg border border-brand/30 bg-brand-soft px-3 py-2">
               <span className="flex items-center gap-1.5 text-xs font-medium text-brand">
-                <Timer aria-hidden="true" size={15} strokeWidth={2} /> Descanso: {formatarDescanso(descansoRestante)}
+                <Timer aria-hidden="true" size={ICON.sm} /> Descanso: {formatarDescanso(descansoRestante)}
               </span>
               <button
                 type="button"
                 onClick={() => setDescansoRestante(null)}
-                className="min-h-11 px-2 text-[11px] font-medium text-brand underline"
+                className="toque flex min-h-11 items-center gap-1 px-2 text-[11px] font-medium text-brand"
               >
-                pular
+                <SkipForward aria-hidden="true" size={ICON.xs} /> pular
               </button>
             </div>
           )}
@@ -345,8 +356,13 @@ export function ExercicioCard({
             <button
               type="button"
               onClick={() => setSeriesIndividuais((v) => !v)}
-              className="text-[11px] text-ink-faint underline"
+              className="toque flex min-h-11 items-center gap-1 text-[11px] font-medium text-ink-muted hover:text-ink"
             >
+              {seriesIndividuais ? (
+                <Layers aria-hidden="true" size={ICON.xs} />
+              ) : (
+                <ListOrdered aria-hidden="true" size={ICON.xs} />
+              )}
               {seriesIndividuais ? "Usar 1 campo para todas" : "Ajustar série por série"}
             </button>
           </div>
@@ -503,7 +519,7 @@ function LinhaReplicada({
         )}
         aria-label={`Confirmar as ${totalSeries} séries`}
       >
-        <Check aria-hidden="true" size={18} strokeWidth={3} />
+        <Check aria-hidden="true" size={ICON.md} strokeWidth={STROKE.forte} />
       </button>
     </>
   );
@@ -580,7 +596,7 @@ function FragmentoLinha({
         )}
         aria-label={`Confirmar série ${n}`}
       >
-        <Check aria-hidden="true" size={18} strokeWidth={3} />
+        <Check aria-hidden="true" size={ICON.md} strokeWidth={STROKE.forte} />
       </button>
     </>
   );

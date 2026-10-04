@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Trophy } from "lucide-react";
+import { ArrowLeft, Dumbbell, Trophy } from "lucide-react";
+import { EstadoVazio } from "@/components/EstadoVazio";
+import { ICON } from "@/lib/icones";
 import { getExercicio } from "@/lib/exercicios";
 import { historicoExercicio, recordesPessoais, type PontoHistorico, type RecordesPessoais } from "@/lib/relatorio";
 import { GrupoBadge } from "@/components/GrupoBadge";
@@ -116,7 +118,7 @@ export default function ExercicioEvolucaoPage() {
   return (
     <div className="p-4 space-y-5">
       <Link href="/relatorio/exercicios" className="inline-flex min-h-11 items-center gap-1 text-xs font-medium text-ink-muted hover:text-ink">
-        <ArrowLeft aria-hidden="true" size={14} /> Exercícios
+        <ArrowLeft aria-hidden="true" size={ICON.sm} /> Exercícios
       </Link>
 
       <header className="space-y-1.5">
@@ -125,7 +127,7 @@ export default function ExercicioEvolucaoPage() {
       </header>
 
       {hist && hist.length === 0 && (
-        <p className="py-8 text-center text-xs text-ink-muted">Sem séries com carga e reps para este exercício.</p>
+        <EstadoVazio Icone={Dumbbell} texto="Sem séries com carga e reps para este exercício." />
       )}
 
       {hist && hist.length > 0 && recordes && (
@@ -169,7 +171,7 @@ export default function ExercicioEvolucaoPage() {
                     </td>
                     <td className="py-1.5 text-right">
                       <span className="inline-flex items-center gap-1">
-                        {prs.has(p.data) && <Trophy aria-label="Recorde" size={11} className="text-accent" />}
+                        {prs.has(p.data) && <Trophy aria-label="Recorde" size={ICON.xs} className="text-accent" />}
                         {formatarKg(p.melhor1RM)}
                       </span>
                     </td>

@@ -13,7 +13,8 @@ import { BikeIndoorCard } from "@/components/BikeIndoorCard";
 import { ProgressoMeso } from "@/components/ProgressoMeso";
 import { AderenciaCard } from "@/components/AderenciaCard";
 import type { EscolhaDoDia } from "@/lib/tipos";
-import { AlertTriangle, Coffee, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CalendarClock, Coffee, CheckCircle2, Target } from "lucide-react";
+import { ICON } from "@/lib/icones";
 
 
 const DIAS_SEMANA_LABEL = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -131,7 +132,7 @@ export default function HojePage() {
             <span className="flex items-center gap-1.5 font-semibold text-ink">
               {treinoConcluido ? (
                 <>
-                  <CheckCircle2 size={17} className="anim-confirmar text-accent" />
+                  <CheckCircle2 size={ICON.md} className="anim-confirmar text-accent" />
                   <span>Treino Concluído!</span>
                 </>
               ) : (
@@ -152,9 +153,12 @@ export default function HojePage() {
       )}
 
       {insightHoje && (
-        <div className="mb-3 rounded-xl border border-brand-soft bg-brand-soft p-3">
-          <p className="text-sm font-semibold text-brand-hover">{insightHoje.titulo}</p>
-          <p className="mt-1 text-sm text-ink-muted">{insightHoje.mensagem}</p>
+        <div className="mb-3 flex gap-3 rounded-xl border border-brand-soft bg-brand-soft p-3">
+          <Target aria-hidden="true" size={ICON.md} className="mt-0.5 shrink-0 text-brand" />
+          <div>
+            <p className="text-sm font-semibold text-brand-hover">{insightHoje.titulo}</p>
+            <p className="mt-1 text-sm text-ink-muted">{insightHoje.mensagem}</p>
+          </div>
         </div>
       )}
 
@@ -163,7 +167,7 @@ export default function HojePage() {
       {!sessaoEfetiva && (
         <div className="mb-4 flex flex-col items-center justify-center rounded-xl border border-line bg-base-800 p-5 text-center shadow-panel">
           <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
-            <Coffee size={24} strokeWidth={2} />
+            <Coffee size={ICON.lg} />
           </div>
           <h2 className="text-base font-semibold text-ink">Recuperação Muscular Ativa</h2>
           <p className="mt-1 text-xs text-ink-muted">
@@ -180,7 +184,7 @@ export default function HojePage() {
       {aderencia && hojeISO <= addDiasISO(aderencia.fim, 7) && <AderenciaCard aderencia={aderencia} />}
       {status?.isDeload && sessaoEfetiva && (
         <div className="mb-4 flex items-start gap-2 rounded-xl border border-danger/30 bg-danger-soft px-3 py-2.5">
-          <AlertTriangle aria-hidden="true" size={16} strokeWidth={2.25} className="mt-0.5 shrink-0 text-danger" />
+          <AlertTriangle aria-hidden="true" size={ICON.sm} className="mt-0.5 shrink-0 text-danger" />
           <p className="text-xs font-medium text-danger">
             Rodada de deload — metade das séries, mesmas reps, carga −10%, longe da falha. Depois dela, todos os
             exercícios trocam.
@@ -210,9 +214,12 @@ export default function HojePage() {
       )}
 
       {insightProximo && (
-        <div className="mt-2 rounded-xl border border-line bg-base-800 p-3 shadow-panel">
-          <p className="text-sm font-semibold text-ink">{insightProximo.titulo}</p>
-          <p className="mt-1 text-sm text-ink-muted">{insightProximo.mensagem}</p>
+        <div className="mt-2 flex gap-3 rounded-xl border border-line bg-base-800 p-3 shadow-panel">
+          <CalendarClock aria-hidden="true" size={ICON.md} className="mt-0.5 shrink-0 text-ink-muted" />
+          <div>
+            <p className="text-sm font-semibold text-ink">{insightProximo.titulo}</p>
+            <p className="mt-1 text-sm text-ink-muted">{insightProximo.mensagem}</p>
+          </div>
         </div>
       )}
     </div>
