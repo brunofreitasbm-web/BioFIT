@@ -4,36 +4,40 @@ const config: Config = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      // Tema escuro "grafite + laranja-energia" (ui-ux-pro-max: fitness/tracker). Os nomes dos
+      // tokens são semânticos (base = superfícies, ink = texto), então os componentes não
+      // mudam de classe — só o valor. Contrastes medidos contra base-800 (card):
+      // ink 15.5:1 · muted 7.8:1 · faint 5.5:1 · brand 6.6:1 · accent 8.7:1 · danger 6.2:1.
       colors: {
         base: {
-          950: "#14161a",
-          900: "#f4f5f7",
-          800: "#ffffff",
-          700: "#f1f2f5",
-          600: "#e6e8ec",
-          500: "#d8dbe1",
+          950: "#0A0C0F",
+          900: "#0F1216", // fundo da página
+          800: "#181C22", // card
+          700: "#222730", // input / superfície elevada
+          600: "#2C323B", // trilho de barra de progresso
+          500: "#3A414C",
         },
-        line: "#e2e4e9",
+        line: "#333A44",
         ink: {
-          DEFAULT: "#1a1d23",
-          muted: "#5b606c",
-          // Darkened from #8a8f9b (2.97:1 on base-900) to meet WCAG AA 4.5:1 for small text.
-          faint: "#656b78",
+          DEFAULT: "#F2F4F7",
+          muted: "#A8B0BC",
+          faint: "#8B93A0",
         },
         brand: {
-          DEFAULT: "#3d63e0",
-          soft: "#e9f0ff",
-          hover: "#2f4fc0",
+          DEFAULT: "#FF7A1A",
+          soft: "#33210F",
+          hover: "#FF8F3D",
+          ink: "#14100C", // texto sobre fundo brand (7.3:1) — branco sobre laranja não passa AA
         },
         accent: {
-          // Darkened from #158a43 (4.05:1 as text, 4.42:1 as white-on-bg) to pass WCAG AA both ways.
-          DEFAULT: "#12793a",
-          soft: "#e7f6ec",
+          DEFAULT: "#34D27A",
+          soft: "#11291B",
+          ink: "#0B1A10",
         },
         danger: {
-          // Darkened from #d63548 (4.31:1 as text) to comfortably pass WCAG AA.
-          DEFAULT: "#c22d3f",
-          soft: "#fceaec",
+          DEFAULT: "#FF6B7A",
+          soft: "#33161B",
+          ink: "#1A0A0C",
         },
         grupo: {
           peito: "#c25019",
@@ -49,7 +53,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-display)", "system-ui", "sans-serif"],
+        sans: ["var(--font-body)", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "var(--font-body)", "system-ui", "sans-serif"],
       },
       letterSpacing: {
         tightest: "-0.03em",
@@ -59,7 +64,8 @@ const config: Config = {
         "2xl": "18px",
       },
       boxShadow: {
-        panel: "0 1px 2px 0 rgba(20,22,26,0.04), 0 8px 24px -12px rgba(20,22,26,0.12)",
+        panel: "0 1px 0 0 rgba(255,255,255,0.03) inset, 0 8px 24px -14px rgba(0,0,0,0.6)",
+        glow: "0 0 0 1px rgba(255,122,26,0.35), 0 10px 28px -12px rgba(255,122,26,0.45)",
       },
     },
   },

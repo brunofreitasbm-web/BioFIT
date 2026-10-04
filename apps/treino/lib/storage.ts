@@ -21,7 +21,11 @@ const VERSAO_PROGRAMA = "ulppl-meso1";
 
 export function getDataInicio(): string | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(KEY_INICIO);
+  try {
+    return window.localStorage.getItem(KEY_INICIO);
+  } catch {
+    return null; // storage bloqueado (aba privada, iframe de terceiros)
+  }
 }
 
 export function setDataInicio(iso: string): boolean {

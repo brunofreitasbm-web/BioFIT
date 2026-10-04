@@ -16,9 +16,41 @@ body {
   margin: 0;
   background: theme("colors.base.900");
   color: theme("colors.ink.DEFAULT");
-  font-feature-settings: "tnum" 1, "ss01" 1;
-  letter-spacing: -0.011em;
+  font-feature-settings: "tnum" 1;
   overscroll-behavior-y: none;
+  color-scheme: dark;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Inputs a 16px: abaixo disso o iOS dá zoom ao focar o campo. */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+/* Tira as setas do input number — ocupam espaço e são inúteis no toque. */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+button,
+a {
+  touch-action: manipulation;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 ::selection {

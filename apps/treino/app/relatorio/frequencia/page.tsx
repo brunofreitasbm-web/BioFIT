@@ -48,7 +48,7 @@ export default function FrequenciaPage() {
   return (
     <div className="p-4 space-y-6">
       <header className="mb-2 space-y-2">
-        <h1 className="text-xl font-semibold text-ink">Frequência de Treinos</h1>
+        <h1 className="font-display text-[2rem] font-bold uppercase leading-none tracking-tight text-ink">Frequência de Treinos</h1>
         <p className="text-sm text-ink-muted">Quais treinos e grupos musculares você tem feito com mais regularidade</p>
         <RelatorioTabs ativa="/relatorio/frequencia" />
       </header>
@@ -63,7 +63,7 @@ export default function FrequenciaPage() {
             aria-pressed={periodo === p.valor}
             className={cn(
               "min-h-11 rounded-full border px-3.5 text-xs font-medium transition-colors",
-              periodo === p.valor ? "border-brand bg-brand text-white shadow-sm" : "border-line bg-base-800 text-ink-muted hover:text-ink",
+              periodo === p.valor ? "border-brand bg-brand text-brand-ink shadow-sm" : "border-line bg-base-800 text-ink-muted hover:text-ink",
             )}
           >
             {p.label}

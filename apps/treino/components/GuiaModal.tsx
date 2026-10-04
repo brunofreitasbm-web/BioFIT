@@ -70,7 +70,7 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
                   onChange={(e) => setInputData(e.target.value)}
                   className="flex-1 rounded-lg border border-line bg-base-800 px-3 py-2 text-sm text-ink"
                 />
-                <button type="button" onClick={salvar} className="rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white">
+                <button type="button" onClick={salvar} className="rounded-lg bg-brand px-3 py-2 text-sm font-medium text-brand-ink">
                   Salvar
                 </button>
               </div>

@@ -54,7 +54,7 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
       <button
         type="button"
         onClick={iniciar}
-        className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brand py-3 text-center text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-hover active:scale-[0.99]"
+        className="mb-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 text-center font-display text-xl font-bold uppercase tracking-wide text-brand-ink shadow-glow transition-colors duration-150 hover:bg-brand-hover active:scale-[0.99]"
       >
         <Play aria-hidden="true" size={17} strokeWidth={2.25} fill="currentColor" />
         Iniciar treino {nome}
@@ -76,7 +76,7 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
         <button
           type="button"
           onClick={terminar}
-          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-danger px-4 py-3 text-sm font-semibold text-white transition-colors hover:opacity-90"
+          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-danger px-4 py-3 text-sm font-semibold text-danger-ink transition-colors hover:opacity-90"
         >
           <Square aria-hidden="true" size={15} strokeWidth={2.25} fill="currentColor" />
           Terminar

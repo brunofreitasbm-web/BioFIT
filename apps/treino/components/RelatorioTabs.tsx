@@ -12,7 +12,7 @@ export function RelatorioTabs({ ativa }: { ativa: (typeof ABAS)[number]["href"] 
     <div className="flex gap-1.5 rounded-full border border-line bg-base-800 p-1 text-xs font-medium">
       {ABAS.map((aba) =>
         aba.href === ativa ? (
-          <span key={aba.href} className="flex-1 rounded-full bg-brand py-1.5 text-center text-white shadow-sm">
+          <span key={aba.href} className="flex-1 rounded-full bg-brand py-1.5 text-center text-brand-ink shadow-sm">
             {aba.label}
           </span>
         ) : (

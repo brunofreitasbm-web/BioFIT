@@ -7,6 +7,7 @@ import { ArrowLeft, Trophy } from "lucide-react";
 import { getExercicio } from "@/lib/exercicios";
 import { historicoExercicio, recordesPessoais, type PontoHistorico, type RecordesPessoais } from "@/lib/relatorio";
 import { GrupoBadge } from "@/components/GrupoBadge";
+import { CHART_COLORS } from "@/lib/colors";
 
 function formatarDataCurta(dataIso: string): string {
   const [, mes, dia] = dataIso.split("-");
@@ -60,27 +61,27 @@ function GraficoEvolucao({ hist, prs }: { hist: PontoHistorico[]; prs: Set<strin
       <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Gráfico de evolução do 1RM estimado e da carga máxima">
         {ticks.map((t) => (
           <g key={t}>
-            <line x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} stroke="#e2e4e9" strokeWidth={1} />
-            <text x={PAD.left - 4} y={y(t) + 3} textAnchor="end" fontSize={9} fill="#656b78">
+            <line x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} stroke={CHART_COLORS.grid} strokeWidth={1} />
+            <text x={PAD.left - 4} y={y(t) + 3} textAnchor="end" fontSize={9} fill={CHART_COLORS.label}>
               {Math.round(t)}
             </text>
           </g>
         ))}
-        <text x={PAD.left} y={H - 6} fontSize={9} fill="#656b78">
+        <text x={PAD.left} y={H - 6} fontSize={9} fill={CHART_COLORS.label}>
           {formatarDataCurta(hist[0].data)}
         </text>
         {hist.length > 1 && (
-          <text x={W - PAD.right} y={H - 6} textAnchor="end" fontSize={9} fill="#656b78">
+          <text x={W - PAD.right} y={H - 6} textAnchor="end" fontSize={9} fill={CHART_COLORS.label}>
             {formatarDataCurta(hist[hist.length - 1].data)}
           </text>
         )}
-        <path d={caminho((p) => p.cargaMaxKg)} fill="none" stroke="#656b78" strokeWidth={1.5} strokeDasharray="4 3" />
-        <path d={caminho((p) => p.melhor1RM)} fill="none" stroke="#3d63e0" strokeWidth={2} />
+        <path d={caminho((p) => p.cargaMaxKg)} fill="none" stroke={CHART_COLORS.label} strokeWidth={1.5} strokeDasharray="4 3" />
+        <path d={caminho((p) => p.melhor1RM)} fill="none" stroke={CHART_COLORS.brand} strokeWidth={2} />
         {hist.map((p, i) =>
           prs.has(p.data) ? (
-            <circle key={p.data} cx={x(i)} cy={y(p.melhor1RM)} r={4.5} fill="#12793a" stroke="#ffffff" strokeWidth={1.5} />
+            <circle key={p.data} cx={x(i)} cy={y(p.melhor1RM)} r={4.5} fill={CHART_COLORS.accent} stroke={CHART_COLORS.surface} strokeWidth={1.5} />
           ) : (
-            <circle key={p.data} cx={x(i)} cy={y(p.melhor1RM)} r={3} fill="#3d63e0" />
+            <circle key={p.data} cx={x(i)} cy={y(p.melhor1RM)} r={3} fill={CHART_COLORS.brand} />
           ),
         )}
       </svg>
@@ -120,7 +121,7 @@ export default function ExercicioEvolucaoPage() {
       </Link>
 
       <header className="space-y-1.5">
-        <h1 className="text-xl font-semibold text-ink">{exercicio?.nome ?? "Exercício não encontrado"}</h1>
+        <h1 className="font-display text-2xl font-bold uppercase leading-tight tracking-tight text-ink">{exercicio?.nome ?? "Exercício não encontrado"}</h1>
         {exercicio && <GrupoBadge grupo={exercicio.grupoMuscular} />}
       </header>
 

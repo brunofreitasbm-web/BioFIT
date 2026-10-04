@@ -119,7 +119,7 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
             aria-hidden="true"
             className={cn(
               "flex h-9 w-9 items-center justify-center rounded-xl transition-all",
-              concluido ? "bg-accent text-white" : "bg-base-700 text-ink-muted"
+              concluido ? "bg-accent text-accent-ink" : "bg-base-700 text-ink-muted"
             )}
           >
             <Bike aria-hidden="true" size={19} strokeWidth={2} />
@@ -215,8 +215,8 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
               !tempo || parseInt(tempo, 10) <= 0
                 ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-50"
                 : concluido
-                ? "bg-accent text-white shadow-sm hover:bg-accent/90"
-                : "bg-brand text-white hover:bg-brand-hover shadow-sm"
+                ? "bg-accent text-accent-ink shadow-sm hover:bg-accent/90"
+                : "border border-line bg-base-700 text-ink hover:border-brand/50"
             )}
           >
             {concluido ? (

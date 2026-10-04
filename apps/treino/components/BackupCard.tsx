@@ -47,7 +47,7 @@ export function BackupCard() {
         <button
           type="button"
           onClick={baixar}
-          className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full border border-brand bg-brand text-xs font-semibold text-white shadow-sm hover:opacity-90"
+          className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full border border-brand bg-brand text-xs font-semibold text-brand-ink shadow-sm hover:opacity-90"
         >
           <Download aria-hidden="true" size={15} /> Baixar backup
         </button>

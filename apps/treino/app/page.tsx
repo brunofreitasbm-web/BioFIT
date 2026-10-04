@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { getDataInicio, getSessaoEscolhida, migrarParaMeso1, setSessaoEscolhida } from "@/lib/storage";
 import { addDiasISO, getStatusAderencia, getStatusPrograma, sessaoSugerida as calcularSessaoSugerida, toISODate } from "@/lib/program";
 import { getSessaoCompleta, SESSAO_LABEL, SESSAO_NOME } from "@/lib/exercicios";
-import { gerarInsightHoje, gerarInsightProximo } from "@/lib/motivacao";
+import { gerarInsightHoje, gerarInsightProximo, labelRodada } from "@/lib/motivacao";
+import { cn } from "@/lib/cn";
 import { ExercicioCard } from "@/components/ExercicioCard";
 import { GuiaModal } from "@/components/GuiaModal";
 import { SeletorSessao } from "@/components/SeletorSessao";
@@ -13,7 +14,7 @@ import { BikeIndoorCard } from "@/components/BikeIndoorCard";
 import { ProgressoMeso } from "@/components/ProgressoMeso";
 import { AderenciaCard } from "@/components/AderenciaCard";
 import type { EscolhaDoDia } from "@/lib/tipos";
-import { AlertTriangle, Coffee, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, Coffee, CheckCircle2 } from "lucide-react";
 
 
 const DIAS_SEMANA_LABEL = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -114,70 +115,68 @@ export default function HojePage() {
   const treinoConcluido = progressoSessao.total > 0 && progressoSessao.feitas >= progressoSessao.total;
 
   return (
-    <div className="p-4">
-      <header className="mb-4 flex items-center justify-between">
-        <div>
-          <p className="text-xs font-medium text-ink-faint">{DIAS_SEMANA_LABEL[hoje.getDay()]}</p>
-          <h1 className="text-xl font-bold tracking-tight text-ink">
-            {sessaoEfetiva ? `Treino ${sessaoEfetiva} · ${SESSAO_NOME[sessaoEfetiva]}` : "Hoje é dia de descanso"}
+    <div className="px-4 pb-4 pt-5">
+      <header className="mb-5 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">
+            {DIAS_SEMANA_LABEL[hoje.getDay()]}
+            {status && ` · ${labelRodada(status)}`}
+          </p>
+          <h1 className="mt-1 font-display text-[2rem] font-bold uppercase leading-none tracking-tight text-ink">
+            {sessaoEfetiva ? (
+              <>
+                Treino {sessaoEfetiva} <span className="text-ink-faint">·</span> {SESSAO_NOME[sessaoEfetiva]}
+              </>
+            ) : (
+              "Dia de descanso"
+            )}
           </h1>
         </div>
         <GuiaModal dataInicio={dataInicio} onDataInicioChange={setDataInicioState} />
       </header>
 
       {sessaoEfetiva && exercicios.length > 0 && (
-        <div className="sticky top-0 z-10 -mx-4 mb-3 border-b border-line bg-base-800/95 px-4 py-2.5 shadow-panel backdrop-blur transition-all">
+        <div className="sticky top-0 z-10 -mx-4 mb-4 border-b border-line bg-base-900/90 px-4 py-2.5 backdrop-blur">
           <div className="mb-1.5 flex items-center justify-between text-xs">
-            <span className="flex items-center gap-1.5 font-semibold text-ink">
+            <span className="flex items-center gap-1.5 font-semibold uppercase tracking-wide text-ink">
               {treinoConcluido ? (
                 <>
-                  <CheckCircle2 size={15} className="text-accent" />
-                  <span>Treino Concluído!</span>
+                  <CheckCircle2 aria-hidden="true" size={15} className="text-accent" />
+                  Treino concluído
                 </>
               ) : (
-                <span>Progresso da Sessão</span>
+                "Sessão"
               )}
             </span>
-            <span className="font-medium text-ink-muted">
-              {progressoSessao.feitas} de {progressoSessao.total} séries ({Math.round(progressoSessaoPct)}%)
+            <span className="tabular-nums text-ink-muted">
+              <span className="font-display text-base font-bold text-ink">{progressoSessao.feitas}</span>/{progressoSessao.total} séries
             </span>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-base-600">
+          <div
+            className="h-1.5 w-full overflow-hidden rounded-full bg-base-600"
+            role="progressbar"
+            aria-label="Séries concluídas na sessão"
+            aria-valuemin={0}
+            aria-valuemax={progressoSessao.total}
+            aria-valuenow={progressoSessao.feitas}
+          >
             <div
-              className="h-full rounded-full bg-accent transition-all duration-300 ease-out"
+              className={cn(
+                "h-full rounded-full transition-[width] duration-300 ease-out",
+                treinoConcluido ? "bg-accent" : "bg-brand",
+              )}
               style={{ width: `${progressoSessaoPct}%` }}
             />
           </div>
         </div>
       )}
 
-      {insightHoje && (
-        <div className="mb-3 rounded-xl border border-brand-soft bg-brand-soft p-3">
-          <p className="text-sm font-semibold text-accent">{insightHoje.titulo}</p>
-          <p className="mt-1 text-sm text-ink-muted">{insightHoje.mensagem}</p>
-        </div>
-      )}
-
       <SeletorSessao hojeISO={hojeISO} sessaoSugerida={sessaoSugerida} valorAtual={escolha} onEscolher={escolher} />
 
-      {!sessaoEfetiva && (
-        <div className="mb-4 flex flex-col items-center justify-center rounded-xl border border-line bg-base-800 p-5 text-center shadow-panel">
-          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
-            <Coffee size={24} strokeWidth={2} />
-          </div>
-          <h2 className="text-base font-semibold text-ink">Recuperação Muscular Ativa</h2>
-          <p className="mt-1 text-xs text-ink-muted">
-            O descanso planejado é fundamental para a hipertrofia e reconstrução tecidual. Mantenha a hidratação e priorize boas horas de sono!
-          </p>
-        </div>
-      )}
-
-      <BikeIndoorCard hojeISO={hojeISO} />
+      {status && <ProgressoMeso status={status} />}
 
       {sessaoEfetiva && status && <TreinoTimer hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} />}
 
-      {status && <ProgressoMeso status={status} />}
-      {aderencia && hojeISO <= addDiasISO(aderencia.fim, 7) && <AderenciaCard aderencia={aderencia} />}
       {status?.isDeload && sessaoEfetiva && (
         <div className="mb-4 flex items-start gap-2 rounded-xl border border-danger/30 bg-danger-soft px-3 py-2.5">
           <AlertTriangle aria-hidden="true" size={16} strokeWidth={2.25} className="mt-0.5 shrink-0 text-danger" />
@@ -188,34 +187,59 @@ export default function HojePage() {
         </div>
       )}
 
-      {sessaoEfetiva && status && (
-        <>
-          <section className="mb-4">
-            <h2 className="mb-2 text-sm font-semibold text-ink">{SESSAO_LABEL[sessaoEfetiva]}</h2>
-            <div className="space-y-2">
-              {exercicios.map((ex) => (
-                <ExercicioCard
-                  key={ex.id}
-                  exercicio={ex}
-                  status={status}
-                  data={hojeISO}
-                  expandido={exercicioAbertoId === ex.id}
-                  onToggleExpandido={() => handleToggleExercicio(ex.id)}
-                  onProgresso={handleProgresso}
-                />
-              ))}
-            </div>
-          </section>
-        </>
+      {insightHoje && (
+        <div className="mb-4 rounded-xl border border-line border-l-[3px] border-l-brand bg-base-800 p-3">
+          <p className="text-sm font-semibold text-ink">{insightHoje.titulo}</p>
+          <p className="mt-1 text-sm leading-relaxed text-ink-muted">{insightHoje.mensagem}</p>
+        </div>
       )}
 
+      {!sessaoEfetiva && (
+        <div className="mb-4 flex flex-col items-center justify-center rounded-2xl border border-line bg-base-800 p-6 text-center">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-soft text-brand">
+            <Coffee aria-hidden="true" size={24} strokeWidth={2} />
+          </div>
+          <h2 className="font-display text-xl font-bold uppercase tracking-tight text-ink">Recuperação</h2>
+          <p className="mt-1 max-w-xs text-sm text-ink-muted">
+            O descanso faz parte do plano. Hidratação, sono e, se quiser, cardio Z2 leve.
+          </p>
+        </div>
+      )}
+
+      {sessaoEfetiva && status && (
+        <section className="mb-5" aria-labelledby="titulo-sessao">
+          <h2 id="titulo-sessao" className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-ink-faint">
+            {SESSAO_LABEL[sessaoEfetiva]}
+          </h2>
+          <div className="space-y-2.5">
+            {exercicios.map((ex) => (
+              <ExercicioCard
+                key={ex.id}
+                exercicio={ex}
+                status={status}
+                data={hojeISO}
+                expandido={exercicioAbertoId === ex.id}
+                onToggleExpandido={() => handleToggleExercicio(ex.id)}
+                onProgresso={handleProgresso}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {aderencia && hojeISO <= addDiasISO(aderencia.fim, 7) && <AderenciaCard aderencia={aderencia} />}
+
+      <BikeIndoorCard hojeISO={hojeISO} />
+
       {insightProximo && (
-        <div className="mt-2 rounded-xl border border-line bg-base-800 p-3 shadow-panel">
-          <p className="text-sm font-semibold text-ink">{insightProximo.titulo}</p>
-          <p className="mt-1 text-sm text-ink-muted">{insightProximo.mensagem}</p>
+        <div className="flex items-start gap-3 rounded-xl border border-line bg-base-800 p-3">
+          <ArrowRight aria-hidden="true" size={18} strokeWidth={2} className="mt-0.5 shrink-0 text-brand" />
+          <div>
+            <p className="text-sm font-semibold text-ink">{insightProximo.titulo}</p>
+            <p className="mt-1 text-sm leading-relaxed text-ink-muted">{insightProximo.mensagem}</p>
+          </div>
         </div>
       )}
     </div>
   );
 }
-

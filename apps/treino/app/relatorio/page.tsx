@@ -118,7 +118,7 @@ export default function RelatorioPage() {
   return (
     <div className="p-4 space-y-6">
       <header className="mb-2 space-y-2">
-        <h1 className="text-xl font-semibold text-ink">Relatório de Evolução</h1>
+        <h1 className="font-display text-[2rem] font-bold uppercase leading-none tracking-tight text-ink">Relatório de Evolução</h1>
         <p className="text-sm text-ink-muted">Acompanhamento diário de treinos e volume muscular</p>
         <RelatorioTabs ativa="/relatorio" />
       </header>
@@ -133,7 +133,7 @@ export default function RelatorioPage() {
             aria-pressed={periodo === p.valor}
             className={cn(
               "min-h-11 rounded-full border px-3.5 text-xs font-medium transition-colors",
-              periodo === p.valor ? "border-brand bg-brand text-white shadow-sm" : "border-line bg-base-800 text-ink-muted hover:text-ink",
+              periodo === p.valor ? "border-brand bg-brand text-brand-ink shadow-sm" : "border-line bg-base-800 text-ink-muted hover:text-ink",
             )}
           >
             {p.label}
