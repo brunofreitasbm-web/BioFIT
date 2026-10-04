@@ -117,8 +117,8 @@ export default function HojePage() {
     <div className="p-4">
       <header className="mb-4 flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium text-ink-faint">{DIAS_SEMANA_LABEL[hoje.getDay()]}</p>
-          <h1 className="text-xl font-bold tracking-tight text-ink">
+          <p className="text-sm font-medium text-ink-muted">{DIAS_SEMANA_LABEL[hoje.getDay()]}</p>
+          <h1 className="text-2xl font-extrabold tracking-tightest text-ink">
             {sessaoEfetiva ? `Treino ${sessaoEfetiva} · ${SESSAO_NOME[sessaoEfetiva]}` : "Hoje é dia de descanso"}
           </h1>
         </div>
@@ -126,12 +126,12 @@ export default function HojePage() {
       </header>
 
       {sessaoEfetiva && exercicios.length > 0 && (
-        <div className="sticky top-0 z-10 -mx-4 mb-3 border-b border-line bg-base-800/95 px-4 py-2.5 shadow-panel backdrop-blur transition-all">
-          <div className="mb-1.5 flex items-center justify-between text-xs">
+        <div className="sticky top-0 z-10 -mx-4 mb-3 border-b border-line bg-base-800/95 px-4 py-3 shadow-panel backdrop-blur">
+          <div className="mb-2 flex items-center justify-between text-sm">
             <span className="flex items-center gap-1.5 font-semibold text-ink">
               {treinoConcluido ? (
                 <>
-                  <CheckCircle2 size={15} className="text-accent" />
+                  <CheckCircle2 size={17} className="anim-confirmar text-accent" />
                   <span>Treino Concluído!</span>
                 </>
               ) : (
@@ -142,9 +142,9 @@ export default function HojePage() {
               {progressoSessao.feitas} de {progressoSessao.total} séries ({Math.round(progressoSessaoPct)}%)
             </span>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-base-600">
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-base-600">
             <div
-              className="h-full rounded-full bg-accent transition-all duration-300 ease-out"
+              className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out"
               style={{ width: `${progressoSessaoPct}%` }}
             />
           </div>
@@ -153,7 +153,7 @@ export default function HojePage() {
 
       {insightHoje && (
         <div className="mb-3 rounded-xl border border-brand-soft bg-brand-soft p-3">
-          <p className="text-sm font-semibold text-accent">{insightHoje.titulo}</p>
+          <p className="text-sm font-semibold text-brand-hover">{insightHoje.titulo}</p>
           <p className="mt-1 text-sm text-ink-muted">{insightHoje.mensagem}</p>
         </div>
       )}
@@ -191,7 +191,7 @@ export default function HojePage() {
       {sessaoEfetiva && status && (
         <>
           <section className="mb-4">
-            <h2 className="mb-2 text-sm font-semibold text-ink">{SESSAO_LABEL[sessaoEfetiva]}</h2>
+            <h2 className="mb-2.5 text-base font-bold tracking-tight text-ink">{SESSAO_LABEL[sessaoEfetiva]}</h2>
             <div className="space-y-2">
               {exercicios.map((ex) => (
                 <ExercicioCard

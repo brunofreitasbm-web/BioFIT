@@ -33,10 +33,13 @@ export function SeletorSessao({
             <button
               key={op.tipo}
               type="button"
+              aria-pressed={selecionado}
               onClick={() => onEscolher(op.tipo)}
               className={cn(
-                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium",
-                selecionado ? "border-brand bg-brand text-white" : "border-line bg-base-800 text-ink-muted",
+                "toque flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-semibold",
+                selecionado
+                  ? "border-brand bg-brand text-white shadow-sm"
+                  : "border-line bg-base-800 text-ink-muted hover:border-brand/40 hover:text-ink",
               )}
             >
               {op.label}
@@ -49,17 +52,20 @@ export function SeletorSessao({
                 />
               )}
               {op.tipo === sessaoSugerida && !selecionado && (
-                <span className="text-[10px] font-normal opacity-70">próximo</span>
+                <span className="rounded-full bg-brand-soft px-1.5 py-0.5 text-[10px] font-semibold text-brand">próximo</span>
               )}
             </button>
           );
         })}
         <button
           type="button"
+          aria-pressed={efetivo === "DESCANSO"}
           onClick={() => onEscolher("DESCANSO")}
           className={cn(
-            "rounded-full border px-3 py-1.5 text-sm font-medium",
-            efetivo === "DESCANSO" ? "border-brand bg-brand text-white" : "border-line bg-base-800 text-ink-muted",
+            "toque min-h-11 rounded-full border px-4 text-sm font-semibold",
+            efetivo === "DESCANSO"
+              ? "border-brand bg-brand text-white shadow-sm"
+              : "border-line bg-base-800 text-ink-muted hover:border-brand/40 hover:text-ink",
           )}
         >
           Descanso
