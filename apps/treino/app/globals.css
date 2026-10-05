@@ -206,6 +206,24 @@ textarea:focus-visible {
   animation: pr-brilho 700ms var(--ease-out);
 }
 
+/* ImagemExercicio: a foto da posição final aparece e some por cima da inicial. */
+@keyframes alternar-foto {
+  0%,
+  42% {
+    opacity: 0;
+  }
+  50%,
+  92% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.anim-alternar-foto {
+  animation: alternar-foto 2.4s ease-in-out infinite;
+}
+
 /* Feedback de toque: todo controle pressionável afunda levemente. */
 .toque {
   transition: transform 120ms var(--ease-out), background-color 150ms var(--ease-out),

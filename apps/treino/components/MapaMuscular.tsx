@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { VistaCorpo } from "@/lib/body-paths";
 import { corCalor } from "@/lib/cor";
 import { grupoDaRegiao, intensidadePorGrupo, PARTES_INERTES } from "@/lib/mapaMuscular";
-import type { VolumeGrupo } from "@/lib/relatorio";
+import { formatarSeries, type VolumeGrupo } from "@/lib/relatorio";
 import type { GrupoMuscular } from "@/lib/tipos";
 
 // Mapa do corpo (frente e costas) com cada grupo pintado pela escala de calor do relatório.
@@ -56,7 +56,7 @@ function Vista({
               : "rgb(var(--c-base-600))";
           return paths.map((d, i) => (
             <path key={parte + i} d={d} fill={fill} stroke="rgb(var(--c-base-800))" strokeWidth={2}>
-              {grupo && <title>{`${grupo}: ${n} séries`}</title>}
+              {grupo && <title>{`${grupo}: ${formatarSeries(n)} séries`}</title>}
             </path>
           ));
         })}

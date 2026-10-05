@@ -6,6 +6,7 @@ import { ICON, STROKE } from "@/lib/icones";
 import type { ExercicioEfetivo, SerieRegistrada } from "@/lib/tipos";
 import { GrupoBadge } from "./GrupoBadge";
 import { VideoModal } from "./VideoModal";
+import { ImagemExercicio } from "./ImagemExercicio";
 import { cn } from "@/lib/cn";
 import { alvoDeEsforco, e1rm, parseDescansoSegundos } from "@/lib/descanso";
 import { EXERCICIOS_ASSISTIDOS, GRUPOS_INFERIORES, partidaKg } from "@/lib/exercicios";
@@ -254,6 +255,7 @@ export function ExercicioCard({
               Não foi possível salvar no dispositivo. Tente novamente.
             </p>
           )}
+          {exercicio.imagem && <ImagemExercicio pasta={exercicio.imagem} nome={exercicio.nome} />}
           <p className="mb-2 text-[11px] text-ink-faint">
             RIR alvo: {alvo.rirAlvo} · {alvo.label}
           </p>

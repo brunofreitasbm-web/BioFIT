@@ -28,6 +28,11 @@ export interface VariacaoExercicio {
   partida: string; // "45", "42,5", "calibrar", "peso corporal"
   notas: string;
   youtubeId: string | null;
+  // Grupos trabalhados indiretamente, com peso (0,5 = meia série por série feita). Entram no
+  // volume por grupo do relatório, não na frequência.
+  secundarios?: Partial<Record<GrupoMuscular, number>>;
+  // Pasta das fotos início/fim em `public/exercicios/` (free-exercise-db). null = sem foto.
+  imagem?: string | null;
 }
 
 // Prescrição de uma posição dentro da sessão — vale para as duas variações (meso 1 e 2).
