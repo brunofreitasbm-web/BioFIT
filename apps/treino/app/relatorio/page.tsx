@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { calcularVolumePorGrupo, totalSeriesNoPeriodo, type VolumeGrupo } from "@/lib/relatorio";
+import { calcularVolumePorGrupo, formatarSeries, totalSeriesNoPeriodo, type VolumeGrupo } from "@/lib/relatorio";
 import { getTodosBikeIndoor, getTodasSessoes } from "@/lib/storage";
 import type { RegistroSessao } from "@/lib/tipos";
 import { corCalor } from "@/lib/cor";
@@ -255,7 +255,15 @@ export default function RelatorioPage() {
                   <div key={v.grupo} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-medium text-ink">{v.grupo}</span>
-                      <span className="text-ink-faint">{v.seriesFeitas} séries</span>
+                      <span className="text-ink-faint">
+                        {formatarSeries(v.seriesFeitas)} séries
+                        {v.seriesIndiretas > 0 && (
+                          <span className="text-ink-faint/80">
+                            {" "}
+                            ({v.seriesDiretas} diretas + {formatarSeries(v.seriesIndiretas)} indiretas)
+                          </span>
+                        )}
+                      </span>
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-base-900 dark:bg-base-700">
                       <div
@@ -270,6 +278,9 @@ export default function RelatorioPage() {
           )}
           <p className="pt-1 text-center text-xs text-ink-faint">
             Total: {totalSeriesNoPeriodo(volumes)} séries registradas no período
+          </p>
+          <p className="text-center text-[11px] text-ink-faint">
+            Indiretas: cada série conta meia série para o músculo auxiliar (ex.: supino → tríceps).
           </p>
         </section>
       )}

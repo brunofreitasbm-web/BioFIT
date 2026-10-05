@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, ChevronDown, Film, Layers, Lightbulb, ListOrdered, Check, Link2, TrendingUp, Trophy, Zap } from "lucide-react";
+import { ArrowRight, ChevronDown, Film, Image as ImageIcon, Layers, Lightbulb, ListOrdered, Check, Link2, TrendingUp, Trophy, Zap } from "lucide-react";
 import { ICON, STROKE } from "@/lib/icones";
 import type { ExercicioEfetivo, SerieRegistrada } from "@/lib/tipos";
 import { GrupoBadge } from "./GrupoBadge";
 import { VideoModal } from "./VideoModal";
+import { ImagemExercicio } from "./ImagemExercicio";
 import { cn } from "@/lib/cn";
 import { alvoDeEsforco, e1rm, parseDescansoSegundos } from "@/lib/descanso";
 import { EXERCICIOS_ASSISTIDOS, GRUPOS_INFERIORES, partidaKg } from "@/lib/exercicios";
@@ -53,6 +54,7 @@ export function ExercicioCard({
   // Incrementa a cada toque na sugestão para a linha de input repopular os campos.
   const [preenchimento, setPreenchimento] = useState<{ kg: string; reps: string; n: number } | null>(null);
   const [videoAberto, setVideoAberto] = useState(false);
+  const [fotoAberta, setFotoAberta] = useState(false);
   const [dicasAbertas, setDicasAbertas] = useState(false);
   const [seriesIndividuais, setSeriesIndividuais] = useState(false);
   const [erroSalvar, setErroSalvar] = useState(false);
@@ -232,6 +234,20 @@ export function ExercicioCard({
           />
         </button>
 
+        {exercicio.imagem && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setFotoAberta(true);
+            }}
+            className="toque flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-line bg-base-700 text-ink-muted hover:border-brand/40 hover:text-brand"
+            aria-label={`Ver foto de ${exercicio.nome}`}
+          >
+            <ImageIcon aria-hidden="true" size={ICON.md} />
+          </button>
+        )}
+
         {exercicio.youtubeId && (
           <button
             type="button"
@@ -403,6 +419,9 @@ export function ExercicioCard({
         </div>
       )}
 
+      {fotoAberta && exercicio.imagem && (
+        <ImagemExercicio pasta={exercicio.imagem} titulo={exercicio.nome} onClose={() => setFotoAberta(false)} />
+      )}
       {videoAberto && exercicio.youtubeId && (
         <VideoModal youtubeId={exercicio.youtubeId} titulo={exercicio.nome} onClose={() => setVideoAberto(false)} />
       )}

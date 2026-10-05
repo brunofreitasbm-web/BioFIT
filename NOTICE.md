@@ -17,6 +17,17 @@ TypeScript para o BioFIT; cada arquivo indica no cabeçalho de qual arquivo do o
 
 Nada do banco de exercícios do openGym (dados de hasaneyldrm/exercises-dataset) foi usado.
 
+## Fotos de exercícios (free-exercise-db)
+
+As fotos em `apps/treino/public/exercicios/` vêm do
+[**free-exercise-db**](https://github.com/yuhonas/free-exercise-db), de yuhonas, publicado sob
+**The Unlicense** (domínio público). Foram reduzidas para 320px por
+`scripts/importar-imagens.sh`; a lista de pastas usadas está em `apps/treino/lib/exercicios.ts`
+(`IMAGENS`). O free-exercise-db reestrutura o [wrkout/exercises.json](https://github.com/wrkout/exercises.json),
+que não documenta a origem das fotos — se algum titular reclamar, basta remover a pasta.
+
+Nada da ExerciseDB/AscendAPI (dados proprietários) foi usado.
+
 ## Contornos do corpo (MuscleMap)
 
 Os contornos em `apps/treino/lib/body-paths.ts` vêm de

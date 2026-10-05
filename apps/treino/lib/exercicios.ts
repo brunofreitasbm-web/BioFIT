@@ -14,8 +14,102 @@ import { EXERCICIOS_PPL_V4 } from "./arquivo/pplV4";
 // O PPL anterior está arquivado em `lib/arquivo/pplV4.ts`.
 
 function v(id: string, nome: string, partida: string, notas: string, youtubeId: string | null): VariacaoExercicio {
-  return { id, nome, partida, notas, youtubeId };
+  return { id, nome, partida, notas, youtubeId, secundarios: SECUNDARIOS[id], imagem: IMAGENS[id] ?? null };
 }
+
+// Músculos secundários por exercício (peso 0,5). Definidos à mão e de propósito
+// conservadores: só o sinergista que de fato limita/recebe estímulo relevante. Ficam por id
+// (não por posição) porque o mesmo exercício aparece em sessões/mesos diferentes.
+const MEIA = 0.5;
+const PRESS_PEITO = { "Tríceps": MEIA, Deltoides: MEIA };
+const PUXADA = { "Bíceps": MEIA };
+const AGACHAMENTO = { "Glúteo": MEIA };
+const SECUNDARIOS: Record<string, Partial<Record<GrupoMuscular, number>>> = {
+  "supino-inclinado-maquina": PRESS_PEITO,
+  "supino-reto-halteres": PRESS_PEITO,
+  "supino-maquina-convergente": PRESS_PEITO,
+  "supino-inclinado-halteres": PRESS_PEITO,
+  "puxada-frente-pronada": PUXADA,
+  "puxada-neutra-fechada": PUXADA,
+  "puxada-frente-supinada": PUXADA,
+  "graviton-neutra": PUXADA,
+  "remada-apoio-peito-maquina": PUXADA,
+  "remada-cavalinho-apoio-peito": PUXADA,
+  "remada-maquina-neutra": PUXADA,
+  "remada-apoio-peito": PUXADA,
+  "remada-unilateral-halter": PUXADA,
+  "remada-unilateral-polia": PUXADA,
+  "desenvolvimento-maquina": { "Tríceps": MEIA },
+  "desenvolvimento-arnold": { "Tríceps": MEIA },
+  "desenvolvimento-sentado-halteres": { "Tríceps": MEIA },
+  "face-pull-polia": { Deltoides: MEIA },
+  "crucifixo-inverso-maquina": { Deltoides: MEIA },
+  "crucifixo-inverso-polia-cruzada": { Deltoides: MEIA },
+  "hack-squat": AGACHAMENTO,
+  "agachamento-smith": AGACHAMENTO,
+  "leg-press-45": AGACHAMENTO,
+  "leg-press-unilateral": AGACHAMENTO,
+  "bulgaro-halteres": AGACHAMENTO,
+  "passada-estatica-smith": AGACHAMENTO,
+  "elevacao-pelvica-maquina": { Posterior: MEIA },
+  "hip-thrust-barra": { Posterior: MEIA },
+};
+
+// Fotos início/fim do free-exercise-db (Unlicense) — ver NOTICE.md e
+// scripts/importar-imagens.sh, que lê este bloco. Equivalência aproximada: mostra o padrão de
+// movimento, não a máquina exata da academia. Sem equivalente (rosca bayesian, Y-raise,
+// extensão torácica, graviton, elevação lateral na máquina) fica sem foto.
+const IMAGENS: Record<string, string> = {
+  "supino-inclinado-maquina": "Leverage_Incline_Chest_Press",
+  "supino-reto-halteres": "Dumbbell_Bench_Press",
+  "supino-maquina-convergente": "Leverage_Chest_Press",
+  "supino-inclinado-halteres": "Incline_Dumbbell_Press",
+  "puxada-frente-pronada": "Wide-Grip_Lat_Pulldown",
+  "puxada-neutra-fechada": "V-Bar_Pulldown",
+  "puxada-frente-supinada": "Underhand_Cable_Pulldowns",
+  "remada-apoio-peito-maquina": "Leverage_Iso_Row",
+  "remada-cavalinho-apoio-peito": "Lying_T-Bar_Row",
+  "remada-maquina-neutra": "Leverage_Iso_Row",
+  "remada-apoio-peito": "Leverage_Iso_Row",
+  "remada-unilateral-halter": "One-Arm_Dumbbell_Row",
+  "remada-unilateral-polia": "Seated_One-arm_Cable_Pulley_Rows",
+  "desenvolvimento-maquina": "Machine_Shoulder_Military_Press",
+  "desenvolvimento-arnold": "Arnold_Dumbbell_Press",
+  "desenvolvimento-sentado-halteres": "Seated_Dumbbell_Press",
+  "face-pull-polia": "Face_Pull",
+  "crucifixo-inverso-maquina": "Reverse_Machine_Flyes",
+  "crucifixo-inverso-polia-cruzada": "Cable_Rear_Delt_Fly",
+  "rosca-polia-baixa-barra": "Standing_Biceps_Cable_Curl",
+  "rosca-scott": "Preacher_Curl",
+  "rosca-inclinada-halteres": "Incline_Dumbbell_Curl",
+  "triceps-corda": "Triceps_Pushdown_-_Rope_Attachment",
+  "triceps-barra-reta": "Triceps_Pushdown",
+  "triceps-overhead-polia-corda": "Cable_Rope_Overhead_Triceps_Extension",
+  "triceps-frances-halter": "Standing_Dumbbell_Triceps_Extension",
+  "crossover-polia-alta": "Cable_Crossover",
+  "peck-deck": "Butterfly",
+  "elevacao-lateral-polia-unilateral": "Cable_Seated_Lateral_Raise",
+  "hack-squat": "Hack_Squat",
+  "agachamento-smith": "Smith_Machine_Squat",
+  "leg-press-45": "Leg_Press",
+  "leg-press-unilateral": "Leg_Press",
+  "bulgaro-halteres": "Split_Squat_with_Dumbbells",
+  "passada-estatica-smith": "Smith_Single-Leg_Split_Squat",
+  "cadeira-extensora": "Leg_Extensions",
+  "flexora-sentada": "Seated_Leg_Curl",
+  "flexora-sentada-unilateral": "Seated_Leg_Curl",
+  "flexora-deitada": "Lying_Leg_Curls",
+  "elevacao-pelvica-maquina": "Barbell_Hip_Thrust",
+  "hip-thrust-barra": "Barbell_Hip_Thrust",
+  "panturrilha-em-pe": "Standing_Calf_Raises",
+  "panturrilha-em-pe-unilateral": "Standing_Calf_Raises",
+  "panturrilha-sentado": "Seated_Calf_Raise",
+  "panturrilha-leg-press": "Calf_Press_On_The_Leg_Press_Machine",
+  "abdominal-polia-alta": "Cable_Crunch",
+  "abdominal-maquina": "Ab_Crunch_Machine",
+  "prancha-lateral": "Side_Bridge",
+  "prancha-frontal-carga": "Plank",
+};
 
 const EXTENSAO_TORACICA = v(
   "extensao-toracica-prono",
@@ -172,14 +266,21 @@ export function gruposDaSessao(sessao: SessaoTreino): GrupoMuscular[] {
 
 // Resolve nome/grupo de qualquer id que possa estar no histórico: exercícios do programa
 // atual (meso 1 e 2) e, para registros antigos, o catálogo arquivado do PPL.
-const CATALOGO = new Map<string, { nome: string; grupoMuscular: GrupoMuscular }>();
+// Os do PPL arquivado não têm secundários: no histórico antigo só conta o grupo primário.
+export interface ExercicioCatalogo {
+  nome: string;
+  grupoMuscular: GrupoMuscular;
+  secundarios?: Partial<Record<GrupoMuscular, number>>;
+}
+const CATALOGO = new Map<string, ExercicioCatalogo>();
 for (const e of EXERCICIOS_PPL_V4) CATALOGO.set(e.id, e);
 for (const s of SLOTS) {
-  CATALOGO.set(s.meso1.id, { nome: s.meso1.nome, grupoMuscular: s.grupoMuscular });
-  CATALOGO.set(s.meso2.id, { nome: s.meso2.nome, grupoMuscular: s.grupoMuscular });
+  for (const m of [s.meso1, s.meso2]) {
+    CATALOGO.set(m.id, { nome: m.nome, grupoMuscular: s.grupoMuscular, secundarios: m.secundarios });
+  }
 }
 
-export function getExercicio(id: string): { nome: string; grupoMuscular: GrupoMuscular } | undefined {
+export function getExercicio(id: string): ExercicioCatalogo | undefined {
   return CATALOGO.get(id);
 }
 

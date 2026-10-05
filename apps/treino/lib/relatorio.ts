@@ -5,8 +5,10 @@ import type { GrupoMuscular, SerieRegistrada, SessaoTreino } from "./tipos";
 
 export interface VolumeGrupo {
   grupo: GrupoMuscular;
-  seriesFeitas: number;
-  pct: number; // % do total de séries feitas no período
+  seriesDiretas: number; // séries de exercícios cujo grupo primário é este
+  seriesIndiretas: number; // séries ponderadas vindas de exercícios em que é secundário
+  seriesFeitas: number; // diretas + indiretas: é o que ordena, pinta o mapa e dá o %
+  pct: number; // % da soma do volume efetivo de todos os grupos no período
 }
 
 const TODOS_GRUPOS: GrupoMuscular[] = [
@@ -29,31 +31,45 @@ function addDays(d: Date, days: number): Date {
   return r;
 }
 
+// Volume por grupo contando os secundários: cada série soma 1 no grupo primário e o peso do
+// secundário (ex.: 0,5) em cada grupo secundário — supino conta meia série para tríceps.
 export function calcularVolumePorGrupo(periodoDias: number | "tudo", hoje: Date = new Date()): VolumeGrupo[] {
   const log = getLog();
   const dataLimite = periodoDias === "tudo" ? null : toISODate(addDays(hoje, -periodoDias + 1));
 
-  const contagem = new Map<GrupoMuscular, number>();
-  for (const grupo of TODOS_GRUPOS) contagem.set(grupo, 0);
+  const diretas = new Map<GrupoMuscular, number>();
+  const indiretas = new Map<GrupoMuscular, number>();
 
-  let totalSeries = 0;
   for (const serie of log) {
     if (serie.cargaKg === null && serie.reps === null) continue; // série não preenchida
     if (dataLimite && serie.data < dataLimite) continue;
     const exercicio = getExercicio(serie.exercicioId);
     if (!exercicio) continue;
-    contagem.set(exercicio.grupoMuscular, (contagem.get(exercicio.grupoMuscular) ?? 0) + 1);
-    totalSeries++;
+    diretas.set(exercicio.grupoMuscular, (diretas.get(exercicio.grupoMuscular) ?? 0) + 1);
+    for (const [grupo, peso] of Object.entries(exercicio.secundarios ?? {}) as [GrupoMuscular, number][]) {
+      indiretas.set(grupo, (indiretas.get(grupo) ?? 0) + peso);
+    }
   }
 
-  return TODOS_GRUPOS.map((grupo) => {
-    const seriesFeitas = contagem.get(grupo) ?? 0;
-    return { grupo, seriesFeitas, pct: totalSeries > 0 ? (seriesFeitas / totalSeries) * 100 : 0 };
-  }).sort((a, b) => b.seriesFeitas - a.seriesFeitas);
+  const volumes = TODOS_GRUPOS.map((grupo) => {
+    const seriesDiretas = diretas.get(grupo) ?? 0;
+    const seriesIndiretas = indiretas.get(grupo) ?? 0;
+    return { grupo, seriesDiretas, seriesIndiretas, seriesFeitas: seriesDiretas + seriesIndiretas, pct: 0 };
+  });
+  const totalEfetivo = volumes.reduce((sum, v) => sum + v.seriesFeitas, 0);
+  for (const v of volumes) v.pct = totalEfetivo > 0 ? (v.seriesFeitas / totalEfetivo) * 100 : 0;
+  return volumes.sort((a, b) => b.seriesFeitas - a.seriesFeitas);
 }
 
+// 4 → "4", 4.5 → "4,5" (as indiretas têm peso fracionário).
+export function formatarSeries(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+}
+
+// Séries realmente registradas (só as diretas — as indiretas são as mesmas séries contadas
+// de novo em outro grupo).
 export function totalSeriesNoPeriodo(volumes: VolumeGrupo[]): number {
-  return volumes.reduce((sum, v) => sum + v.seriesFeitas, 0);
+  return volumes.reduce((sum, v) => sum + v.seriesDiretas, 0);
 }
 
 export type TipoFrequencia = SessaoTreino | "PPL";
