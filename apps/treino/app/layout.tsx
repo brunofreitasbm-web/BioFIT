@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { Manrope } from "next/font/google";
 import "./globals.css";
 import { NavTabs } from "@/components/NavTabs";
+import { TimerDescanso } from "@/components/TimerDescanso";
+import { RegistrarSW } from "@/components/RegistrarSW";
 
 // Self-hospedada via next/font (sem chamada de rede em runtime — importante pra PWA usada
 // offline na academia). Geométrica e com números tabulares fortes: é a voz do app nos
@@ -17,6 +19,9 @@ const manrope = Manrope({
 export const metadata = {
   title: "Treino PPL",
   description: "Programa de hipertrofia PPL — hoje, registro e relatório de volume",
+  manifest: "/manifest.webmanifest",
+  icons: { icon: "/icon.svg", apple: "/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "BioFIT", statusBarStyle: "default" },
 };
 
 export const viewport = {
@@ -35,8 +40,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <div className="mx-auto flex min-h-screen max-w-xl flex-col">
           <main className="flex-1 pb-24">{children}</main>
+          <TimerDescanso />
           <NavTabs />
         </div>
+        <RegistrarSW />
       </body>
     </html>
   );

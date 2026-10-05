@@ -13,6 +13,7 @@ import { corCalor } from "@/lib/cor";
 import { cn } from "@/lib/cn";
 import { SESSAO_NOME } from "@/lib/exercicios";
 import { RelatorioTabs } from "@/components/RelatorioTabs";
+import { HeatmapAnual } from "@/components/HeatmapAnual";
 
 const PERIODOS: { label: string; valor: number | "tudo" }[] = [
   { label: "7 dias", valor: 7 },
@@ -54,6 +55,12 @@ export default function FrequenciaPage() {
         <p className="text-sm text-ink-muted">Quais treinos e grupos musculares você tem feito com mais regularidade</p>
         <RelatorioTabs ativa="/relatorio/frequencia" />
       </header>
+
+      {/* Últimos 12 meses — independe do seletor de período abaixo */}
+      <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm space-y-3">
+        <h2 className="text-base font-semibold text-ink">Últimos 12 meses</h2>
+        <HeatmapAnual />
+      </section>
 
       {/* Seletor de Período */}
       <div className="flex gap-2">

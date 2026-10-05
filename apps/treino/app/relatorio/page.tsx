@@ -8,6 +8,7 @@ import { corCalor } from "@/lib/cor";
 import { cn } from "@/lib/cn";
 import { RelatorioTabs } from "@/components/RelatorioTabs";
 import { BackupCard } from "@/components/BackupCard";
+import { MapaMuscular } from "@/components/MapaMuscular";
 import { BarChart3, Dumbbell, Bike, Check, History, Timer } from "lucide-react";
 import { EstadoVazio } from "@/components/EstadoVazio";
 import { ICON, STROKE } from "@/lib/icones";
@@ -245,6 +246,8 @@ export default function RelatorioPage() {
           {volumes.filter((v) => v.seriesFeitas > 0).length === 0 ? (
             <EstadoVazio Icone={BarChart3} texto="Nenhuma série registrada no período selecionado." />
           ) : (
+            <>
+            <MapaMuscular volumes={volumes} />
             <div className="space-y-2.5">
               {volumes
                 .filter((v) => v.seriesFeitas > 0)
@@ -263,6 +266,7 @@ export default function RelatorioPage() {
                   </div>
                 ))}
             </div>
+            </>
           )}
           <p className="pt-1 text-center text-xs text-ink-faint">
             Total: {totalSeriesNoPeriodo(volumes)} séries registradas no período
