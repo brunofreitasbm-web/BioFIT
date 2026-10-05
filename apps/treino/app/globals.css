@@ -224,3 +224,8 @@ textarea:focus-visible {
     transition-duration: 1ms !important;
   }
 }
+
+/* Barra do timer de descanso (TimerDescanso) fica fixa acima da navegação. */
+body[data-descanso] main {
+  padding-bottom: 11rem;
+}

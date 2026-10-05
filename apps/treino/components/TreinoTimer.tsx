@@ -6,6 +6,8 @@ import { ICON } from "@/lib/icones";
 import { getSessaoAtiva, iniciarSessao, reabrirSessao, terminarSessao } from "@/lib/storage";
 import { SESSAO_NOME } from "@/lib/exercicios";
 import type { RegistroSessao, SessaoTreino } from "@/lib/tipos";
+import { liberarTela, manterTelaLigada } from "@/lib/wakelock";
+import { pararDescanso } from "@/lib/timerDescanso";
 
 function formatarDuracao(ms: number): string {
   const totalSegundos = Math.max(0, Math.floor(ms / 1000));
@@ -29,7 +31,12 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
   useEffect(() => {
     if (!registro || registro.fimISO) return;
     const id = setInterval(() => setAgora(Date.now()), 1000);
-    return () => clearInterval(id);
+    // Treino em andamento = tela ligada (o celular não apaga entre as séries).
+    manterTelaLigada();
+    return () => {
+      clearInterval(id);
+      liberarTela();
+    };
   }, [registro]);
 
   function iniciar() {
@@ -41,6 +48,7 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
   function terminar() {
     if (!window.confirm(`Terminar o treino ${nome} agora? Dá pra reabrir depois se precisar.`)) return;
     terminarSessao(hojeISO, sessaoTipo);
+    pararDescanso();
     setRegistro(getSessaoAtiva(hojeISO, sessaoTipo));
   }
 

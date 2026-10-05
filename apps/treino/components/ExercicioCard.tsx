@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, ChevronDown, Film, Layers, Lightbulb, ListOrdered, SkipForward, Timer, Check, Link2, TrendingUp, Trophy, Zap } from "lucide-react";
+import { ArrowRight, ChevronDown, Film, Layers, Lightbulb, ListOrdered, Check, Link2, TrendingUp, Trophy, Zap } from "lucide-react";
 import { ICON, STROKE } from "@/lib/icones";
 import type { ExercicioEfetivo, SerieRegistrada } from "@/lib/tipos";
 import { GrupoBadge } from "./GrupoBadge";
@@ -13,12 +13,7 @@ import { sugerirProximaCarga } from "@/lib/progressao";
 import { estimar1RM, recordesPessoais } from "@/lib/relatorio";
 import { seriesDaRodada, type StatusPrograma } from "@/lib/program";
 import { getPalpite, salvarPalpite, seriesDoExercicioNaData, ultimaExecucao, upsertSerie } from "@/lib/storage";
-
-function formatarDescanso(segundos: number): string {
-  const m = Math.floor(segundos / 60);
-  const s = segundos % 60;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
+import { iniciarDescanso } from "@/lib/timerDescanso";
 
 function melhorE1rm(series: SerieRegistrada[]): number | null {
   let melhor: number | null = null;
@@ -58,7 +53,6 @@ export function ExercicioCard({
   // Incrementa a cada toque na sugestão para a linha de input repopular os campos.
   const [preenchimento, setPreenchimento] = useState<{ kg: string; reps: string; n: number } | null>(null);
   const [videoAberto, setVideoAberto] = useState(false);
-  const [descansoRestante, setDescansoRestante] = useState<number | null>(null);
   const [dicasAbertas, setDicasAbertas] = useState(false);
   const [seriesIndividuais, setSeriesIndividuais] = useState(false);
   const [erroSalvar, setErroSalvar] = useState(false);
@@ -72,7 +66,6 @@ export function ExercicioCard({
     setRecorde1RMAnterior(recordesPessoais(exercicio.id, data).melhor1RM?.kg ?? null);
     setPreenchimento(null);
     setPalpite(getPalpite(exercicio.id, data)?.toString() ?? "");
-    setDescansoRestante(null);
     setDicasAbertas(false);
     setSeriesIndividuais(false);
   }, [exercicio.id, data]);
@@ -110,12 +103,6 @@ export function ExercicioCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exercicio.id, feitas, totalSeries]);
 
-  useEffect(() => {
-    if (descansoRestante === null || descansoRestante <= 0) return;
-    const id = setTimeout(() => setDescansoRestante((v) => (v === null ? null : v - 1)), 1000);
-    return () => clearTimeout(id);
-  }, [descansoRestante]);
-
   function registrar(serieNumero: number, kgStr: string, repsStr: string, registradoEm: string): boolean {
     const anterior = series.find((s) => s.serieNumero === serieNumero);
     return upsertSerie({
@@ -133,9 +120,12 @@ export function ExercicioCard({
   function aposSalvar(salvou: boolean) {
     setErroSalvar(!salvou);
     setSeries(seriesDoExercicioNaData(exercicio.id, data));
-    if (salvou) {
+    // Biset: o 1º exercício do par emenda direto no 2º, sem descanso entre eles; o timer
+    // só corre depois do 2º.
+    const emendaNoBiset = exercicio.bisetCom !== undefined && exercicio.ordem < exercicio.bisetCom;
+    if (salvou && !emendaNoBiset) {
       const segundos = parseDescansoSegundos(exercicio.descanso);
-      if (segundos) setDescansoRestante(segundos);
+      if (segundos) iniciarDescanso(segundos, `${exercicio.sessao}${exercicio.ordem} · ${exercicio.nome}`);
     }
   }
 
@@ -331,21 +321,6 @@ export function ExercicioCard({
                     : `Real: ${realCalibracao}${erroCalibracao !== null ? ` · erro ${erroCalibracao > 0 ? "+" : ""}${erroCalibracao}` : ""}`}
                 </span>
               </div>
-            </div>
-          )}
-
-          {descansoRestante !== null && descansoRestante > 0 && (
-            <div className="mb-3 flex items-center justify-between rounded-lg border border-brand/30 bg-brand-soft px-3 py-2">
-              <span className="flex items-center gap-1.5 text-xs font-medium text-brand">
-                <Timer aria-hidden="true" size={ICON.sm} /> Descanso: {formatarDescanso(descansoRestante)}
-              </span>
-              <button
-                type="button"
-                onClick={() => setDescansoRestante(null)}
-                className="toque flex min-h-11 items-center gap-1 px-2 text-[11px] font-medium text-brand"
-              >
-                <SkipForward aria-hidden="true" size={ICON.xs} /> pular
-              </button>
             </div>
           )}
 
