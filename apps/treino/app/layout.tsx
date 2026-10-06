@@ -4,6 +4,7 @@ import "./globals.css";
 import { NavTabs } from "@/components/NavTabs";
 import { TimerDescanso } from "@/components/TimerDescanso";
 import { RegistrarSW } from "@/components/RegistrarSW";
+import { IniciarSync } from "@/components/IniciarSync";
 
 // Self-hospedada via next/font (sem chamada de rede em runtime — importante pra PWA usada
 // offline na academia). Geométrica e com números tabulares fortes: é a voz do app nos
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <NavTabs />
         </div>
         <RegistrarSW />
+        <IniciarSync />
       </body>
     </html>
   );

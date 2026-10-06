@@ -18,6 +18,16 @@ const KEY_VERSAO = "treino:versaoPrograma";
 const KEY_ARQUIVO_PPL = "treino:arquivo:ppl-v4";
 const VERSAO_PROGRAMA = "ulppl-meso1";
 
+// Gancho chamado após cada gravação, para o envio ao servidor (lib/sync.ts) agendar um sync.
+let aoGravar: (() => void) | null = null;
+export function registrarAoGravar(fn: (() => void) | null): void {
+  aoGravar = fn;
+}
+function gravarLocal(chave: string, valor: string): void {
+  window.localStorage.setItem(chave, valor);
+  aoGravar?.();
+}
+
 
 export function getDataInicio(): string | null {
   if (typeof window === "undefined") return null;
@@ -26,7 +36,7 @@ export function getDataInicio(): string | null {
 
 export function setDataInicio(iso: string): boolean {
   try {
-    window.localStorage.setItem(KEY_INICIO, iso);
+    gravarLocal(KEY_INICIO, iso);
     return true;
   } catch {
     return false;
@@ -45,7 +55,7 @@ export function getLog(): SerieRegistrada[] {
 
 function saveLog(log: SerieRegistrada[]): boolean {
   try {
-    window.localStorage.setItem(KEY_LOG, JSON.stringify(log));
+    gravarLocal(KEY_LOG, JSON.stringify(log));
     return true;
   } catch {
     return false;
@@ -95,7 +105,7 @@ export function getTodasSessoes(): Record<string, RegistroSessao[]> {
 
 function saveSessoesPorDia(map: Record<string, RegistroSessao[]>): boolean {
   try {
-    window.localStorage.setItem(KEY_SESSOES, JSON.stringify(map));
+    gravarLocal(KEY_SESSOES, JSON.stringify(map));
     return true;
   } catch {
     return false;
@@ -166,7 +176,7 @@ export function setSessaoEscolhida(data: string, valor: EscolhaDoDia): boolean {
   const map = getEscolhas();
   map[data] = valor;
   try {
-    window.localStorage.setItem(KEY_ESCOLHAS, JSON.stringify(map));
+    gravarLocal(KEY_ESCOLHAS, JSON.stringify(map));
     return true;
   } catch {
     return false;
@@ -177,7 +187,7 @@ export function limparSessaoEscolhida(data: string): boolean {
   const map = getEscolhas();
   delete map[data];
   try {
-    window.localStorage.setItem(KEY_ESCOLHAS, JSON.stringify(map));
+    gravarLocal(KEY_ESCOLHAS, JSON.stringify(map));
     return true;
   } catch {
     return false;
@@ -248,7 +258,7 @@ export function salvarPalpite(entry: PalpiteCalibracao): boolean {
   const lista = getPalpites().filter((p) => !(p.exercicioId === entry.exercicioId && p.data === entry.data));
   lista.push(entry);
   try {
-    window.localStorage.setItem(KEY_CALIBRACAO, JSON.stringify(lista));
+    gravarLocal(KEY_CALIBRACAO, JSON.stringify(lista));
     return true;
   } catch {
     return false;
@@ -323,7 +333,7 @@ export function saveBikeIndoor(entry: RegistroBikeIndoor): boolean {
     const raw = window.localStorage.getItem(KEY_BIKE);
     const map = raw ? (JSON.parse(raw) as Record<string, RegistroBikeIndoor>) : {};
     map[entry.data] = entry;
-    window.localStorage.setItem(KEY_BIKE, JSON.stringify(map));
+    gravarLocal(KEY_BIKE, JSON.stringify(map));
     return true;
   } catch {
     return false;
@@ -336,7 +346,7 @@ export function removerBikeIndoor(data: string): boolean {
     const raw = window.localStorage.getItem(KEY_BIKE);
     const map = raw ? (JSON.parse(raw) as Record<string, RegistroBikeIndoor>) : {};
     delete map[data];
-    window.localStorage.setItem(KEY_BIKE, JSON.stringify(map));
+    gravarLocal(KEY_BIKE, JSON.stringify(map));
     return true;
   } catch {
     return false;
@@ -413,7 +423,7 @@ export function importarTudo(texto: string): string | null {
   try {
     for (const chave of CHAVES_BACKUP) {
       const valor = dados[chave];
-      if (typeof valor === "string") window.localStorage.setItem(chave, valor);
+      if (typeof valor === "string") gravarLocal(chave, valor);
       else window.localStorage.removeItem(chave);
     }
   } catch {
