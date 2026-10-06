@@ -1,16 +1,38 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { CheckCircle2, CircleAlert, Download, HardDriveDownload, Upload } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CheckCircle2, CircleAlert, Download, HardDriveDownload, RefreshCw, Upload } from "lucide-react";
 import { ICON } from "@/lib/icones";
 import { exportarTudo, importarTudo } from "@/lib/storage";
 import { toISODate } from "@/lib/program";
+import { getTokenSync, getUltimoSync, setTokenSync, sincronizarAgora } from "@/lib/sync";
 
 // Os dados só existem no localStorage deste navegador: sem backup, limpar os dados do site
 // ou trocar de aparelho apaga todo o histórico (e os gráficos de evolução junto).
 export function BackupCard() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [mensagem, setMensagem] = useState<{ tipo: "ok" | "erro"; texto: string } | null>(null);
+  const [token, setToken] = useState("");
+  const [ultimoSync, setUltimoSync] = useState<string | null>(null);
+  const [sincronizando, setSincronizando] = useState(false);
+
+  useEffect(() => {
+    setToken(getTokenSync());
+    setUltimoSync(getUltimoSync());
+  }, []);
+
+  async function enviarAgora() {
+    setTokenSync(token.trim());
+    setSincronizando(true);
+    const r = await sincronizarAgora();
+    setSincronizando(false);
+    if (r.ok) {
+      setUltimoSync(r.quando);
+      setMensagem({ tipo: "ok", texto: "Histórico enviado ao servidor." });
+    } else {
+      setMensagem({ tipo: "erro", texto: r.motivo });
+    }
+  }
 
   function baixar() {
     const backup = exportarTudo();
@@ -72,6 +94,33 @@ export function BackupCard() {
             if (arquivo) void restaurar(arquivo);
           }}
         />
+      </div>
+      <div className="space-y-2 border-t border-line pt-3">
+        <p className="text-xs text-ink-muted">
+          Envio automático para o servidor (usado pelo MCP com Claude/Gemini). Cole o token de sync uma vez neste aparelho.
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="password"
+            autoComplete="off"
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            placeholder="Token de sync"
+            aria-label="Token de sync"
+            className="min-h-11 min-w-0 flex-1 rounded-full border border-line bg-base-700 px-4 text-xs text-ink"
+          />
+          <button
+            type="button"
+            onClick={() => void enviarAgora()}
+            disabled={sincronizando || !token.trim()}
+            className="flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-line bg-base-700 px-4 text-xs font-semibold text-ink-muted hover:text-ink disabled:opacity-50"
+          >
+            <RefreshCw aria-hidden="true" size={ICON.sm} /> {sincronizando ? "Enviando…" : "Enviar agora"}
+          </button>
+        </div>
+        {ultimoSync && (
+          <p className="text-xs text-ink-muted">Último envio: {new Date(ultimoSync).toLocaleString("pt-BR")}</p>
+        )}
       </div>
       {mensagem && (
         <p
