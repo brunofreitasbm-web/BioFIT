@@ -7,7 +7,8 @@ Fluxo: app (localStorage) → `POST /api/sync` → Supabase (`biofit_backup`) �
 | Variável | O que é |
 | --- | --- |
 | `SUPABASE_URL` | URL do projeto Supabase (PLAY) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role. Só no servidor, nunca `NEXT_PUBLIC_*` |
+| `SUPABASE_ANON_KEY` | Chave publicável do projeto (não é a service role) |
+| `BIOFIT_DB_SECRET` | Segredo que as funções SQL `biofit_backup_get/put` exigem. No banco fica só o hash (SHA-256) em `biofit_config` |
 | `SYNC_TOKEN` | Token que o app usa para enviar dados (>= 24 caracteres) |
 | `MCP_TOKEN` | Token do MCP (>= 24 caracteres). Diferente do `SYNC_TOKEN` |
 
@@ -15,7 +16,7 @@ Gerar tokens: `openssl rand -base64 32 | tr -d '=+/'`. Servidor sem token válid
 
 ## Tabela
 
-`public.biofit_backup` (RLS ligado, sem policies: só a service role acessa). Migration `biofit_backup_table`.
+`public.biofit_backup` (RLS ligado, sem policies) e `public.biofit_config` (hash do segredo). O acesso é só pelas funções `biofit_backup_get/put` (security definer, exigem o segredo). Migrations `biofit_backup_table` e `biofit_backup_rpc`.
 
 ## Conectar
 
