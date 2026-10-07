@@ -5,7 +5,7 @@ import { CheckCircle2, CircleAlert, Download, HardDriveDownload, RefreshCw, Uplo
 import { ICON } from "@/lib/icones";
 import { exportarTudo, importarTudo } from "@/lib/storage";
 import { toISODate } from "@/lib/program";
-import { getTokenSync, getUltimoSync, setTokenSync, sincronizarAgora } from "@/lib/sync";
+import { getErroSync, getTokenSync, getUltimoSync, setTokenSync, sincronizarAgora } from "@/lib/sync";
 
 // Os dados só existem no localStorage deste navegador: sem backup, limpar os dados do site
 // ou trocar de aparelho apaga todo o histórico (e os gráficos de evolução junto).
@@ -15,17 +15,26 @@ export function BackupCard() {
   const [token, setToken] = useState("");
   const [ultimoSync, setUltimoSync] = useState<string | null>(null);
   const [sincronizando, setSincronizando] = useState(false);
+  const [erroSync, setErroSync] = useState<string | null>(null);
 
   useEffect(() => {
     setToken(getTokenSync());
     setUltimoSync(getUltimoSync());
+    setErroSync(getErroSync());
+    // Atualiza o estado do envio automático enquanto a tela está aberta.
+    const id = window.setInterval(() => {
+      setUltimoSync(getUltimoSync());
+      setErroSync(getErroSync());
+    }, 5000);
+    return () => window.clearInterval(id);
   }, []);
 
   async function enviarAgora() {
     setTokenSync(token.trim());
     setSincronizando(true);
-    const r = await sincronizarAgora();
+    const r = await sincronizarAgora({ forcar: true });
     setSincronizando(false);
+    setErroSync(getErroSync());
     if (r.ok) {
       setUltimoSync(r.quando);
       setMensagem({ tipo: "ok", texto: "Histórico enviado ao servidor." });
@@ -120,6 +129,12 @@ export function BackupCard() {
         </div>
         {ultimoSync && (
           <p className="text-xs text-ink-muted">Último envio: {new Date(ultimoSync).toLocaleString("pt-BR")}</p>
+        )}
+        {erroSync && (
+          <p role="alert" className="flex items-start gap-1.5 text-xs font-medium text-danger">
+            <CircleAlert aria-hidden="true" size={ICON.sm} className="shrink-0" />
+            Envio automático falhando: {erroSync}
+          </p>
         )}
       </div>
       {mensagem && (

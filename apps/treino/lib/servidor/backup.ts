@@ -58,6 +58,25 @@ export async function gravarBackup(dados: DadosBackup): Promise<void> {
   await rpc("biofit_backup_put", { p_dados: dados });
 }
 
+// Número de séries no log de um backup (0 se ausente ou corrompido).
+export function contarSeries(dados: DadosBackup): number {
+  try {
+    const log = JSON.parse(dados["treino:log"] ?? "[]") as unknown;
+    return Array.isArray(log) ? log.length : 0;
+  } catch {
+    return 0;
+  }
+}
+
+// Recusa um envio que reduz drasticamente o histórico já guardado (ex.: aparelho que perdeu
+// os dados locais e registrou uma série nova antes de restaurar o backup).
+const MIN_SERIES_PARA_TRAVA = 20;
+const FRACAO_MINIMA = 0.5;
+export function reducaoSuspeita(guardado: DadosBackup, novo: DadosBackup): boolean {
+  const antes = contarSeries(guardado);
+  return antes >= MIN_SERIES_PARA_TRAVA && contarSeries(novo) < antes * FRACAO_MINIMA;
+}
+
 // Valida o corpo enviado pelo app (mesmo formato de `exportarTudo`). Retorna os dados ou um erro.
 export function validarCorpoSync(texto: string): { dados: DadosBackup } | { erro: string } {
   if (texto.length > TAMANHO_MAX_BYTES) return { erro: "Payload grande demais." };
