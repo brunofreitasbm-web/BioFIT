@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useBackLayers } from "@/hooks/useBackHandler";
 import { ArrowRight, ChevronDown, Film, Image as ImageIcon, Layers, Lightbulb, ListOrdered, Check, Link2, TrendingUp, Trophy, Zap } from "lucide-react";
 import { ICON, STROKE } from "@/lib/icones";
 import type { ExercicioEfetivo, SerieRegistrada } from "@/lib/tipos";
@@ -56,6 +57,12 @@ export function ExercicioCard({
   const [videoAberto, setVideoAberto] = useState(false);
   const [fotoAberta, setFotoAberta] = useState(false);
   const [dicasAbertas, setDicasAbertas] = useState(false);
+
+  // Botão/gesto voltar do celular fecha o vídeo/foto abertos (ver hooks/useBackHandler).
+  useBackLayers([
+    { active: videoAberto, back: () => setVideoAberto(false) },
+    { active: fotoAberta, back: () => setFotoAberta(false) },
+  ]);
   const [seriesIndividuais, setSeriesIndividuais] = useState(false);
   const [erroSalvar, setErroSalvar] = useState(false);
   const [palpite, setPalpite] = useState("");
