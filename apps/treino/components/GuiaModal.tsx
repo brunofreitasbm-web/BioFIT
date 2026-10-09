@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useBackLayers } from "@/hooks/useBackHandler";
 import { Info, Save, X } from "lucide-react";
 import { ICON } from "@/lib/icones";
 import { erroMedioCalibracao, getDataInicio, setDataInicio } from "@/lib/storage";
@@ -9,6 +10,9 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
   const [aberto, setAberto] = useState(false);
   const [inputData, setInputData] = useState(dataInicio);
   const [calibracao, setCalibracao] = useState<ReturnType<typeof erroMedioCalibracao>>({ amostras: 0, erroMedio: null });
+
+  // Botão/gesto voltar do celular fecha o modal (ver hooks/useBackHandler).
+  useBackLayers([{ active: aberto, back: () => setAberto(false) }]);
 
   function salvar() {
     setDataInicio(inputData);
