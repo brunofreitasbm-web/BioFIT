@@ -10,10 +10,9 @@ import { GuiaModal } from "@/components/GuiaModal";
 import { SeletorSessao } from "@/components/SeletorSessao";
 import { TreinoTimer } from "@/components/TreinoTimer";
 import { BikeIndoorCard } from "@/components/BikeIndoorCard";
-import { ProgressoMeso } from "@/components/ProgressoMeso";
-import { AderenciaCard } from "@/components/AderenciaCard";
+import { ResumoPrograma } from "@/components/ResumoPrograma";
 import type { EscolhaDoDia } from "@/lib/tipos";
-import { AlertTriangle, CalendarClock, Coffee, CheckCircle2, Target } from "lucide-react";
+import { AlertTriangle, CalendarClock, Coffee, CheckCircle2 } from "lucide-react";
 import { ICON } from "@/lib/icones";
 
 
@@ -127,8 +126,8 @@ export default function HojePage() {
       </header>
 
       {sessaoEfetiva && exercicios.length > 0 && (
-        <div className="sticky top-0 z-10 -mx-4 mb-3 border-b border-line bg-base-800/95 px-4 py-3 shadow-panel backdrop-blur">
-          <div className="mb-2 flex items-center justify-between text-sm">
+        <div className="sticky top-0 z-10 -mx-4 mb-3 border-b border-line bg-base-800/95 px-4 py-2 shadow-panel backdrop-blur">
+          <div className="mb-1.5 flex items-center justify-between text-xs">
             <span className="flex items-center gap-1.5 font-semibold text-ink">
               {treinoConcluido ? (
                 <>
@@ -143,21 +142,11 @@ export default function HojePage() {
               {progressoSessao.feitas} de {progressoSessao.total} séries ({Math.round(progressoSessaoPct)}%)
             </span>
           </div>
-          <div className="h-2.5 w-full overflow-hidden rounded-full bg-base-600">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-base-600">
             <div
               className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out"
               style={{ width: `${progressoSessaoPct}%` }}
             />
-          </div>
-        </div>
-      )}
-
-      {insightHoje && (
-        <div className="mb-3 flex gap-3 rounded-xl border border-brand-soft bg-brand-soft p-3">
-          <Target aria-hidden="true" size={ICON.md} className="mt-0.5 shrink-0 text-brand" />
-          <div>
-            <p className="text-sm font-semibold text-brand-hover">{insightHoje.titulo}</p>
-            <p className="mt-1 text-sm text-ink-muted">{insightHoje.mensagem}</p>
           </div>
         </div>
       )}
@@ -176,12 +165,15 @@ export default function HojePage() {
         </div>
       )}
 
-      <BikeIndoorCard hojeISO={hojeISO} />
-
       {sessaoEfetiva && status && <TreinoTimer hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} />}
 
-      {status && <ProgressoMeso status={status} />}
-      {aderencia && hojeISO <= addDiasISO(aderencia.fim, 7) && <AderenciaCard aderencia={aderencia} />}
+      {status && (
+        <ResumoPrograma
+          status={status}
+          aderencia={aderencia && hojeISO <= addDiasISO(aderencia.fim, 7) ? aderencia : null}
+          insight={insightHoje}
+        />
+      )}
       {status?.isDeload && sessaoEfetiva && (
         <div className="mb-4 flex items-start gap-2 rounded-xl border border-danger/30 bg-danger-soft px-3 py-2.5">
           <AlertTriangle aria-hidden="true" size={ICON.sm} className="mt-0.5 shrink-0 text-danger" />
@@ -212,6 +204,8 @@ export default function HojePage() {
           </section>
         </>
       )}
+
+      <BikeIndoorCard hojeISO={hojeISO} />
 
       {insightProximo && (
         <div className="mt-2 flex gap-3 rounded-xl border border-line bg-base-800 p-3 shadow-panel">

@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { calcularVolumePorGrupo, formatarSeries, totalSeriesNoPeriodo, type VolumeGrupo } from "@/lib/relatorio";
+import { calcularVolumePorGrupo, evolucaoRecente, semanasNoPeriodo, totalSeriesNoPeriodo, type EvolucaoRecente, type VolumeGrupo } from "@/lib/relatorio";
 import { getTodosBikeIndoor, getTodasSessoes } from "@/lib/storage";
 import type { RegistroSessao } from "@/lib/tipos";
-import { corCalor } from "@/lib/cor";
 import { cn } from "@/lib/cn";
 import { RelatorioTabs } from "@/components/RelatorioTabs";
 import { BackupCard } from "@/components/BackupCard";
 import { MapaMuscular } from "@/components/MapaMuscular";
-import { BarChart3, Dumbbell, Bike, Check, History, Timer } from "lucide-react";
+import { SeriesPorMusculo } from "@/components/SeriesPorMusculo";
+import { EvolucaoRM } from "@/components/EvolucaoRM";
+import { BarChart3, Dumbbell, Bike, Check, History, Timer, TrendingUp } from "lucide-react";
 import { EstadoVazio } from "@/components/EstadoVazio";
 import { ICON, STROKE } from "@/lib/icones";
 
@@ -50,6 +51,9 @@ function formatarDuracaoMs(ms: number): string {
 export default function RelatorioPage() {
   const [periodo, setPeriodo] = useState<number | "tudo">(7);
   const [volumes, setVolumes] = useState<VolumeGrupo[] | null>(null);
+  const [semanas, setSemanas] = useState(1);
+  const [evolucao, setEvolucao] = useState<EvolucaoRecente[]>([]);
+  const [historicoCompleto, setHistoricoCompleto] = useState(false);
 
   // Bike
   const [totalMinutosBike, setTotalMinutosBike] = useState<number>(0);
@@ -62,6 +66,8 @@ export default function RelatorioPage() {
 
   useEffect(() => {
     setVolumes(calcularVolumePorGrupo(periodo));
+    setSemanas(semanasNoPeriodo(periodo));
+    setEvolucao(evolucaoRecente());
     const agora = new Date();
 
     // 1. Processar Bike Indoor
@@ -121,8 +127,7 @@ export default function RelatorioPage() {
   return (
     <div className="p-4 space-y-6">
       <header className="mb-2 space-y-2">
-        <h1 className="text-xl font-semibold text-ink">Relatório de Evolução</h1>
-        <p className="text-sm text-ink-muted">Acompanhamento diário de treinos e volume muscular</p>
+        <h1 className="text-2xl font-extrabold tracking-tightest text-ink">Relatório</h1>
         <RelatorioTabs ativa="/relatorio" />
       </header>
 
@@ -144,42 +149,49 @@ export default function RelatorioPage() {
         ))}
       </div>
 
-      {/* Resumos em Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* Card Força */}
-        <div className="rounded-xl border border-line bg-base-800 p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand" aria-hidden="true">
-              <Dumbbell size={ICON.md} />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-ink">Treinos de Força</h3>
-              <p className="text-xs text-ink-muted">
-                {sessoesForcaCount > 0
-                  ? `${sessoesForcaCount} sessão(ões) · ${totalMinutosForca} min totais`
-                  : "Nenhum treino concluído no período"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Card Bike Indoor */}
-        <div className="rounded-xl border border-line bg-base-800 p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent" aria-hidden="true">
-              <Bike size={ICON.md} />
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-ink">Bike Indoor (Cardio)</h3>
-              <p className="text-xs text-ink-muted">
-                {sessoesBikeCount > 0
-                  ? `${sessoesBikeCount} sessão(ões) · ${totalMinutosBike} min totais`
-                  : "Nenhuma sessão registrada no período"}
-              </p>
-            </div>
-          </div>
-        </div>
+      {/* Resumo do período */}
+      <div className="grid grid-cols-3 gap-2">
+        <Kpi Icone={Dumbbell} valor={String(sessoesForcaCount)} rotulo="sessões" />
+        <Kpi Icone={BarChart3} valor={volumes ? String(totalSeriesNoPeriodo(volumes)) : "–"} rotulo="séries" />
+        <Kpi Icone={Timer} valor={String(totalMinutosForca)} rotulo="min de treino" />
       </div>
+      {sessoesBikeCount > 0 && (
+        <p className="flex items-center gap-2 text-xs text-ink-muted">
+          <Bike aria-hidden="true" size={ICON.sm} className="text-accent" />
+          Bike indoor: {sessoesBikeCount} sessão(ões) · {totalMinutosBike} min
+        </p>
+      )}
+
+      {/* Séries por grupo muscular, contra a faixa semanal */}
+      {volumes && (
+        <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm space-y-3">
+          <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
+            <BarChart3 aria-hidden="true" size={ICON.md} className="text-ink-muted" /> Volume por Grupo Muscular
+          </h2>
+          {volumes.filter((v) => v.seriesFeitas > 0).length === 0 ? (
+            <EstadoVazio Icone={BarChart3} texto="Nenhuma série registrada no período selecionado." />
+          ) : (
+            <>
+              <SeriesPorMusculo volumes={volumes} semanas={semanas} />
+              <MapaMuscular volumes={volumes} />
+            </>
+          )}
+          <p className="text-center text-[11px] text-ink-faint">
+            Inclui séries indiretas (meia série para o músculo auxiliar, ex.: supino → tríceps).
+          </p>
+        </section>
+      )}
+
+      {/* Evolução do 1RM estimado */}
+      {evolucao.length > 0 && (
+        <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+          <h2 className="mb-1 flex items-center gap-2 text-base font-semibold text-ink">
+            <TrendingUp aria-hidden="true" size={ICON.md} className="text-ink-muted" /> 1RM estimado
+          </h2>
+          <p className="mb-1 text-xs text-ink-muted">Última sessão contra a anterior, em kg.</p>
+          <EvolucaoRM itens={evolucao} />
+        </section>
+      )}
 
       {/* Histórico Diário de Sessões de Treino */}
       <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm space-y-3">
@@ -194,7 +206,7 @@ export default function RelatorioPage() {
           <EstadoVazio Icone={Dumbbell} texto="Nenhum treino iniciado ou concluído no período selecionado." />
         ) : (
           <div className="space-y-2.5">
-            {sessoesForca.map((sessao, index) => {
+            {(historicoCompleto ? sessoesForca : sessoesForca.slice(0, 5)).map((sessao, index) => {
               const estaConcluido = Boolean(sessao.fimISO);
               const inicioHora = formatarHora(sessao.inicioISO);
               const fimHora = sessao.fimISO ? formatarHora(sessao.fimISO) : null;
@@ -235,57 +247,29 @@ export default function RelatorioPage() {
             })}
           </div>
         )}
+        {sessoesForca.length > 5 && (
+          <button
+            type="button"
+            onClick={() => setHistoricoCompleto((v) => !v)}
+            aria-expanded={historicoCompleto}
+            className="toque min-h-11 w-full text-center text-xs font-semibold text-brand"
+          >
+            {historicoCompleto ? "Mostrar menos" : `Ver todos (${sessoesForca.length})`}
+          </button>
+        )}
       </section>
 
-      {/* Relatório de Volume por Grupo Muscular */}
-      {volumes && (
-        <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm space-y-3">
-          <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
-            <BarChart3 aria-hidden="true" size={ICON.md} className="text-ink-muted" /> Volume por Grupo Muscular
-          </h2>
-          {volumes.filter((v) => v.seriesFeitas > 0).length === 0 ? (
-            <EstadoVazio Icone={BarChart3} texto="Nenhuma série registrada no período selecionado." />
-          ) : (
-            <>
-            <MapaMuscular volumes={volumes} />
-            <div className="space-y-2.5">
-              {volumes
-                .filter((v) => v.seriesFeitas > 0)
-                .map((v) => (
-                  <div key={v.grupo} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-ink">{v.grupo}</span>
-                      <span className="text-ink-faint">
-                        {formatarSeries(v.seriesFeitas)} séries
-                        {v.seriesIndiretas > 0 && (
-                          <span className="text-ink-faint/80">
-                            {" "}
-                            ({v.seriesDiretas} diretas + {formatarSeries(v.seriesIndiretas)} indiretas)
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-base-900 dark:bg-base-700">
-                      <div
-                        className="h-full rounded-full transition-[width]"
-                        style={{ width: `${v.pct}%`, backgroundColor: corCalor(v.pct / 100) }}
-                      />
-                    </div>
-                  </div>
-                ))}
-            </div>
-            </>
-          )}
-          <p className="pt-1 text-center text-xs text-ink-faint">
-            Total: {totalSeriesNoPeriodo(volumes)} séries registradas no período
-          </p>
-          <p className="text-center text-[11px] text-ink-faint">
-            Indiretas: cada série conta meia série para o músculo auxiliar (ex.: supino → tríceps).
-          </p>
-        </section>
-      )}
-
       <BackupCard />
+    </div>
+  );
+}
+
+function Kpi({ Icone, valor, rotulo }: { Icone: typeof Dumbbell; valor: string; rotulo: string }) {
+  return (
+    <div className="rounded-xl border border-line bg-base-800 p-3 shadow-sm">
+      <Icone aria-hidden="true" size={ICON.sm} className="mb-1 text-ink-faint" />
+      <p className="text-2xl font-extrabold leading-none tracking-tightest tabular-nums text-ink">{valor}</p>
+      <p className="mt-1 text-[11px] text-ink-muted">{rotulo}</p>
     </div>
   );
 }

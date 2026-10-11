@@ -1,3 +1,4 @@
+import { estimar1RM } from "../rm";
 import type { RegistroBikeIndoor, RegistroSessao, SerieRegistrada } from "@/lib/tipos";
 import { getExercicio } from "@/lib/exercicios";
 import type { BackupGuardado } from "./backup";
@@ -58,7 +59,7 @@ function numArg(args: Record<string, unknown>, nome: string, padrao: number, min
 }
 
 const r1 = (n: number) => Math.round(n * 10) / 10;
-const epley = (carga: number, reps: number) => (reps <= 1 ? carga : carga * (1 + reps / 30));
+const epley = estimar1RM;
 
 function resumirSerie(s: SerieRegistrada) {
   return { n: s.serieNumero, cargaKg: s.cargaKg, reps: s.reps, rir: s.rir ?? null, obs: s.observacoes || undefined };

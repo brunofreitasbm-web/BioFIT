@@ -1,4 +1,6 @@
 import { getLog, getTodasSessoes } from "./storage";
+import { estimar1RM } from "./rm";
+export { estimar1RM };
 import { getExercicio } from "./exercicios";
 import { toISODate } from "./program";
 import type { GrupoMuscular, SerieRegistrada, SessaoTreino } from "./tipos";
@@ -59,6 +61,21 @@ export function calcularVolumePorGrupo(periodoDias: number | "tudo", hoje: Date 
   const totalEfetivo = volumes.reduce((sum, v) => sum + v.seriesFeitas, 0);
   for (const v of volumes) v.pct = totalEfetivo > 0 ? (v.seriesFeitas / totalEfetivo) * 100 : 0;
   return volumes.sort((a, b) => b.seriesFeitas - a.seriesFeitas);
+}
+
+// Faixa semanal de séries por grupo para hipertrofia (consenso comum: ~10–20 séries/semana
+// por grupo). É uma escolha de treino, não um dado: ajuste aqui e o relatório inteiro segue.
+export const META_SERIES_SEMANA = { min: 10, max: 20 } as const;
+// Postura e core não seguem a faixa de hipertrofia.
+export const GRUPOS_SEM_META: GrupoMuscular[] = ["Postura", "Core"];
+
+// Semanas cobertas pelo período; em "tudo", desde a primeira série registrada.
+export function semanasNoPeriodo(periodoDias: number | "tudo", hoje: Date = new Date()): number {
+  if (periodoDias !== "tudo") return Math.max(1, periodoDias / 7);
+  const primeira = getLog().reduce<string | null>((min, s) => (min === null || s.data < min ? s.data : min), null);
+  if (!primeira) return 1;
+  const dias = (hoje.getTime() - new Date(primeira + "T00:00:00").getTime()) / 86_400_000 + 1;
+  return Math.max(1, dias / 7);
 }
 
 // 4 → "4", 4.5 → "4,5" (as indiretas têm peso fracionário).
@@ -150,11 +167,6 @@ export function calcularFrequenciaPorGrupo(periodoDias: number | "tudo", hoje: D
 }
 
 // ===== Evolução por exercício =====
-
-// 1RM estimado (Epley). Com 1 rep é a própria carga.
-export function estimar1RM(cargaKg: number, reps: number): number {
-  return reps <= 1 ? cargaKg : cargaKg * (1 + reps / 30);
-}
 
 export interface PontoHistorico {
   data: string; // YYYY-MM-DD
@@ -253,4 +265,34 @@ export function resumoExercicios(): ResumoExercicio[] {
     });
   }
   return resumo.sort((a, b) => b.ultimaData.localeCompare(a.ultimaData) || a.nome.localeCompare(b.nome));
+}
+
+export interface EvolucaoRecente {
+  exercicioId: string;
+  nome: string;
+  anterior1RM: number;
+  atual1RM: number;
+  variacaoPct: number;
+  ultimaData: string;
+}
+
+// Último 1RM estimado contra o da sessão imediatamente anterior, dos exercícios mais
+// recentes. Exercícios com uma só sessão ainda não têm com o que comparar.
+export function evolucaoRecente(limite = 6): EvolucaoRecente[] {
+  const lista: EvolucaoRecente[] = [];
+  for (const r of resumoExercicios()) {
+    const hist = historicoExercicio(r.exercicioId);
+    if (hist.length < 2) continue;
+    const anterior = hist[hist.length - 2].melhor1RM;
+    const atual = hist[hist.length - 1].melhor1RM;
+    lista.push({
+      exercicioId: r.exercicioId,
+      nome: r.nome,
+      anterior1RM: anterior,
+      atual1RM: atual,
+      variacaoPct: anterior > 0 ? ((atual - anterior) / anterior) * 100 : 0,
+      ultimaData: r.ultimaData,
+    });
+  }
+  return lista.slice(0, limite);
 }
