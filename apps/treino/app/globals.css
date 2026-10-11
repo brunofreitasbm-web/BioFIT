@@ -23,6 +23,7 @@
   --c-brand-hover: 47 79 192;
   --c-accent: 18 121 58;
   --c-accent-soft: 231 246 236;
+  --c-warn: 163 90 0;
   --c-danger: 194 45 63;
   --c-danger-soft: 252 234 236;
   --c-on-solid: 255 255 255;
@@ -50,6 +51,7 @@
     --c-brand-hover: 160 181 255;
     --c-accent: 61 204 117;
     --c-accent-soft: 18 40 28;
+    --c-warn: 240 162 58;
     --c-danger: 255 107 122;
     --c-danger-soft: 52 24 30;
     --c-on-solid: 10 12 18;

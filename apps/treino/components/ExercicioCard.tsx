@@ -205,7 +205,7 @@ export function ExercicioCard({
                 {exercicio.sessao}
                 {exercicio.ordem}
               </span>
-              <span className="truncate text-[15px] font-semibold tracking-tight text-ink">{exercicio.nome}</span>
+              <span className="line-clamp-2 min-w-0 text-[15px] font-semibold leading-tight tracking-tight text-ink">{exercicio.nome}</span>
               {completo && (
                 <span className="anim-confirmar flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-on-solid">
                   <Check aria-hidden="true" size={ICON.xs} strokeWidth={STROKE.forte} />
@@ -241,7 +241,7 @@ export function ExercicioCard({
           />
         </button>
 
-        {exercicio.imagem && (
+        {expandido && exercicio.imagem && (
           <button
             type="button"
             onClick={(e) => {
@@ -255,7 +255,7 @@ export function ExercicioCard({
           </button>
         )}
 
-        {exercicio.youtubeId && (
+        {expandido && exercicio.youtubeId && (
           <button
             type="button"
             onClick={(e) => {

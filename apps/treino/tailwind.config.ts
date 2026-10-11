@@ -33,6 +33,7 @@ const config: Config = {
           DEFAULT: v("accent"),
           soft: v("accent-soft"),
         },
+        warn: v("warn"),
         danger: {
           DEFAULT: v("danger"),
           soft: v("danger-soft"),

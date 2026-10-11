@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, ChevronDown } from "lucide-react";
 import { ICON } from "@/lib/icones";
 import { cn } from "@/lib/cn";
 import { statusDescansoPorSessao } from "@/lib/descanso";
@@ -21,11 +22,25 @@ export function SeletorSessao({
   onEscolher: (valor: EscolhaDoDia) => void;
 }) {
   const efetivo: EscolhaDoDia = valorAtual ?? sessaoSugerida;
+  const [aberto, setAberto] = useState(false);
 
   return (
     <div className="mb-3">
-      <p className="mb-1.5 text-xs font-medium text-ink-muted">Treino de hoje — siga a fila A → E</p>
-      <div className="flex flex-wrap gap-2">
+      <button
+        type="button"
+        onClick={() => setAberto((v) => !v)}
+        aria-expanded={aberto}
+        className="toque flex min-h-11 w-full items-center justify-between gap-2 text-left text-xs font-medium text-ink-muted"
+      >
+        <span>
+          {efetivo === sessaoSugerida ? `Próximo da fila: ${sessaoSugerida}` : `Fila sugere ${sessaoSugerida} · você escolheu ${efetivo === "DESCANSO" ? "descanso" : efetivo}`}
+        </span>
+        <span className="flex items-center gap-1 font-semibold text-brand">
+          Trocar sessão
+          <ChevronDown aria-hidden="true" size={ICON.sm} className={cn("transition-transform duration-200", aberto && "rotate-180")} />
+        </span>
+      </button>
+      <div className={cn("flex-wrap gap-2", aberto ? "anim-revelar flex" : "hidden")}>
         {OPCOES.map((op) => {
           const status = statusDescansoPorSessao(op.tipo, hojeISO);
           const algumEmRecuperacao = status.some((s) => s.emRecuperacao);
