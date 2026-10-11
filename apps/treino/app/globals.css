@@ -76,9 +76,16 @@ body {
   margin: 0;
   background: theme("colors.base.900");
   color: theme("colors.ink.DEFAULT");
-  font-feature-settings: "tnum" 1, "ss01" 1;
-  letter-spacing: -0.011em;
+  font-feature-settings: "tnum" 1;
   overscroll-behavior-y: none;
+}
+
+/* Títulos e números de destaque usam a versão condensada. */
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
 }
 
 ::selection {
@@ -142,9 +149,9 @@ textarea:focus-visible {
   background: theme("colors.base.700");
   padding: 0 10px;
   text-align: center;
-  font-size: 1.125rem;
+  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+  font-size: 1.25rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   color: theme("colors.ink.DEFAULT");
   transition: border-color 150ms var(--ease-out), background-color 150ms var(--ease-out),

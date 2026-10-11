@@ -118,7 +118,7 @@ export default function HojePage() {
       <header className="mb-4 flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-ink-muted">{DIAS_SEMANA_LABEL[hoje.getDay()]}</p>
-          <h1 className="text-2xl font-extrabold tracking-tightest text-ink">
+          <h1 className="text-3xl font-extrabold uppercase leading-none text-ink">
             {sessaoEfetiva ? `Treino ${sessaoEfetiva} · ${SESSAO_NOME[sessaoEfetiva]}` : "Hoje é dia de descanso"}
           </h1>
         </div>
