@@ -127,7 +127,7 @@ export default function RelatorioPage() {
   return (
     <div className="p-4 space-y-6">
       <header className="mb-2 space-y-2">
-        <h1 className="text-2xl font-extrabold tracking-tightest text-ink">Relatório</h1>
+        <h1 className="text-3xl font-extrabold uppercase leading-none text-ink">Relatório</h1>
         <RelatorioTabs ativa="/relatorio" />
       </header>
 
@@ -268,7 +268,7 @@ function Kpi({ Icone, valor, rotulo }: { Icone: typeof Dumbbell; valor: string; 
   return (
     <div className="rounded-xl border border-line bg-base-800 p-3 shadow-sm">
       <Icone aria-hidden="true" size={ICON.sm} className="mb-1 text-ink-faint" />
-      <p className="text-2xl font-extrabold leading-none tracking-tightest tabular-nums text-ink">{valor}</p>
+      <p className="font-display text-3xl font-extrabold leading-none tabular-nums text-ink">{valor}</p>
       <p className="mt-1 text-[11px] text-ink-muted">{rotulo}</p>
     </div>
   );

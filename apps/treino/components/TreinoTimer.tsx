@@ -80,7 +80,7 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
             <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-danger" aria-hidden="true" />
             Treino {nome} em andamento
           </span>
-          <span className="text-xl font-bold tabular-nums tracking-tight text-ink">{formatarDuracao(decorrido)}</span>
+          <span className="font-display text-2xl font-bold tabular-nums text-ink">{formatarDuracao(decorrido)}</span>
         </div>
         <button
           type="button"

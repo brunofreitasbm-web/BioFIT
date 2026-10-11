@@ -43,10 +43,11 @@ const config: Config = {
         "on-solid": v("on-solid"),
       },
       fontFamily: {
-        sans: ["var(--font-display)", "system-ui", "sans-serif"],
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "var(--font-sans)", "system-ui", "sans-serif"],
       },
       letterSpacing: {
-        tightest: "-0.03em",
+        tightest: "-0.01em",
       },
       borderRadius: {
         xl: "14px",
