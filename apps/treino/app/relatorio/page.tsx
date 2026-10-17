@@ -13,6 +13,7 @@ import { EvolucaoRM } from "@/components/EvolucaoRM";
 import { BarChart3, Dumbbell, Bike, Check, History, Timer, TrendingUp } from "lucide-react";
 import { EstadoVazio } from "@/components/EstadoVazio";
 import { ICON, STROKE } from "@/lib/icones";
+import { useDadosAtualizados } from "@/hooks/useDadosAtualizados";
 
 const PERIODOS: { label: string; valor: number | "tudo" }[] = [
   { label: "7 dias", valor: 7 },
@@ -54,6 +55,7 @@ export default function RelatorioPage() {
   const [semanas, setSemanas] = useState(1);
   const [evolucao, setEvolucao] = useState<EvolucaoRecente[]>([]);
   const [historicoCompleto, setHistoricoCompleto] = useState(false);
+  const versaoDados = useDadosAtualizados();
 
   // Bike
   const [totalMinutosBike, setTotalMinutosBike] = useState<number>(0);
@@ -122,7 +124,7 @@ export default function RelatorioPage() {
     setSessoesForca(listaFiltrada);
     setTotalMinutosForca(minForcaSum);
     setSessoesForcaCount(countForca);
-  }, [periodo]);
+  }, [periodo, versaoDados]);
 
   return (
     <div className="p-4 space-y-6">

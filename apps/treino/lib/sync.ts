@@ -1,12 +1,14 @@
-import { exportarTudo, registrarAoGravar } from "./storage";
+import { aplicarDadosSincronizados, exportarTudo, registrarAoGravar } from "./storage";
 
-// Envia o histórico (mesmo JSON do backup) para /api/sync, de onde o servidor MCP lê.
+// Envia o histórico (mesmo JSON do backup) para /api/sync. O servidor mescla com o que já tem
+// (inclusive o que o MCP gravou) e devolve o resultado, que é aplicado aqui.
 // O token fica em `biofit:syncToken` — fora do prefixo "treino:" de propósito, para nunca
 // entrar em backup, snapshot de migração nem no que é enviado ao servidor.
 
 const KEY_TOKEN = "biofit:syncToken";
 const KEY_ULTIMO = "biofit:syncUltimo";
 const ATRASO_MS = 3000;
+export const EVENTO_DADOS_ATUALIZADOS = "biofit:dadosAtualizados";
 
 export type ResultadoSync = { ok: true; quando: string } | { ok: false; motivo: string };
 
@@ -53,6 +55,10 @@ export async function sincronizarAgora(): Promise<ResultadoSync> {
       const corpo = (await res.json().catch(() => ({}))) as { erro?: string };
       return { ok: false, motivo: corpo.erro ?? `Erro ${res.status}` };
     }
+    const corpo = (await res.json().catch(() => ({}))) as { dados?: Record<string, string> };
+    if (corpo.dados && aplicarDadosSincronizados(corpo.dados)) {
+      window.dispatchEvent(new Event(EVENTO_DADOS_ATUALIZADOS));
+    }
     const quando = new Date().toISOString();
     try {
       window.localStorage.setItem(KEY_ULTIMO, quando);
@@ -74,17 +80,19 @@ function agendar(): void {
 }
 
 // Liga o envio automático: depois de cada gravação (com atraso), ao abrir o app e ao
-// esconder a aba. Retorna a função que desliga.
+// esconder a aba; ao voltar para a aba, sincroniza para trazer o que o MCP gravou.
+// Retorna a função que desliga.
 export function iniciarSync(): () => void {
   registrarAoGravar(agendar);
-  const aoEsconder = () => {
+  const aoMudarVisibilidade = () => {
     if (document.visibilityState === "hidden") void sincronizarAgora();
+    else agendar();
   };
-  document.addEventListener("visibilitychange", aoEsconder);
+  document.addEventListener("visibilitychange", aoMudarVisibilidade);
   agendar();
   return () => {
     registrarAoGravar(null);
-    document.removeEventListener("visibilitychange", aoEsconder);
+    document.removeEventListener("visibilitychange", aoMudarVisibilidade);
     if (timer) clearTimeout(timer);
   };
 }

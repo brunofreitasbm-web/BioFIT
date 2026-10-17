@@ -71,6 +71,7 @@ export interface RegistroSessao {
   sessaoTipo: SessaoTreino | SessaoLegada;
   inicioISO: string;
   fimISO: string | null;
+  atualizadoEm?: string; // ISO — última mudança (iniciar/terminar/reabrir), desempata o sync
 }
 
 export interface RegistroBikeIndoor {

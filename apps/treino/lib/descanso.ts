@@ -1,5 +1,5 @@
 import { estimar1RM } from "./rm";
-import type { ExercicioEfetivo, GrupoMuscular, SessaoTreino } from "./tipos";
+import type { ExercicioEfetivo, GrupoMuscular, SerieRegistrada, SessaoTreino } from "./tipos";
 import { getExercicio, gruposDaSessao } from "./exercicios";
 import { getLog } from "./storage";
 import type { StatusPrograma } from "./program";
@@ -20,9 +20,9 @@ function diasEntre(dataAnteriorISO: string, dataAtualISO: string): number {
   return Math.round((b - a) / 86400000);
 }
 
-export function statusDescansoPorSessao(tipo: SessaoTreino, hojeISO: string): StatusGrupo[] {
+export function statusDescansoPorSessao(tipo: SessaoTreino, hojeISO: string, todoLog: SerieRegistrada[] = getLog()): StatusGrupo[] {
   const grupos = gruposDaSessao(tipo);
-  const log = getLog().filter((s) => (s.cargaKg !== null || s.reps !== null) && s.data < hojeISO);
+  const log = todoLog.filter((s) => (s.cargaKg !== null || s.reps !== null) && s.data < hojeISO);
 
   return grupos.map((grupo) => {
     let ultimaData: string | null = null;

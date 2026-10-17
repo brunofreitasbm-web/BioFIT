@@ -1,6 +1,8 @@
 # MCP do BioFIT (dados de treino para Claude / Gemini)
 
-Fluxo: app (localStorage) → `POST /api/sync` → Supabase (`biofit_backup`) → `POST /api/mcp` (somente leitura).
+Fluxo: app (localStorage) ⇄ `POST /api/sync` ⇄ Supabase (`biofit_backup`) ⇄ `POST /api/mcp` (leitura **e escrita**).
+
+O sync **mescla** nos dois sentidos: cada registro tem uma chave natural e um carimbo, a gravação mais recente vence e remoções viram lápides (`treino:removidos`, podadas após 90 dias). Assim o que o Claude grava não é apagado pelo próximo envio do celular, e o app recebe o que o Claude gravou ao sincronizar (ao gravar, abrir o app ou voltar para a aba). A lógica está em `lib/merge.ts`.
 
 ## Variáveis de ambiente (Vercel, projeto do app `treino`)
 
@@ -8,15 +10,18 @@ Fluxo: app (localStorage) → `POST /api/sync` → Supabase (`biofit_backup`) �
 | --- | --- |
 | `SUPABASE_URL` | URL do projeto Supabase (PLAY) |
 | `SUPABASE_ANON_KEY` | Chave publicável do projeto (não é a service role) |
-| `BIOFIT_DB_SECRET` | Segredo que as funções SQL `biofit_backup_get/put` exigem. No banco fica só o hash (SHA-256) em `biofit_config` |
+| `BIOFIT_DB_SECRET` | Segredo que as funções SQL `biofit_backup_*` exigem. No banco fica só o hash (SHA-256) em `biofit_config` |
 | `SYNC_TOKEN` | Token que o app usa para enviar dados (>= 24 caracteres) |
 | `MCP_TOKEN` | Token do MCP (>= 24 caracteres). Diferente do `SYNC_TOKEN` |
 
 Gerar tokens: `openssl rand -base64 32 | tr -d '=+/'`. Servidor sem token válido recusa tudo.
 
-## Tabela
+## Banco
 
-`public.biofit_backup` (RLS ligado, sem policies) e `public.biofit_config` (hash do segredo). O acesso é só pelas funções `biofit_backup_get/put` (security definer, exigem o segredo). Migrations `biofit_backup_table` e `biofit_backup_rpc`.
+`public.biofit_backup` (RLS ligado, sem policies) e `public.biofit_config` (hash do segredo). O acesso é só pelas funções `security definer`, que exigem o segredo. O SQL está em `supabase/migrations/`:
+
+- `0001_biofit_backup_rpc.sql`: `biofit_backup_get/put` (já aplicadas em produção; o arquivo só versiona).
+- `0002_biofit_backup_put_se.sql`: gravação condicional (`p_esperado` = `atualizado_em` lido). Evita que MCP e celular, gravando ao mesmo tempo, percam dados: o servidor relê, mescla e tenta de novo (3 vezes). **Precisa ser aplicada**; sem ela o servidor cai na gravação simples e registra um aviso.
 
 ## Conectar
 
@@ -25,10 +30,41 @@ Gerar tokens: `openssl rand -base64 32 | tr -d '=+/'`. Servidor sem token válid
 
 ## Ferramentas
 
-`treino_do_dia`, `historico_exercicio`, `resumo_periodo`, `status_sync`.
+Leitura (mesmos cálculos do app: `lib/relatorio.ts`, `lib/program.ts`, `lib/progressao.ts`, `lib/descanso.ts`):
+
+| Ferramenta | O que devolve |
+| --- | --- |
+| `plano_do_dia` | Treino **planejado**: exercícios com séries (deload reduzido), reps, descanso, alvo de RIR, carga sugerida (dupla progressão), última vez, recorde, o que já foi feito e recuperação por grupo |
+| `treino_do_dia` | Treino **registrado** num dia |
+| `status_programa` | Meso, rodada/deload, sessões concluídas, sessão de hoje e próxima, aderência (14 dias), dias seguidos |
+| `historico_exercicio` | Evolução de um exercício (por id ou nome) com recordes |
+| `resumo_periodo` | Resumo dos últimos N dias |
+| `relatorio_volume` | Séries por grupo (diretas + secundárias) vs meta 10–20/semana, frequência por sessão e grupo |
+| `progresso` | Todos os exercícios (variação de 1RM), evolução recente, calibração do RIR |
+| `relatorio_semanal` | Semana vs semana anterior, volume vs meta, recordes batidos, evolução, programa |
+| `listar_exercicios` | Ids, nomes e prescrição do programa |
+| `status_sync` | Última gravação no servidor e por quem (app ou MCP) |
+
+Escrita (anotações `readOnlyHint=false`; a resposta traz o estado do dia depois da gravação):
+
+| Ferramenta | O que faz |
+| --- | --- |
+| `registrar_series` | Grava uma ou mais séries de um exercício; numera em sequência; inicia a sessão se for hoje e ainda não iniciada |
+| `remover_serie` | Apaga uma série (com lápide) |
+| `iniciar_sessao` / `terminar_sessao` | Timer da sessão; concluir faz ela contar na fila A→E, rodada e aderência |
+| `registrar_bike` | Bike indoor do dia (`minutos: 0` apaga) |
+
+### Mudança de comportamento
+
+`resumo_periodo.seriesPorGrupo` passou a contar os grupos secundários (supino conta meia série para tríceps), igual ao relatório do app. Antes contava só o grupo primário, então os números mudam. `totalSeries` continua sendo o número de séries registradas.
+
+## Testes
+
+`npm test -w @biofit/treino` (vitest). Cobre o merge (última gravação vence, lápides, idempotência), cada ferramenta pelo endpoint com um Supabase falso, a sobrevivência de uma escrita do MCP a um sync com snapshot antigo, conflito de gravação e paridade do volume com `calcularVolumePorGrupo`.
 
 ## Limites conhecidos
 
-- O dado é tão atual quanto o último envio do app (automático após cada gravação, ao abrir e ao esconder a aba). `status_sync` mostra a hora.
+- O dado é tão atual quanto o último envio do app. Uma escrita do MCP só aparece no app no próximo sync (ao abrir, ao voltar para a aba ou após gravar algo).
 - Um único usuário (`id = 'default'`).
 - Aparelho sem histórico nunca sobrescreve o do servidor (409).
+- Chaves sem carimbo (`dataInicio`, escolha de sessão do dia, palpites de RIR, versão do programa) não são mescladas: vale a do aparelho que enviou por último. O MCP não escreve nelas.

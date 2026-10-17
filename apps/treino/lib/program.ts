@@ -1,6 +1,11 @@
 import type { SessaoTreino } from "./tipos";
 import { SESSOES } from "./exercicios";
-import { getSessoesDoDia, sessoesConcluidas } from "./storage";
+import { getLog, getTodasSessoes } from "./storage";
+import { sessoesConcluidasEm, type DadosTreino } from "./dados";
+
+// Log + sessões; por padrão lidos do storage do navegador, no servidor vêm do backup.
+type Historico = Pick<DadosTreino, "log" | "sessoes">;
+const historicoLocal = (): Historico => ({ log: getLog(), sessoes: getTodasSessoes() });
 
 // Programa sequencial: 1 rodada = A+B+C+D+E (5 sessões). Rodadas 1–4 = treino, rodada 5 =
 // deload, depois troca de mesociclo (todos os exercícios mudam). A contagem é por sessões
@@ -30,10 +35,10 @@ export function proximaDaFila(sessao: SessaoTreino): SessaoTreino {
 
 // Sessão sugerida para hoje: se hoje já começou/terminou alguma sessão do programa, é ela
 // (o app não pula para a próxima no meio do dia). Senão, a seguinte à última concluída.
-export function sessaoSugerida(dataInicioISO: string, hojeISO: string): SessaoTreino {
-  const deHoje = getSessoesDoDia(hojeISO).filter((r) => (SESSOES as string[]).includes(r.sessaoTipo));
+export function sessaoSugerida(dataInicioISO: string, hojeISO: string, h: Historico = historicoLocal()): SessaoTreino {
+  const deHoje = (h.sessoes[hojeISO] ?? []).filter((r) => (SESSOES as string[]).includes(r.sessaoTipo));
   if (deHoje.length > 0) return deHoje[deHoje.length - 1].sessaoTipo as SessaoTreino;
-  const concluidas = sessoesConcluidas(dataInicioISO);
+  const concluidas = sessoesConcluidasEm(h, dataInicioISO);
   const ultima = concluidas[concluidas.length - 1];
   return ultima ? proximaDaFila(ultima.tipo) : "A";
 }
@@ -48,8 +53,13 @@ export interface StatusPrograma {
 
 // Status da sessão que está sendo feita hoje. A própria sessão de hoje não entra na conta —
 // senão, ao terminar a 5ª sessão da rodada, a tela pularia para a rodada seguinte.
-export function getStatusPrograma(dataInicioISO: string, hojeISO: string, sessaoHoje: SessaoTreino | null): StatusPrograma {
-  const anteriores = sessoesConcluidas(dataInicioISO).filter((s) => !(s.data === hojeISO && s.tipo === sessaoHoje));
+export function getStatusPrograma(
+  dataInicioISO: string,
+  hojeISO: string,
+  sessaoHoje: SessaoTreino | null,
+  h: Historico = historicoLocal(),
+): StatusPrograma {
+  const anteriores = sessoesConcluidasEm(h, dataInicioISO).filter((s) => !(s.data === hojeISO && s.tipo === sessaoHoje));
   const total = anteriores.length;
   const posNoMeso = total % SESSOES_POR_MESO;
   const rodada = Math.floor(posNoMeso / SESSOES_POR_RODADA) + 1;
@@ -91,9 +101,9 @@ export function decidirAderencia(realizadas: number, diasRestantes: number): Dec
   return realizadas >= ADERENCIA_MINIMO ? "MANTER_5X" : "CAIR_UPPER_LOWER";
 }
 
-export function getStatusAderencia(dataInicioISO: string, hojeISO: string): StatusAderencia {
+export function getStatusAderencia(dataInicioISO: string, hojeISO: string, h: Historico = historicoLocal()): StatusAderencia {
   const fim = addDiasISO(dataInicioISO, ADERENCIA_JANELA_DIAS - 1);
-  const realizadas = sessoesConcluidas(dataInicioISO).filter((s) => s.data <= fim).length;
+  const realizadas = sessoesConcluidasEm(h, dataInicioISO).filter((s) => s.data <= fim).length;
   const msPorDia = 86400000;
   const diasAteFim = Math.round((new Date(fim + "T00:00:00").getTime() - new Date(hojeISO + "T00:00:00").getTime()) / msPorDia);
   const diasRestantes = Math.max(0, Math.min(ADERENCIA_JANELA_DIAS, diasAteFim + 1));
