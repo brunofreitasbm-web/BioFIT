@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
-import { lerBackup, tokenDoHeader, tokenValido } from "@/lib/servidor/backup";
-import { FERRAMENTAS } from "@/lib/servidor/ferramentasMcp";
+import { dadosDoBackup } from "@/lib/dados";
+import { gravarMesclado, lerBackup, tokenDoHeader, tokenValido } from "@/lib/servidor/backup";
+import { contextoDe, descreverFerramenta, estadoDoDia, FERRAMENTAS, type Ferramenta } from "@/lib/servidor/ferramentas";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Servidor MCP (Streamable HTTP, sem estado, só JSON-RPC por POST). Implementado à mão: são
-// 4 ferramentas de leitura, não compensa uma dependência.
+// Servidor MCP (Streamable HTTP, sem estado, só JSON-RPC por POST). Implementado à mão: o
+// protocolo usado aqui é pequeno (initialize, ping, tools/list, tools/call) e não compensa
+// uma dependência.
 //
 // Autenticação por MCP_TOKEN:
 //  - header `Authorization: Bearer <token>` (Claude Code, Gemini CLI, qualquer cliente com headers);
@@ -14,6 +16,13 @@ export const dynamic = "force-dynamic";
 //    customizado do claude.ai). A URL vira a credencial: não compartilhe nem cole em lugar público.
 
 const VERSOES_SUPORTADAS = ["2025-06-18", "2025-03-26", "2024-11-05"];
+
+const INSTRUCOES = [
+  "Dados de treino do BioFIT (app de musculação, programa A→E em mesociclos com deload).",
+  "Leitura: plano_do_dia (o que fazer hoje, com carga sugerida), treino_do_dia (o que foi feito), status_programa, resumo_periodo, relatorio_volume, progresso, historico_exercicio, relatorio_semanal, listar_exercicios.",
+  "Escrita: registrar_series, remover_serie, iniciar_sessao, terminar_sessao, registrar_bike. Confirme com o usuário carga/reps antes de gravar; use ids de plano_do_dia ou listar_exercicios.",
+  "Os dados vêm do último sync do app (ao gravar, abrir e trocar de aba); o app recebe o que você gravar no próximo sync. Chame status_sync se precisar saber o quão atual está.",
+].join(" ");
 
 interface RpcRequest {
   jsonrpc?: string;
@@ -30,6 +39,30 @@ function falha(id: RpcRequest["id"], code: number, message: string) {
   return { jsonrpc: "2.0", id: id ?? null, error: { code, message } };
 }
 
+function texto(conteudo: unknown, isError = false) {
+  return { ...(isError ? { isError } : {}), content: [{ type: "text", text: typeof conteudo === "string" ? conteudo : JSON.stringify(conteudo) }] };
+}
+
+async function executar(ferramenta: Ferramenta, args: Record<string, unknown>): Promise<unknown> {
+  const backup = await lerBackup();
+  if (!backup) return texto("Nenhum dado sincronizado ainda. Abra o app e configure o envio.", true);
+  const ctx = contextoDe(backup);
+
+  if (ferramenta.tipo === "leitura") {
+    return texto({ atualizadoEm: backup.atualizadoEm, ...(ferramenta.executar(args, ctx) as object) });
+  }
+
+  const { entrada, data, mensagem } = ferramenta.escrever(args, ctx);
+  const final = Object.keys(entrada).length > 0 ? await gravarMesclado(entrada, "mcp") : backup;
+  return texto({
+    ok: true,
+    mensagem,
+    atualizadoEm: final.atualizadoEm,
+    aviso: "O app recebe a mudança no próximo sync (ao abrir ou voltar para a aba).",
+    dia: estadoDoDia(dadosDoBackup(final.dados), data),
+  });
+}
+
 async function tratar(msg: RpcRequest): Promise<unknown | null> {
   const { id, method, params = {} } = msg;
   if (!method) return falha(id, -32600, "Requisição inválida.");
@@ -42,33 +75,21 @@ async function tratar(msg: RpcRequest): Promise<unknown | null> {
       return ok(id, {
         protocolVersion: VERSOES_SUPORTADAS.includes(pedida) ? pedida : VERSOES_SUPORTADAS[0],
         capabilities: { tools: {} },
-        serverInfo: { name: "biofit-treino", version: "0.1.0" },
-        instructions:
-          "Dados de treino do BioFIT (somente leitura). Os dados vêm do último envio do app: chame status_sync se precisar saber o quão atual está.",
+        serverInfo: { name: "biofit-treino", version: "0.2.0" },
+        instructions: INSTRUCOES,
       });
     }
     case "ping":
       return ok(id, {});
     case "tools/list":
-      return ok(id, {
-        tools: FERRAMENTAS.map(({ name, description, inputSchema }) => ({ name, description, inputSchema })),
-      });
+      return ok(id, { tools: FERRAMENTAS.map(descreverFerramenta) });
     case "tools/call": {
       const ferramenta = FERRAMENTAS.find((f) => f.name === params.name);
       if (!ferramenta) return falha(id, -32602, `Ferramenta desconhecida: ${String(params.name)}`);
       try {
-        const backup = await lerBackup();
-        if (!backup) {
-          return ok(id, {
-            isError: true,
-            content: [{ type: "text", text: "Nenhum dado sincronizado ainda. Abra o app e configure o envio." }],
-          });
-        }
-        const args = (params.arguments ?? {}) as Record<string, unknown>;
-        const resultado = ferramenta.executar(args, backup);
-        return ok(id, { content: [{ type: "text", text: JSON.stringify({ atualizadoEm: backup.atualizadoEm, ...(resultado as object) }) }] });
+        return ok(id, await executar(ferramenta, (params.arguments ?? {}) as Record<string, unknown>));
       } catch (e) {
-        return ok(id, { isError: true, content: [{ type: "text", text: e instanceof Error ? e.message : "Erro." }] });
+        return ok(id, texto(e instanceof Error ? e.message : "Erro.", true));
       }
     }
     default:
@@ -89,8 +110,13 @@ export async function POST(req: Request, { params }: { params: { token?: string[
     return NextResponse.json(falha(null, -32700, "JSON inválido."), { status: 400 });
   }
 
+  // Em lote, uma mensagem por vez: duas escritas em paralelo só disputariam a gravação.
   if (Array.isArray(corpo)) {
-    const respostas = (await Promise.all(corpo.map((m) => tratar(m as RpcRequest)))).filter((r) => r !== null);
+    const respostas: unknown[] = [];
+    for (const m of corpo) {
+      const r = await tratar(m as RpcRequest);
+      if (r !== null) respostas.push(r);
+    }
     return respostas.length ? NextResponse.json(respostas) : new NextResponse(null, { status: 202 });
   }
   const resposta = await tratar(corpo as RpcRequest);

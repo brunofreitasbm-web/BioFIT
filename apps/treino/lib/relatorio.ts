@@ -3,7 +3,7 @@ import { estimar1RM } from "./rm";
 export { estimar1RM };
 import { getExercicio } from "./exercicios";
 import { toISODate } from "./program";
-import type { GrupoMuscular, SerieRegistrada, SessaoTreino } from "./tipos";
+import type { GrupoMuscular, RegistroSessao, SerieRegistrada, SessaoTreino } from "./tipos";
 
 export interface VolumeGrupo {
   grupo: GrupoMuscular;
@@ -35,8 +35,11 @@ function addDays(d: Date, days: number): Date {
 
 // Volume por grupo contando os secundários: cada série soma 1 no grupo primário e o peso do
 // secundário (ex.: 0,5) em cada grupo secundário — supino conta meia série para tríceps.
-export function calcularVolumePorGrupo(periodoDias: number | "tudo", hoje: Date = new Date()): VolumeGrupo[] {
-  const log = getLog();
+export function calcularVolumePorGrupo(
+  periodoDias: number | "tudo",
+  hoje: Date = new Date(),
+  log: SerieRegistrada[] = getLog(),
+): VolumeGrupo[] {
   const dataLimite = periodoDias === "tudo" ? null : toISODate(addDays(hoje, -periodoDias + 1));
 
   const diretas = new Map<GrupoMuscular, number>();
@@ -70,9 +73,9 @@ export const META_SERIES_SEMANA = { min: 10, max: 20 } as const;
 export const GRUPOS_SEM_META: GrupoMuscular[] = ["Postura", "Core"];
 
 // Semanas cobertas pelo período; em "tudo", desde a primeira série registrada.
-export function semanasNoPeriodo(periodoDias: number | "tudo", hoje: Date = new Date()): number {
+export function semanasNoPeriodo(periodoDias: number | "tudo", hoje: Date = new Date(), log: SerieRegistrada[] = getLog()): number {
   if (periodoDias !== "tudo") return Math.max(1, periodoDias / 7);
-  const primeira = getLog().reduce<string | null>((min, s) => (min === null || s.data < min ? s.data : min), null);
+  const primeira = log.reduce<string | null>((min, s) => (min === null || s.data < min ? s.data : min), null);
   if (!primeira) return 1;
   const dias = (hoje.getTime() - new Date(primeira + "T00:00:00").getTime()) / 86_400_000 + 1;
   return Math.max(1, dias / 7);
@@ -107,13 +110,17 @@ function tipoFrequencia(sessaoTipo: string): TipoFrequencia {
 
 // Frequência de treinos por tipo: quantas sessões concluídas no período e a data mais
 // recente de cada uma, para ver "quais treinos" o usuário fez.
-export function calcularFrequenciaPorSessao(periodoDias: number | "tudo", hoje: Date = new Date()): FrequenciaSessao[] {
+export function calcularFrequenciaPorSessao(
+  periodoDias: number | "tudo",
+  hoje: Date = new Date(),
+  sessoes: Record<string, RegistroSessao[]> = getTodasSessoes(),
+): FrequenciaSessao[] {
   const dataLimite = periodoDias === "tudo" ? null : toISODate(addDays(hoje, -periodoDias + 1));
   const contagem = new Map<TipoFrequencia, number>();
   const ultima = new Map<TipoFrequencia, string>();
   for (const tipo of TIPOS_SESSAO) contagem.set(tipo, 0);
 
-  for (const lista of Object.values(getTodasSessoes())) {
+  for (const lista of Object.values(sessoes)) {
     for (const sessao of lista) {
       if (!sessao.fimISO) continue;
       if (dataLimite && sessao.data < dataLimite) continue;
@@ -140,8 +147,11 @@ export interface FrequenciaGrupo {
 // Frequência por grupo muscular: em quantos dias distintos do período o grupo apareceu
 // em alguma série registrada, e a data mais recente — complementa o volume (séries) com
 // "com que regularidade" cada grupo foi treinado.
-export function calcularFrequenciaPorGrupo(periodoDias: number | "tudo", hoje: Date = new Date()): FrequenciaGrupo[] {
-  const log = getLog();
+export function calcularFrequenciaPorGrupo(
+  periodoDias: number | "tudo",
+  hoje: Date = new Date(),
+  log: SerieRegistrada[] = getLog(),
+): FrequenciaGrupo[] {
   const dataLimite = periodoDias === "tudo" ? null : toISODate(addDays(hoje, -periodoDias + 1));
 
   const diasPorGrupo = new Map<GrupoMuscular, Set<string>>();
@@ -179,17 +189,17 @@ export interface PontoHistorico {
 
 type SerieCompleta = SerieRegistrada & { cargaKg: number; reps: number };
 
-function seriesValidas(exercicioId: string): SerieCompleta[] {
-  return getLog().filter(
+function seriesValidas(exercicioId: string, log: SerieRegistrada[]): SerieCompleta[] {
+  return log.filter(
     (s): s is SerieCompleta =>
       s.exercicioId === exercicioId && s.cargaKg != null && s.cargaKg > 0 && s.reps != null && s.reps > 0,
   );
 }
 
 // Uma entrada por dia em que o exercício teve séries com carga e reps, em ordem cronológica.
-export function historicoExercicio(exercicioId: string): PontoHistorico[] {
+export function historicoExercicio(exercicioId: string, log: SerieRegistrada[] = getLog()): PontoHistorico[] {
   const porData = new Map<string, PontoHistorico>();
-  for (const s of seriesValidas(exercicioId)) {
+  for (const s of seriesValidas(exercicioId, log)) {
     const rm = estimar1RM(s.cargaKg, s.reps);
     const p = porData.get(s.data);
     if (!p) {
@@ -220,10 +230,10 @@ export interface RecordesPessoais {
 }
 
 // Recordes considerando só as datas anteriores a `antesDe` (exclusivo), quando informado.
-export function recordesPessoais(exercicioId: string, antesDe?: string): RecordesPessoais {
+export function recordesPessoais(exercicioId: string, antesDe?: string, log: SerieRegistrada[] = getLog()): RecordesPessoais {
   let cargaMax: RecordesPessoais["cargaMax"] = null;
   let melhor1RM: RecordesPessoais["melhor1RM"] = null;
-  for (const p of historicoExercicio(exercicioId)) {
+  for (const p of historicoExercicio(exercicioId, log)) {
     if (antesDe && p.data >= antesDe) continue;
     if (!cargaMax || p.cargaMaxKg > cargaMax.kg) cargaMax = { kg: p.cargaMaxKg, data: p.data };
     if (!melhor1RM || p.melhor1RM > melhor1RM.kg) {
@@ -244,13 +254,13 @@ export interface ResumoExercicio {
 }
 
 // Todos os exercícios com histórico (inclusive os que já foram trocados no programa).
-export function resumoExercicios(): ResumoExercicio[] {
-  const ids = new Set(getLog().map((s) => s.exercicioId));
+export function resumoExercicios(log: SerieRegistrada[] = getLog()): ResumoExercicio[] {
+  const ids = new Set(log.map((s) => s.exercicioId));
   const resumo: ResumoExercicio[] = [];
   for (const id of ids) {
     const exercicio = getExercicio(id);
     if (!exercicio) continue;
-    const hist = historicoExercicio(id);
+    const hist = historicoExercicio(id, log);
     if (hist.length === 0) continue;
     const primeiro = hist[0].melhor1RM;
     const ultimo = hist[hist.length - 1].melhor1RM;
@@ -278,10 +288,10 @@ export interface EvolucaoRecente {
 
 // Último 1RM estimado contra o da sessão imediatamente anterior, dos exercícios mais
 // recentes. Exercícios com uma só sessão ainda não têm com o que comparar.
-export function evolucaoRecente(limite = 6): EvolucaoRecente[] {
+export function evolucaoRecente(limite = 6, log: SerieRegistrada[] = getLog()): EvolucaoRecente[] {
   const lista: EvolucaoRecente[] = [];
-  for (const r of resumoExercicios()) {
-    const hist = historicoExercicio(r.exercicioId);
+  for (const r of resumoExercicios(log)) {
+    const hist = historicoExercicio(r.exercicioId, log);
     if (hist.length < 2) continue;
     const anterior = hist[hist.length - 2].melhor1RM;
     const atual = hist[hist.length - 1].melhor1RM;

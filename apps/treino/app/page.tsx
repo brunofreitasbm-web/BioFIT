@@ -14,6 +14,7 @@ import { ResumoPrograma } from "@/components/ResumoPrograma";
 import type { EscolhaDoDia } from "@/lib/tipos";
 import { AlertTriangle, CalendarClock, Coffee, CheckCircle2 } from "lucide-react";
 import { ICON } from "@/lib/icones";
+import { useDadosAtualizados } from "@/hooks/useDadosAtualizados";
 
 
 const DIAS_SEMANA_LABEL = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -27,14 +28,21 @@ export default function HojePage() {
   const [progressoPorExercicio, setProgressoPorExercicio] = useState<Record<string, { feitas: number; total: number }>>({});
 
   const hojeISO = toISODate(hoje);
+  // Sobe quando o sync traz algo gravado fora deste aparelho (ex.: pelo MCP): remonta os
+  // cards que leem o storage no mount.
+  const versaoDados = useDadosAtualizados();
 
   useEffect(() => {
     migrarParaMeso1(hojeISO);
-    setDataInicioState(getDataInicio() ?? hojeISO);
-    setEscolha(getSessaoEscolhida(hojeISO));
     setPronto(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    setDataInicioState(getDataInicio() ?? hojeISO);
+    setEscolha(getSessaoEscolhida(hojeISO));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [versaoDados]);
 
   const sessaoSugerida = pronto ? calcularSessaoSugerida(dataInicio, hojeISO) : "A";
   const sessaoEfetiva = escolha === "DESCANSO" ? null : (escolha ?? sessaoSugerida);
@@ -165,7 +173,7 @@ export default function HojePage() {
         </div>
       )}
 
-      {sessaoEfetiva && status && <TreinoTimer hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} />}
+      {sessaoEfetiva && status && <TreinoTimer key={versaoDados} hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} />}
 
       {status && (
         <ResumoPrograma
@@ -191,7 +199,7 @@ export default function HojePage() {
             <div className="space-y-2">
               {exercicios.map((ex) => (
                 <ExercicioCard
-                  key={ex.id}
+                  key={`${ex.id}:${versaoDados}`}
                   exercicio={ex}
                   status={status}
                   data={hojeISO}
@@ -205,7 +213,7 @@ export default function HojePage() {
         </>
       )}
 
-      <BikeIndoorCard hojeISO={hojeISO} />
+      <BikeIndoorCard key={versaoDados} hojeISO={hojeISO} />
 
       {insightProximo && (
         <div className="mt-2 flex gap-3 rounded-xl border border-line bg-base-800 p-3 shadow-panel">
