@@ -81,6 +81,39 @@ export interface RegistroBikeIndoor {
   registradoEm: string; // ISO timestamp
 }
 
+// Massa magra e gorda de um segmento do corpo (bioimpedância segmentada).
+export interface SegmentoCorpo {
+  massaMagraKg: number | null;
+  massaGordaKg: number | null;
+}
+
+export type NomeSegmento = "bracoDireito" | "bracoEsquerdo" | "tronco" | "pernaDireita" | "pernaEsquerda";
+
+// Uma medição de composição corporal (hoje, só a importada dos relatórios da Avanutri).
+// `chave` é única por medição ("avanutri:<id>") e é o que o sync usa para não duplicar.
+export interface RegistroCorpo {
+  chave: string;
+  fonte: "avanutri";
+  data: string; // YYYY-MM-DD, horário local de quem mediu
+  quando: string; // YYYY-MM-DDTHH:mm:ss, mesmo horário local (a hora do dia importa na leitura)
+  pesoKg: number;
+  gorduraPct: number | null;
+  massaGordaKg: number | null;
+  massaLivreKg: number | null; // sem gordura (ffm)
+  musculoEsqueleticoKg: number | null;
+  aguaTotalL: number | null;
+  aguaIntraL: number | null;
+  aguaExtraL: number | null;
+  gorduraVisceral: number | null;
+  imc: number | null;
+  proteinaKg: number | null;
+  mineraisKg: number | null;
+  tmbKcal: number | null;
+  idadeMetabolica: number | null;
+  segmentos: Record<NomeSegmento, SegmentoCorpo> | null;
+  registradoEm: string; // ISO — quando foi importada; desempata o sync
+}
+
 // Aba "Calibração RIR": na rodada 1, antes da última série de um exercício "Teste falha",
 // anota-se o palpite de reps até a falha. O real vem da própria série registrada.
 export interface PalpiteCalibracao {

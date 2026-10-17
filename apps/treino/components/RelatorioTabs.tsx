@@ -4,6 +4,7 @@ const ABAS = [
   { href: "/relatorio", label: "Visão Geral" },
   { href: "/relatorio/frequencia", label: "Frequência" },
   { href: "/relatorio/exercicios", label: "Exercícios" },
+  { href: "/relatorio/corpo", label: "Corpo" },
 ] as const;
 
 // Alternador entre as sub-páginas do Relatório.

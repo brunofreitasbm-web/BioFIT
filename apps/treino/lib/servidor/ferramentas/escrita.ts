@@ -1,11 +1,12 @@
 import { KEY_BIKE, KEY_LOG, KEY_REMOVIDOS, KEY_SESSOES } from "@/lib/dados";
 import { getSessaoCompleta, SESSOES, SLOTS } from "@/lib/exercicios";
-import { chaveBike, chaveSerie, registrarRemocao, type Removido } from "@/lib/merge";
+import { chaveBike, chaveSerie, registrarRemocao } from "@/lib/merge";
 import type { RegistroBikeIndoor, RegistroSessao, SerieRegistrada, SessaoTreino } from "@/lib/tipos";
 import {
   dataArg,
   mesoAtual,
   numArg,
+  removidosDe,
   resolverExercicio,
   sessaoArg,
   sessaoDoDia,
@@ -52,14 +53,6 @@ function sessaoDaSerie(ctx: Contexto, id: string, data: string, pedida: SessaoTr
   const opcoes = noMeso.length > 0 ? noMeso : Array.from(new Set(emAlgum));
   if (opcoes.length === 1) return opcoes[0];
   throw new Error(`O exercício ${id} aparece nas sessões ${opcoes.join(", ")}: informe "sessao".`);
-}
-
-function removidosDe(ctx: Contexto): Removido[] {
-  try {
-    return JSON.parse(ctx.backup.dados[KEY_REMOVIDOS] ?? "[]") as Removido[];
-  } catch {
-    return [];
-  }
 }
 
 function comSessao(sessoes: Record<string, RegistroSessao[]>, registro: RegistroSessao): Record<string, RegistroSessao[]> {

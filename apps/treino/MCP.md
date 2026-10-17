@@ -45,7 +45,18 @@ Leitura (mesmos cálculos do app: `lib/relatorio.ts`, `lib/program.ts`, `lib/pro
 | `listar_exercicios` | Ids, nomes e prescrição do programa |
 | `status_sync` | Última gravação no servidor e por quem (app ou MCP) |
 
-Escrita (anotações `readOnlyHint=false`; a resposta traz o estado do dia depois da gravação):
+Composição corporal (bioimpedância da balança AvaBio / Avanutri):
+
+| Ferramenta | O que faz |
+| --- | --- |
+| `importar_bioimpedancia` | Recebe o link do botão “Acessar Relatório” do e-mail “Relatório bioimpedância” (noreply@avanutrionline.com) e importa as medições. Cada link traz as 6 mais recentes até aquela data; reimportar não duplica (cada medição tem id próprio) e, se não há nada novo, nem grava |
+| `evolucao_corpo` | Série de medições com hora do dia, tendência por mês (por data), massa magra por segmento, veredito cruzado com a força (`recomposicao_em_curso`, `dentro_do_ruido`, `ganho_de_massa`, `ganho_sem_retorno`, `alerta_perda_de_massa`, `dados_insuficientes`), confiança e avisos |
+| `remover_corpo` | Apaga as medições de uma data |
+| `relatorio_semanal` | Ganha o bloco `corpo`: última medição e lembrete após 14 dias |
+
+A bioimpedância é ruidosa (hidratação, refeição, hora do dia). A análise usa tendência por data e massa magra/força como sinal principal, trata variações pequenas como ruído (`RUIDO_GORDURA_PP`, `RUIDO_MASSA_MAGRA_KG` em `lib/corpo.ts`: pontos de partida, não medidos) e rebaixa a confiança quando as medições foram feitas em horários muito diferentes. O app mostra tudo isso na aba **Corpo** do Relatório (somente leitura).
+
+Escrita de treino (anotações `readOnlyHint=false`; a resposta traz o estado do dia depois da gravação):
 
 | Ferramenta | O que faz |
 | --- | --- |
@@ -57,6 +68,16 @@ Escrita (anotações `readOnlyHint=false`; a resposta traz o estado do dia depoi
 ### Mudança de comportamento
 
 `resumo_periodo.seriesPorGrupo` passou a contar os grupos secundários (supino conta meia série para tríceps), igual ao relatório do app. Antes contava só o grupo primário, então os números mudam. `totalSeries` continua sendo o número de séries registradas.
+
+## Importação da Avanutri: dados e segurança
+
+O link do e-mail aponta para uma página que lê `GET balancaapi.avanutrionline.com/Relatorio/<código>` (JSON, sem login; o código é o do link). A resposta traz, além das medições, dados pessoais de quem foi avaliado e **da conta do profissional (inclusive um campo `password`)**. Por isso (`lib/servidor/avanutri.ts`):
+
+- o servidor só aceita o link no formato e domínio da Avanutri (ou o código solto) e chama sempre o host fixo da API: não serve para fazer o servidor acessar outro endereço;
+- só os campos de medição são copiados; o resto é descartado sem ser lido nem registrado em log, e o código do link não é guardado;
+- o conteúdo da resposta nunca entra em mensagens de erro.
+
+Importação semanal: uma tarefa agendada do Claude (domingo, 20h, horário de Belém) procura o e-mail mais recente do remetente e chama `importar_bioimpedancia`. Para carregar o histórico, importe o link mais recente e o de uma medição antiga que cubra o início.
 
 ## Testes
 

@@ -2,6 +2,7 @@ import type {
   EscolhaDoDia,
   PalpiteCalibracao,
   RegistroBikeIndoor,
+  RegistroCorpo,
   RegistroSessao,
   SerieRegistrada,
   SessaoTreino,
@@ -14,6 +15,7 @@ import {
   KEY_ARQUIVO_PPL,
   KEY_BIKE,
   KEY_CALIBRACAO,
+  KEY_CORPO,
   KEY_ESCOLHAS,
   KEY_INICIO,
   KEY_LOG,
@@ -336,6 +338,18 @@ export function getTodosBikeIndoor(): Record<string, RegistroBikeIndoor> {
 
 
 
+// ===== Composição corporal (importada pelo MCP; o app só lê) =====
+
+export function getTodosCorpo(): Record<string, RegistroCorpo> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(KEY_CORPO);
+    return raw ? (JSON.parse(raw) as Record<string, RegistroCorpo>) : {};
+  } catch {
+    return {};
+  }
+}
+
 // ===== Lápides (remoções) e leitura em bloco =====
 
 function getRemovidos(): Removido[] {
@@ -367,6 +381,7 @@ export function lerDadosLocais(): DadosTreino {
     [KEY_BIKE]: ls.getItem(KEY_BIKE),
     [KEY_CALIBRACAO]: ls.getItem(KEY_CALIBRACAO),
     [KEY_ESCOLHAS]: ls.getItem(KEY_ESCOLHAS),
+    [KEY_CORPO]: ls.getItem(KEY_CORPO),
     [KEY_INICIO]: ls.getItem(KEY_INICIO),
   });
 }
@@ -376,7 +391,7 @@ export function lerDadosLocais(): DadosTreino {
 // é um JSON com o valor bruto de cada chave, para restaurar em outro aparelho ou após limpar
 // os dados do site.
 
-const CHAVES_BACKUP = [KEY_LOG, KEY_INICIO, KEY_SESSOES, KEY_ESCOLHAS, KEY_BIKE, KEY_CALIBRACAO, KEY_VERSAO, KEY_ARQUIVO_PPL, KEY_REMOVIDOS];
+const CHAVES_BACKUP = [KEY_LOG, KEY_INICIO, KEY_SESSOES, KEY_ESCOLHAS, KEY_BIKE, KEY_CALIBRACAO, KEY_VERSAO, KEY_ARQUIVO_PPL, KEY_REMOVIDOS, KEY_CORPO];
 // Chaves que guardam texto puro (não JSON).
 const CHAVES_TEXTO = [KEY_INICIO, KEY_VERSAO];
 const BACKUP_FORMATO = "biofit-treino-backup";

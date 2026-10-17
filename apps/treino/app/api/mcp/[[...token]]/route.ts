@@ -20,7 +20,7 @@ const VERSOES_SUPORTADAS = ["2025-06-18", "2025-03-26", "2024-11-05"];
 const INSTRUCOES = [
   "Dados de treino do BioFIT (app de musculação, programa A→E em mesociclos com deload).",
   "Leitura: plano_do_dia (o que fazer hoje, com carga sugerida), treino_do_dia (o que foi feito), status_programa, resumo_periodo, relatorio_volume, progresso, historico_exercicio, relatorio_semanal, listar_exercicios.",
-  "Escrita: registrar_series, remover_serie, iniciar_sessao, terminar_sessao, registrar_bike. Confirme com o usuário carga/reps antes de gravar; use ids de plano_do_dia ou listar_exercicios.",
+  "Composição corporal (bioimpedância Avanutri): evolucao_corpo para ler; importar_bioimpedancia recebe o link do botão “Acessar Relatório” do e-mail “Relatório bioimpedância” (remetente noreply@avanutrionline.com) e importa até 6 medições, sem duplicar. A bioimpedância é ruidosa: não conclua progresso ou piora sem olhar o veredito, a confiança e os avisos de evolucao_corpo.\nEscrita de treino: registrar_series, remover_serie, iniciar_sessao, terminar_sessao, registrar_bike. Confirme com o usuário carga/reps antes de gravar; use ids de plano_do_dia ou listar_exercicios.",
   "Os dados vêm do último sync do app (ao gravar, abrir e trocar de aba); o app recebe o que você gravar no próximo sync. Chame status_sync se precisar saber o quão atual está.",
 ].join(" ");
 
@@ -52,14 +52,16 @@ async function executar(ferramenta: Ferramenta, args: Record<string, unknown>): 
     return texto({ atualizadoEm: backup.atualizadoEm, ...(ferramenta.executar(args, ctx) as object) });
   }
 
-  const { entrada, data, mensagem } = ferramenta.escrever(args, ctx);
-  const final = Object.keys(entrada).length > 0 ? await gravarMesclado(entrada, "mcp") : backup;
+  const { entrada, data, mensagem, detalhe } = await ferramenta.escrever(args, ctx);
+  const gravou = Object.keys(entrada).length > 0;
+  const final = gravou ? await gravarMesclado(entrada, "mcp") : backup;
   return texto({
     ok: true,
     mensagem,
     atualizadoEm: final.atualizadoEm,
-    aviso: "O app recebe a mudança no próximo sync (ao abrir ou voltar para a aba).",
-    dia: estadoDoDia(dadosDoBackup(final.dados), data),
+    ...(gravou ? { aviso: "O app recebe a mudança no próximo sync (ao abrir ou voltar para a aba)." } : {}),
+    ...(detalhe !== undefined ? { detalhe } : {}),
+    ...(data ? { dia: estadoDoDia(dadosDoBackup(final.dados), data) } : {}),
   });
 }
 

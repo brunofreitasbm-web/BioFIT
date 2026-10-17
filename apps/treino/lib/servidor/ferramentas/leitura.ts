@@ -17,6 +17,7 @@ import {
   semanasNoPeriodo,
 } from "@/lib/relatorio";
 import type { SerieRegistrada } from "@/lib/tipos";
+import { blocoCorpo } from "./corpo";
 import {
   dataArg,
   dataLocal,
@@ -410,6 +411,7 @@ export const LEITURA: FerramentaLeitura[] = [
           ultimaData: e.ultimaData,
         })),
         programa: ctx.dados.dataInicio ? statusPrograma(ctx) : null,
+        corpo: blocoCorpo(ctx),
       };
     },
   },
