@@ -1,4 +1,5 @@
-import { dadosDoBackup, type DadosTreino } from "@/lib/dados";
+import { dadosDoBackup, KEY_REMOVIDOS, type DadosTreino } from "@/lib/dados";
+import type { Removido } from "@/lib/merge";
 import { EXERCICIOS_PPL_V4 } from "@/lib/arquivo/pplV4";
 import { getExercicio, SESSOES, SLOTS } from "@/lib/exercicios";
 import { getStatusPrograma, sessaoSugerida } from "@/lib/program";
@@ -24,11 +25,18 @@ export interface FerramentaLeitura extends Base {
 
 // Escritas não gravam direto: devolvem só as chaves alteradas, que a rota mescla no backup
 // (lib/merge.ts) com controle de concorrência. `data` é o dia cujo estado volta na resposta.
+export interface ResultadoEscrita {
+  entrada: DadosBackup;
+  data?: string; // se informado, a resposta traz o estado desse dia
+  mensagem: string;
+  detalhe?: unknown;
+}
+
 export interface FerramentaEscrita extends Base {
   tipo: "escrita";
   destrutiva: boolean;
   idempotente: boolean;
-  escrever: (args: Record<string, unknown>, ctx: Contexto) => { entrada: DadosBackup; data: string; mensagem: string };
+  escrever: (args: Record<string, unknown>, ctx: Contexto) => ResultadoEscrita | Promise<ResultadoEscrita>;
 }
 
 export type Ferramenta = FerramentaLeitura | FerramentaEscrita;
@@ -80,6 +88,14 @@ export function sessaoArg(args: Record<string, unknown>, nome = "sessao"): Sessa
     throw new Error(`"${nome}" deve ser uma de ${SESSOES.join(", ")}.`);
   }
   return v.toUpperCase() as SessaoTreino;
+}
+
+export function removidosDe(ctx: Contexto): Removido[] {
+  try {
+    return JSON.parse(ctx.backup.dados[KEY_REMOVIDOS] ?? "[]") as Removido[];
+  } catch {
+    return [];
+  }
 }
 
 export function exigirDataInicio(ctx: Contexto): string {
