@@ -29,5 +29,7 @@ begin
   return novo;
 end $function$;
 
-revoke all on function public.biofit_backup_put_se(text, jsonb, timestamptz) from public;
+-- O Supabase concede execute a anon/authenticated/service_role em funções novas; mantém só o
+-- que as outras biofit_backup_* têm (o app usa a chave anon, protegida pelo segredo).
+revoke all on function public.biofit_backup_put_se(text, jsonb, timestamptz) from public, authenticated;
 grant execute on function public.biofit_backup_put_se(text, jsonb, timestamptz) to anon, service_role;
