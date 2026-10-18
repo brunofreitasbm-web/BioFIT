@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useBackLayers } from "@/hooks/useBackHandler";
-import { ArrowRight, ChevronDown, Film, Image as ImageIcon, Layers, Lightbulb, ListOrdered, Check, Link2, TrendingUp, Trophy, Zap } from "lucide-react";
+import { ArrowRight, ChevronDown, Image as ImageIcon, Layers, Lightbulb, ListOrdered, Check, Link2, TrendingUp, Trophy, Zap } from "lucide-react";
 import { ICON, STROKE } from "@/lib/icones";
 import type { ExercicioEfetivo, SerieRegistrada } from "@/lib/tipos";
 import { GrupoBadge } from "./GrupoBadge";
-import { VideoModal } from "./VideoModal";
 import { ImagemExercicio } from "./ImagemExercicio";
 import { cn } from "@/lib/cn";
 import { alvoDeEsforco, e1rm, parseDescansoSegundos } from "@/lib/descanso";
@@ -54,13 +53,11 @@ export function ExercicioCard({
   const [recorde1RMAnterior, setRecorde1RMAnterior] = useState<number | null>(null);
   // Incrementa a cada toque na sugestão para a linha de input repopular os campos.
   const [preenchimento, setPreenchimento] = useState<{ kg: string; reps: string; n: number } | null>(null);
-  const [videoAberto, setVideoAberto] = useState(false);
   const [fotoAberta, setFotoAberta] = useState(false);
   const [dicasAbertas, setDicasAbertas] = useState(false);
 
-  // Botão/gesto voltar do celular fecha o vídeo/foto abertos (ver hooks/useBackHandler).
+  // Botão/gesto voltar do celular fecha a foto aberta (ver hooks/useBackHandler).
   useBackLayers([
-    { active: videoAberto, back: () => setVideoAberto(false) },
     { active: fotoAberta, back: () => setFotoAberta(false) },
   ]);
   const [seriesIndividuais, setSeriesIndividuais] = useState(false);
@@ -254,20 +251,6 @@ export function ExercicioCard({
             <ImageIcon aria-hidden="true" size={ICON.md} />
           </button>
         )}
-
-        {expandido && exercicio.youtubeId && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setVideoAberto(true);
-            }}
-            className="toque flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-line bg-base-700 text-ink-muted hover:border-brand/40 hover:text-brand"
-            aria-label={`Ver vídeo de ${exercicio.nome}`}
-          >
-            <Film aria-hidden="true" size={ICON.md} />
-          </button>
-        )}
       </div>
 
       {expandido && (
@@ -428,9 +411,6 @@ export function ExercicioCard({
 
       {fotoAberta && exercicio.imagem && (
         <ImagemExercicio pasta={exercicio.imagem} titulo={exercicio.nome} onClose={() => setFotoAberta(false)} />
-      )}
-      {videoAberto && exercicio.youtubeId && (
-        <VideoModal youtubeId={exercicio.youtubeId} titulo={exercicio.nome} onClose={() => setVideoAberto(false)} />
       )}
     </div>
   );
