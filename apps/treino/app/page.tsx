@@ -173,7 +173,7 @@ export default function HojePage() {
         </div>
       )}
 
-      {sessaoEfetiva && status && <TreinoTimer key={versaoDados} hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} />}
+      {sessaoEfetiva && status && <TreinoTimer key={`timer:${versaoDados}`} hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} />}
 
       {status && (
         <ResumoPrograma
@@ -213,7 +213,7 @@ export default function HojePage() {
         </>
       )}
 
-      <BikeIndoorCard key={versaoDados} hojeISO={hojeISO} />
+      <BikeIndoorCard key={`bike:${versaoDados}`} hojeISO={hojeISO} />
 
       {insightProximo && (
         <div className="mt-2 flex gap-3 rounded-xl border border-line bg-base-800 p-3 shadow-panel">
