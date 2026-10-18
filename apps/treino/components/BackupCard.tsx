@@ -5,7 +5,7 @@ import { CheckCircle2, CircleAlert, Download, HardDriveDownload, RefreshCw, Uplo
 import { ICON } from "@/lib/icones";
 import { exportarTudo, importarTudo } from "@/lib/storage";
 import { toISODate } from "@/lib/program";
-import { getTokenSync, getUltimoSync, setTokenSync, sincronizarAgora } from "@/lib/sync";
+import { getTokenSync, getUltimoSync, restaurarDoServidor, setTokenSync, sincronizarAgora } from "@/lib/sync";
 
 // Os dados só existem no localStorage deste navegador: sem backup, limpar os dados do site
 // ou trocar de aparelho apaga todo o histórico (e os gráficos de evolução junto).
@@ -29,6 +29,19 @@ export function BackupCard() {
     if (r.ok) {
       setUltimoSync(r.quando);
       setMensagem({ tipo: "ok", texto: "Histórico enviado ao servidor." });
+    } else {
+      setMensagem({ tipo: "erro", texto: r.motivo });
+    }
+  }
+
+  async function trazerDoServidor() {
+    setTokenSync(token.trim());
+    setSincronizando(true);
+    const r = await restaurarDoServidor();
+    setSincronizando(false);
+    if (r.ok) {
+      setUltimoSync(r.quando);
+      setMensagem({ tipo: "ok", texto: "Histórico restaurado do servidor." });
     } else {
       setMensagem({ tipo: "erro", texto: r.motivo });
     }
@@ -118,6 +131,14 @@ export function BackupCard() {
             <RefreshCw aria-hidden="true" size={ICON.sm} /> {sincronizando ? "Enviando…" : "Enviar agora"}
           </button>
         </div>
+        <button
+          type="button"
+          onClick={() => void trazerDoServidor()}
+          disabled={sincronizando || !token.trim()}
+          className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-full border border-brand bg-brand text-xs font-semibold text-on-solid shadow-sm hover:opacity-90 disabled:opacity-50"
+        >
+          <Download aria-hidden="true" size={ICON.sm} /> Restaurar do servidor (aparelho novo)
+        </button>
         {ultimoSync && (
           <p className="text-xs text-ink-muted">Último envio: {new Date(ultimoSync).toLocaleString("pt-BR")}</p>
         )}

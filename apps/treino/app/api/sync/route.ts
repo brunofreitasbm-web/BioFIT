@@ -5,6 +5,21 @@ import { gravarMesclado, lerBackup, tokenDoHeader, tokenValido, validarCorpoSync
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Aparelho novo ou navegador limpo: baixa o histórico guardado no servidor.
+export async function GET(req: Request) {
+  if (!tokenValido(tokenDoHeader(req), process.env.SYNC_TOKEN)) {
+    return NextResponse.json({ erro: "Não autorizado." }, { status: 401 });
+  }
+  try {
+    const backup = await lerBackup();
+    if (!backup) return NextResponse.json({ erro: "Nenhum backup no servidor." }, { status: 404 });
+    const { [KEY_ORIGEM]: _meta, ...paraApp } = backup.dados;
+    return NextResponse.json({ ok: true, atualizadoEm: backup.atualizadoEm, dados: paraApp });
+  } catch (e) {
+    return NextResponse.json({ erro: e instanceof Error ? e.message : "Falha ao ler." }, { status: 502 });
+  }
+}
+
 // O app envia aqui o mesmo JSON do "Baixar backup". Autenticado por SYNC_TOKEN (Bearer).
 // O servidor mescla com o que já tem (o MCP também grava) e devolve o resultado para o app.
 export async function POST(req: Request) {

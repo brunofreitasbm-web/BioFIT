@@ -71,6 +71,27 @@ export async function sincronizarAgora(): Promise<ResultadoSync> {
   }
 }
 
+// Traz o histórico do servidor para este aparelho (navegador novo/limpo). Mescla com o local.
+export async function restaurarDoServidor(): Promise<ResultadoSync> {
+  const token = getTokenSync();
+  if (!token) return { ok: false, motivo: "Token não configurado." };
+  try {
+    const res = await fetch("/api/sync", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+    const corpo = (await res.json().catch(() => ({}))) as { erro?: string; dados?: Record<string, string> };
+    if (!res.ok || !corpo.dados) return { ok: false, motivo: corpo.erro ?? `Erro ${res.status}` };
+    if (aplicarDadosSincronizados(corpo.dados)) window.dispatchEvent(new Event(EVENTO_DADOS_ATUALIZADOS));
+    const quando = new Date().toISOString();
+    try {
+      window.localStorage.setItem(KEY_ULTIMO, quando);
+    } catch {
+      // ignore
+    }
+    return { ok: true, quando };
+  } catch {
+    return { ok: false, motivo: "Sem conexão." };
+  }
+}
+
 let timer: ReturnType<typeof setTimeout> | null = null;
 
 function agendar(): void {
