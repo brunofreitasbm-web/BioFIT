@@ -172,6 +172,49 @@ describe("analisarCorpo: vereditos", () => {
   });
 });
 
+describe("analisarCorpo: inconclusivo", () => {
+  // Quatro medições com um buraco de 90 dias (03/06 a 01/09), como no histórico real.
+  const COM_BURACO = ["2026-04-27", "2026-05-17", "2026-06-03", "2026-09-01"];
+  const MISTAS = ["21:41", "13:12", "17:09", "10:17"];
+  const HOJE_LONGE = "2026-10-17";
+
+  it("confiança baixa + intervalo longo: o veredito direcional vira inconclusivo e guarda a pista", () => {
+    const a = analisar(serie(5, 0, MISTAS, COM_BURACO), logForca(1), HOJE_LONGE);
+    expect(a.confianca).toBe("baixa");
+    expect(a.veredito).toBe("inconclusivo");
+    expect(a.leituraProvisoria).toBe("ganho_sem_retorno");
+    expect(a.explicacao).toMatch(/Inconclusivo.*90 dias sem medir.*Sinal provisório/);
+  });
+
+  it("com o mesmo buraco mas horários parecidos (confiança não é baixa), mantém o veredito", () => {
+    const a = analisar(serie(5, 0, COM_BURACO.map(() => "08:10"), COM_BURACO), logForca(1), HOJE_LONGE);
+    expect(a.confianca).not.toBe("baixa");
+    expect(a.veredito).toBe("ganho_sem_retorno");
+    expect(a.leituraProvisoria).toBeNull();
+  });
+
+  it("confiança baixa sem buraco: mantém o veredito (já há aviso de horário)", () => {
+    const a = analisar(serie(-3, 1.5, ["23:05", "08:12", "17:58", "21:20", "10:01", "14:30"]));
+    expect(a.avisos.join(" ")).toMatch(/horários muito diferentes/);
+    expect(a.avisos.join(" ")).not.toMatch(/dias sem medição/);
+    expect(a.veredito).toBe("recomposicao_em_curso");
+    expect(a.leituraProvisoria).toBeNull();
+  });
+
+  it("dentro do ruído continua dentro do ruído, mesmo com buraco e confiança baixa", () => {
+    const a = analisar(serie(0.3, 0.2, MISTAS, COM_BURACO), logForca(1), HOJE_LONGE);
+    expect(a.confianca).toBe("baixa");
+    expect(a.veredito).toBe("dentro_do_ruido");
+    expect(a.leituraProvisoria).toBeNull();
+  });
+
+  it("alerta de perda de massa também vira inconclusivo nessas condições", () => {
+    const a = analisar(serie(0, -3, MISTAS, COM_BURACO), logForca(0.9), HOJE_LONGE);
+    expect(a.veredito).toBe("inconclusivo");
+    expect(a.leituraProvisoria).toBe("alerta_perda_de_massa");
+  });
+});
+
 describe("analisarCorpo: confiança e avisos", () => {
   it("horários muito diferentes avisam e rebaixam a confiança", () => {
     const horas = ["23:05", "08:12", "17:58", "21:20", "10:01", "14:30"];

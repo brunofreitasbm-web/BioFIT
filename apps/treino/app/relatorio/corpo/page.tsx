@@ -15,6 +15,7 @@ import type { RegistroCorpo } from "@/lib/tipos";
 
 const VEREDITOS: Record<Veredito, { titulo: string; tom: "ok" | "neutro" | "alerta" }> = {
   dados_insuficientes: { titulo: "Dados insuficientes", tom: "neutro" },
+  inconclusivo: { titulo: "Inconclusivo", tom: "neutro" },
   dentro_do_ruido: { titulo: "Dentro do ruído", tom: "neutro" },
   recomposicao_em_curso: { titulo: "Recomposição em curso", tom: "ok" },
   ganho_de_massa: { titulo: "Ganho de massa", tom: "ok" },

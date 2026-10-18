@@ -42,7 +42,7 @@ export const CORPO_LEITURA: FerramentaLeitura[] = [
     tipo: "leitura",
     name: "evolucao_corpo",
     description:
-      "Evolução da composição corporal (bioimpedância Avanutri): série de medições com hora do dia, tendência por mês (por data, não por posição), massa magra por segmento e uma leitura cruzada com a força do treino. A bioimpedância é ruidosa: o veredito pode ser 'dentro_do_ruido' ou 'dados_insuficientes', e a confiança cai quando as medições foram feitas em horários muito diferentes. Respeite esses avisos ao explicar.",
+      "Evolução da composição corporal (bioimpedância Avanutri): série de medições com hora do dia, tendência por mês (por data, não por posição), massa magra por segmento e uma leitura cruzada com a força do treino. A bioimpedância é ruidosa: o veredito pode ser 'dentro_do_ruido', 'inconclusivo' (confiança baixa com intervalo longo: 'leituraProvisoria' guarda o que a conta diria, mas não é conclusão) ou 'dados_insuficientes', e a confiança cai quando as medições foram feitas em horários muito diferentes. Respeite esses avisos ao explicar.",
     inputSchema: {
       type: "object",
       properties: { limite: { type: "integer", minimum: 1, maximum: 60, description: "Quantas medições mais recentes na série. Padrão 12." } },

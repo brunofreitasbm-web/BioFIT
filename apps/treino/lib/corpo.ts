@@ -28,6 +28,7 @@ export type PeriodoDia = "manha" | "tarde" | "noite";
 export type Confianca = "alta" | "media" | "baixa";
 export type Veredito =
   | "dados_insuficientes"
+  | "inconclusivo"
   | "dentro_do_ruido"
   | "recomposicao_em_curso"
   | "ganho_de_massa"
@@ -99,6 +100,9 @@ export function variacaoForcaNaJanela(log: SerieRegistrada[], inicio: string, fi
 
 export interface AnaliseCorpo {
   veredito: Veredito;
+  // Quando o veredito vira "inconclusivo" (confiança baixa + intervalo longo), guarda o que a
+  // conta diria, só como pista: o app e o Claude não devem tratá-lo como conclusão.
+  leituraProvisoria: Veredito | null;
   confianca: Confianca;
   leituras: number;
   periodo: { inicio: string; fim: string } | null;
@@ -129,11 +133,13 @@ export function analisarCorpo(
   const diasDesdeUltima = ultima ? diasEntre(ultima.data, hoje) : null;
 
   const avisos: string[] = [];
+  let maiorIntervalo = 0;
   if (diasDesdeUltima !== null && diasDesdeUltima > LEMBRETE_DIAS) {
     avisos.push(`Última medição há ${diasDesdeUltima} dias.`);
   }
   for (let i = 1; i < regs.length; i++) {
     const salto = diasEntre(regs[i - 1].data, regs[i].data);
+    maiorIntervalo = Math.max(maiorIntervalo, salto);
     if (salto > INTERVALO_LONGO_DIAS) {
       avisos.push(`Intervalo de ${salto} dias sem medição (${regs[i - 1].data} a ${regs[i].data}).`);
     }
@@ -171,6 +177,7 @@ export function analisarCorpo(
     return {
       ...base,
       veredito: "dados_insuficientes",
+      leituraProvisoria: null,
       confianca: "baixa",
       porMes,
       variacao,
@@ -215,7 +222,16 @@ export function analisarCorpo(
   let confianca: Confianca = regs.length >= MAX_LEITURAS && span >= 56 && parteDominante >= 0.6 ? "alta" : "media";
   if (parteDominante < 0.6 || forca === null) confianca = confianca === "alta" ? "media" : "baixa";
 
-  return { ...base, veredito, confianca, porMes, variacao, forca, explicacao };
+  // Um buraco grande entre medições, somado a confiança baixa, deixa a tendência na mão de um
+  // ou dois pontos: um veredito direcional (ainda mais em vermelho) assustaria sem base.
+  let leituraProvisoria: Veredito | null = null;
+  if (confianca === "baixa" && maiorIntervalo > INTERVALO_LONGO_DIAS && veredito !== "dentro_do_ruido") {
+    leituraProvisoria = veredito;
+    veredito = "inconclusivo";
+    explicacao = `Inconclusivo: confiança baixa e ${maiorIntervalo} dias sem medir dentro da janela, então a tendência depende de poucos pontos. Sinal provisório: ${explicacao}`;
+  }
+
+  return { ...base, veredito, leituraProvisoria, confianca, porMes, variacao, forca, explicacao };
 }
 
 export const NOMES_SEGMENTO: Record<NomeSegmento, string> = {
