@@ -5,15 +5,30 @@
 //     que há rede; sem rede, abre a última versão vista)
 //   - /_next/static, ícones, fontes: cache primeiro (arquivos com hash, imutáveis)
 // Trocar VERSAO descarta os caches antigos no próximo activate.
-const VERSAO = "biofit-v1";
-const SHELL = ["/", "/relatorio", "/relatorio/frequencia", "/relatorio/exercicios", "/manifest.webmanifest", "/icon-192.png"];
+const VERSAO = "biofit-v2";
+const PAGINAS = ["/", "/relatorio", "/relatorio/frequencia", "/relatorio/exercicios", "/relatorio/corpo"];
+const ARQUIVOS = ["/manifest.webmanifest", "/icon-192.png"];
+
+// Só o HTML não basta offline: a tela é montada pelos scripts da página (client components).
+// Por isso, além do HTML, guarda os /_next/static que ele referencia (scripts, estilos, fontes).
+async function guardarPagina(cache, url) {
+  const res = await fetch(url, { cache: "reload" });
+  if (!res.ok) return [];
+  await cache.put(url, res.clone());
+  const html = await res.text();
+  return html.match(/\/_next\/static\/[^"'\s\\)]+\.(?:js|css|woff2)/g) ?? [];
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(VERSAO)
-      // allSettled: uma rota que falhe não impede a instalação.
-      .then((cache) => Promise.allSettled(SHELL.map((url) => cache.add(url))))
+      .then(async (cache) => {
+        // allSettled: uma rota que falhe não impede a instalação.
+        const achados = await Promise.allSettled(PAGINAS.map((url) => guardarPagina(cache, url)));
+        const assets = new Set(achados.flatMap((r) => (r.status === "fulfilled" ? r.value : [])));
+        await Promise.allSettled([...ARQUIVOS, ...assets].map((url) => cache.add(url)));
+      })
       .then(() => self.skipWaiting()),
   );
 });
