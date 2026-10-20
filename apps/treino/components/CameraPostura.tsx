@@ -1,14 +1,18 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, Image as ImageIcon, SwitchCamera, Timer } from "lucide-react";
+import { Camera, EyeOff, ArrowLeftRight, Image as ImageIcon, PersonStanding, SwitchCamera, Timer } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { ALTURA, CENTRO, LARGURA, NIVEIS, contorno } from "@/lib/contornoCorpo";
 import { ICON } from "@/lib/icones";
 
 // Captura da foto para a avaliação postural. A pessoa está sozinha: apoia o celular, aperta o
-// disparo com contagem de 10 s e se posiciona. A prévia da câmera frontal é espelhada só na
-// tela; o quadro capturado fica como a câmera vê (o detector distingue esquerda e direita
-// pelo corpo, e espelhar trocaria os lados). Alternativa: escolher uma foto já tirada.
+// disparo com contagem de 10 s e se posiciona dentro do contorno. A prévia da câmera frontal é
+// espelhada só na tela; o quadro capturado fica como a câmera vê (o detector distingue esquerda
+// e direita pelo corpo, e espelhar trocaria os lados). Alternativa: escolher uma foto já tirada.
+//
+// O quadro é 9:16 e o vídeo preenche com `object-cover`, então a foto é recortada na mesma
+// região que aparece na tela: o contorno e a imagem final coincidem.
 
 export interface FotoCapturada {
   src: string; // object URL (quem recebe revoga)
@@ -17,6 +21,60 @@ export interface FotoCapturada {
 }
 
 const CONTAGEM_S = 10;
+const PROPORCAO_QUADRO = LARGURA / ALTURA; // 9:16
+
+// Região do vídeo que `object-cover` mostra num quadro 9:16.
+export function recorteCover(vw: number, vh: number): { sx: number; sy: number; sw: number; sh: number } {
+  if (vw / vh > PROPORCAO_QUADRO) {
+    const sw = vh * PROPORCAO_QUADRO;
+    return { sx: (vw - sw) / 2, sy: 0, sw, sh: vh };
+  }
+  const sh = vw / PROPORCAO_QUADRO;
+  return { sx: 0, sy: (vh - sh) / 2, sw: vw, sh };
+}
+
+export function GuiaCorpo({ vista, virado, rotulos = true }: { vista: "perfil" | "frontal"; virado: boolean; rotulos?: boolean }) {
+  const d = contorno(vista);
+  const espelho = vista === "perfil" && virado ? `translate(${LARGURA} 0) scale(-1 1)` : undefined;
+  return (
+    <svg viewBox={`0 0 ${LARGURA} ${ALTURA}`} className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
+      <defs>
+        <mask id="recorte-corpo">
+          <rect width={LARGURA} height={ALTURA} fill="white" />
+          <path d={d} fill="black" transform={espelho} />
+        </mask>
+      </defs>
+      {/* Escurece o que fica fora do contorno: o olho vai para dentro dele. */}
+      <rect width={LARGURA} height={ALTURA} fill="black" fillOpacity={0.5} mask="url(#recorte-corpo)" />
+      <path d={d} transform={espelho} fill="none" stroke="rgb(0 0 0 / 0.55)" strokeWidth={1.6} strokeLinejoin="round" />
+      <path d={d} transform={espelho} fill="none" stroke="#b6ff3b" strokeWidth={0.75} strokeLinejoin="round" strokeDasharray="2.2 1.6" />
+      {/* Prumo central: no perfil, orelha, ombro, quadril e joelho ficam sobre ele. */}
+      <line x1={CENTRO} y1={3} x2={CENTRO} y2={ALTURA - 3} stroke="white" strokeOpacity={0.55} strokeWidth={0.3} strokeDasharray="1 1.6" />
+      {NIVEIS[vista].map((n) => (
+        <g key={n.rotulo}>
+          <line x1={2} y1={n.y} x2={LARGURA - 2} y2={n.y} stroke="white" strokeOpacity={0.3} strokeWidth={0.25} strokeDasharray="0.8 1.6" />
+          {rotulos && (
+            <text x={2.5} y={n.y - 0.9} fontSize={2.7} fontWeight={700} fill="white" stroke="rgb(0 0 0 / 0.7)" strokeWidth={0.5} paintOrder="stroke">
+              {n.rotulo}
+            </text>
+          )}
+        </g>
+      ))}
+      {/* Chão e topo: o corpo inteiro precisa caber entre as duas marcas. */}
+      <line x1={14} y1={155.5} x2={LARGURA - 14} y2={155.5} stroke="#b6ff3b" strokeOpacity={0.8} strokeWidth={0.5} />
+      {rotulos && (
+        <>
+          <text x={CENTRO} y={158.8} textAnchor="middle" fontSize={2.6} fontWeight={700} fill="#b6ff3b" stroke="rgb(0 0 0 / 0.7)" strokeWidth={0.5} paintOrder="stroke">
+            pés aqui
+          </text>
+          <text x={CENTRO} y={5.6} textAnchor="middle" fontSize={2.6} fontWeight={700} fill="#b6ff3b" stroke="rgb(0 0 0 / 0.7)" strokeWidth={0.5} paintOrder="stroke">
+            cabeça aqui
+          </text>
+        </>
+      )}
+    </svg>
+  );
+}
 
 export function CameraPostura({ silhueta, aoCapturar }: { silhueta: "perfil" | "frontal"; aoCapturar: (foto: FotoCapturada) => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -24,6 +82,8 @@ export function CameraPostura({ silhueta, aoCapturar }: { silhueta: "perfil" | "
   const [facing, setFacing] = useState<"user" | "environment">("user");
   const [erro, setErro] = useState<string | null>(null);
   const [contagem, setContagem] = useState<number | null>(null);
+  const [guia, setGuia] = useState(true);
+  const [virado, setVirado] = useState(false);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -69,10 +129,11 @@ export function CameraPostura({ silhueta, aoCapturar }: { silhueta: "perfil" | "
   function disparar() {
     const v = videoRef.current;
     if (!v || !v.videoWidth) return;
+    const { sx, sy, sw, sh } = recorteCover(v.videoWidth, v.videoHeight);
     const canvas = document.createElement("canvas");
-    canvas.width = v.videoWidth;
-    canvas.height = v.videoHeight;
-    canvas.getContext("2d")!.drawImage(v, 0, 0);
+    canvas.width = Math.round(sw);
+    canvas.height = Math.round(sh);
+    canvas.getContext("2d")!.drawImage(v, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
     canvas.toBlob((blob) => {
       if (blob) aoCapturar({ src: URL.createObjectURL(blob), largura: canvas.width, altura: canvas.height });
     }, "image/jpeg", 0.92);
@@ -90,6 +151,8 @@ export function CameraPostura({ silhueta, aoCapturar }: { silhueta: "perfil" | "
     img.src = src;
   }
 
+  const botaoCanto = "toque flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-white";
+
   return (
     <div className="space-y-3">
       <div className="relative aspect-[9/16] w-full overflow-hidden rounded-xl bg-base-950">
@@ -100,35 +163,37 @@ export function CameraPostura({ silhueta, aoCapturar }: { silhueta: "perfil" | "
           autoPlay
           className={cn("h-full w-full object-cover", facing === "user" && "-scale-x-100")}
         />
-        {/* Silhueta-guia: ajuda a repetir distância e enquadramento entre sessões. */}
-        <svg viewBox="0 0 90 160" className="pointer-events-none absolute inset-0 h-full w-full opacity-60" aria-hidden="true">
-          {silhueta === "frontal" ? (
-            <g fill="none" stroke="#fff" strokeWidth={0.8} strokeDasharray="2 2">
-              <circle cx={45} cy={22} r={8} />
-              <path d="M30 36 h30 l5 40 h-6 v60 h-8 v-45 h-12 v45 h-8 v-60 h-6 z" />
-            </g>
-          ) : (
-            <g fill="none" stroke="#fff" strokeWidth={0.8} strokeDasharray="2 2">
-              <circle cx={45} cy={22} r={8} />
-              <path d="M38 36 c-6 10 -6 30 -2 44 l-1 55 h7 l2 -50 l3 50 h7 l-1 -58 c4 -14 3 -32 -2 -41 z" />
-            </g>
-          )}
-          <line x1={45} y1={4} x2={45} y2={156} stroke="#fff" strokeWidth={0.4} strokeDasharray="1 2" />
-        </svg>
+        {guia && <GuiaCorpo vista={silhueta} virado={virado} />}
         {contagem !== null && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/30">
             <span className="font-display text-8xl font-extrabold text-white drop-shadow-lg tabular-nums">{contagem}</span>
           </div>
         )}
-        <button
-          type="button"
-          onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
-          className="toque absolute right-2 top-2 flex h-11 w-11 items-center justify-center rounded-full bg-black/50 text-white"
-          aria-label="Trocar câmera"
-        >
-          <SwitchCamera size={ICON.md} aria-hidden="true" />
-        </button>
+        <div className="absolute right-2 top-2 flex flex-col gap-2">
+          <button type="button" onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))} className={botaoCanto} aria-label="Trocar câmera">
+            <SwitchCamera size={ICON.md} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setGuia((g) => !g)}
+            aria-pressed={guia}
+            className={cn(botaoCanto, !guia && "text-white/60")}
+            aria-label={guia ? "Ocultar contorno" : "Mostrar contorno"}
+          >
+            {guia ? <PersonStanding size={ICON.md} aria-hidden="true" /> : <EyeOff size={ICON.md} aria-hidden="true" />}
+          </button>
+          {silhueta === "perfil" && guia && (
+            <button type="button" onClick={() => setVirado((v) => !v)} className={botaoCanto} aria-label="Virar contorno para o outro lado">
+              <ArrowLeftRight size={ICON.md} aria-hidden="true" />
+            </button>
+          )}
+        </div>
       </div>
+      <p className="text-center text-[11px] text-ink-faint">
+        {silhueta === "perfil"
+          ? "Encaixe o corpo no contorno, com a orelha, o ombro e o quadril sobre o prumo. Vire o contorno para o lado em que você está olhando."
+          : "Encaixe o corpo no contorno: ombros e quadril nas linhas, pés sobre a marca do chão."}
+      </p>
       {erro && <p className="text-xs text-danger">{erro}</p>}
       <div className="flex gap-2">
         <button

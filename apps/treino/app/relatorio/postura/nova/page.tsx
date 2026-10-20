@@ -39,6 +39,7 @@ export default function NovaPosturaPage() {
   const [confianca, setConfianca] = useState<number | null>(null);
   const [deteccao, setDeteccao] = useState<Deteccao>("aguardando");
   const [salvasHoje, setSalvasHoje] = useState(0);
+  const [zoomLupa, setZoomLupa] = useState(3);
   const imgRef = useRef<HTMLImageElement | null>(null);
 
   const proporcao = foto ? foto.largura / foto.altura : 1;
@@ -171,7 +172,25 @@ export default function NovaPosturaPage() {
             referencias={REFERENCIAS[vista]}
             aoMover={(nome, p) => setPontos((atual) => ({ ...atual, [nome]: p }))}
             editavel={deteccao !== "carregando"}
+            zoomLupa={zoomLupa}
           />
+          <div className="flex items-center gap-2" role="group" aria-label="Ampliação da lupa">
+            <span className="text-xs text-ink-muted">Lupa ao arrastar</span>
+            {[2, 3, 4, 6].map((z) => (
+              <button
+                key={z}
+                type="button"
+                onClick={() => setZoomLupa(z)}
+                aria-pressed={zoomLupa === z}
+                className={cn(
+                  "toque min-h-9 min-w-11 rounded-full border px-3 text-xs font-semibold tabular-nums",
+                  zoomLupa === z ? "border-brand bg-brand text-on-solid" : "border-line bg-base-800 text-ink-muted",
+                )}
+              >
+                {z}×
+              </button>
+            ))}
+          </div>
           <section className="space-y-2 rounded-xl border border-line bg-base-800 p-4 shadow-sm">
             {deteccao === "carregando" && <p className="text-sm text-ink-muted">Detectando a pose… (na primeira vez baixa o modelo, ~20 MB)</p>}
             {deteccao === "sem_pessoa" && <p className="text-sm text-danger">Não achei ninguém na foto. Os pontos estão num gabarito: arraste cada um para o lugar, ou refaça a foto.</p>}
@@ -191,7 +210,9 @@ export default function NovaPosturaPage() {
                 ))}
               </ul>
             )}
-            <p className="text-[11px] text-ink-faint">Arraste a partir de qualquer lugar do ponto: o deslocamento do dedo move o ponto, então ele não fica escondido.</p>
+            <p className="text-[11px] text-ink-faint">
+              Arraste a partir de qualquer lugar do ponto: o deslocamento do dedo move o ponto e uma lupa mostra o trecho ampliado, com a mira no centro.
+            </p>
           </section>
           <section className="grid grid-cols-2 gap-2">
             {MEDIDAS_POR_VISTA[vista].map((m: Medida) => (
