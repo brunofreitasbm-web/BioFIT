@@ -114,8 +114,11 @@ export function BackupCard() {
         </p>
         <div className="flex gap-2">
           <input
-            type="password"
+            type="text"
             autoComplete="off"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
             value={token}
             onChange={(e) => setToken(e.target.value)}
             placeholder="Token de sync"
