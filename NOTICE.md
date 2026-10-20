@@ -17,6 +17,15 @@ TypeScript para o BioFIT; cada arquivo indica no cabeçalho de qual arquivo do o
 
 Nada do banco de exercícios do openGym (dados de hasaneyldrm/exercises-dataset) foi usado.
 
+## MediaPipe Pose Landmarker (avaliação postural)
+
+A detecção de pose por foto em `apps/treino/lib/detectorPose.ts` usa
+[**MediaPipe Tasks Vision**](https://github.com/google-ai-edge/mediapipe) (`@mediapipe/tasks-vision`),
+Copyright Google LLC, sob licença **Apache-2.0**. O modelo `pose_landmarker_lite.task` em
+`apps/treino/public/modelos/` é o publicado pelo Google (mesma licença); o WASM é carregado do
+jsDelivr com a versão fixada no código. Os pontos da coluna (C7, ápice, T12) não vêm do modelo:
+são marcados pelo usuário.
+
 ## Fotos de exercícios (free-exercise-db)
 
 As fotos em `apps/treino/public/exercicios/` vêm do

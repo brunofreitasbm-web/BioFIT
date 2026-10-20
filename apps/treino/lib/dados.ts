@@ -1,4 +1,13 @@
-import type { EscolhaDoDia, PalpiteCalibracao, RegistroBikeIndoor, RegistroCorpo, RegistroSessao, SerieRegistrada, SessaoTreino } from "./tipos";
+import type {
+  EscolhaDoDia,
+  PalpiteCalibracao,
+  RegistroBikeIndoor,
+  RegistroCorpo,
+  RegistroPostura,
+  RegistroSessao,
+  SerieRegistrada,
+  SessaoTreino,
+} from "./tipos";
 
 // Tudo que as contas do app precisam, já lido. No navegador vem do localStorage
 // (`lerDadosLocais` em storage.ts); no servidor, do backup sincronizado (`dadosDoBackup`).
@@ -11,6 +20,7 @@ export interface DadosTreino {
   palpites: PalpiteCalibracao[];
   escolhas: Record<string, EscolhaDoDia>;
   corpo: Record<string, RegistroCorpo>; // por `chave`
+  postura: Record<string, RegistroPostura>; // por `chave`
   dataInicio: string | null;
 }
 
@@ -24,6 +34,7 @@ export const KEY_VERSAO = "treino:versaoPrograma";
 export const KEY_ARQUIVO_PPL = "treino:arquivo:ppl-v4";
 // Lápides das remoções, para o sync com merge não ressuscitar o que foi apagado.
 export const KEY_CORPO = "treino:corpo";
+export const KEY_POSTURA = "treino:postura";
 export const KEY_REMOVIDOS = "treino:removidos";
 // Quem gravou por último no servidor ("app" ou "mcp"). Só existe no backup do servidor.
 export const KEY_ORIGEM = "treino:meta:origem";
@@ -46,6 +57,7 @@ export function dadosDoBackup(dados: Record<string, string | null | undefined>):
     palpites: analisar<PalpiteCalibracao[]>(dados[KEY_CALIBRACAO], []),
     escolhas: analisar<Record<string, EscolhaDoDia>>(dados[KEY_ESCOLHAS], {}),
     corpo: analisar<Record<string, RegistroCorpo>>(dados[KEY_CORPO], {}),
+    postura: analisar<Record<string, RegistroPostura>>(dados[KEY_POSTURA], {}),
     dataInicio: dados[KEY_INICIO] || null,
   };
 }

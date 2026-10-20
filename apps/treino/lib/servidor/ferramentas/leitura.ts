@@ -18,6 +18,7 @@ import {
 } from "@/lib/relatorio";
 import type { SerieRegistrada } from "@/lib/tipos";
 import { blocoCorpo } from "./corpo";
+import { blocoPostura } from "./postura";
 import {
   dataArg,
   dataLocal,
@@ -412,6 +413,7 @@ export const LEITURA: FerramentaLeitura[] = [
         })),
         programa: ctx.dados.dataInicio ? statusPrograma(ctx) : null,
         corpo: blocoCorpo(ctx),
+        postura: blocoPostura(ctx),
       };
     },
   },

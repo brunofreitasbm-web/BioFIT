@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { KEY_BIKE, KEY_LOG, KEY_REMOVIDOS, KEY_SESSOES } from "./dados";
-import { chaveBike, chaveSerie, mesclar, registrarRemocao } from "./merge";
-import type { RegistroSessao, SerieRegistrada } from "./tipos";
+import { KEY_BIKE, KEY_LOG, KEY_POSTURA, KEY_REMOVIDOS, KEY_SESSOES } from "./dados";
+import { chaveBike, chavePostura, chaveSerie, mesclar, registrarRemocao } from "./merge";
+import type { RegistroPostura, RegistroSessao, SerieRegistrada } from "./tipos";
 
 const AGORA = new Date("2026-10-12T12:00:00Z");
 const serie = (n: number, reps: number, quando: string, extra: Partial<SerieRegistrada> = {}): SerieRegistrada => ({
@@ -72,5 +72,35 @@ describe("mesclar", () => {
 
   it("não cria chaves que nenhum lado tinha", () => {
     expect(Object.keys(mesclar({}, { "treino:dataInicio": "2026-10-01" }, AGORA))).toEqual(["treino:dataInicio"]);
+  });
+});
+
+describe("mesclar postura", () => {
+  const postura = (quando: string, cif: number, registradoEm = `${quando}.000Z`): RegistroPostura => ({
+    chave: `postura:${quando}:perfil`,
+    vista: "perfil",
+    data: quando.slice(0, 10),
+    quando,
+    proporcao: 0.75,
+    pontos: { c7: { x: 0.5, y: 0.2 } },
+    medidas: { anguloCifose: cif },
+    confiancaDeteccao: 0.9,
+    registradoEm,
+  });
+  const mapa = (...regs: RegistroPostura[]) => ({ [KEY_POSTURA]: JSON.stringify(Object.fromEntries(regs.map((r) => [r.chave, r]))) });
+  const ler = (d: Record<string, string>) => Object.values(JSON.parse(d[KEY_POSTURA]) as Record<string, RegistroPostura>);
+
+  it("une capturas de lados diferentes e a mais recente vence a mesma chave", () => {
+    const a = postura("2026-10-10T08:00:00", 40);
+    const b = postura("2026-10-11T08:00:00", 41);
+    expect(ler(mesclar(mapa(a), mapa(b), AGORA)).map((r) => r.medidas.anguloCifose).sort()).toEqual([40, 41]);
+    const corrigida = postura("2026-10-10T08:00:00", 38, "2026-10-10T09:00:00.000Z");
+    expect(ler(mesclar(mapa(corrigida), mapa(a), AGORA))[0].medidas.anguloCifose).toBe(38);
+  });
+
+  it("lápide derruba a captura removida", () => {
+    const a = postura("2026-10-10T08:00:00", 40);
+    const lapide = { [KEY_REMOVIDOS]: JSON.stringify(registrarRemocao([], chavePostura(a.chave), "2026-10-10T09:00:00Z")) };
+    expect(ler(mesclar({ ...mapa(), ...lapide }, mapa(a), AGORA))).toEqual([]);
   });
 });

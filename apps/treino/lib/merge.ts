@@ -1,5 +1,5 @@
-import { KEY_BIKE, KEY_CORPO, KEY_LOG, KEY_REMOVIDOS, KEY_SESSOES } from "./dados";
-import type { RegistroBikeIndoor, RegistroCorpo, RegistroSessao, SerieRegistrada } from "./tipos";
+import { KEY_BIKE, KEY_CORPO, KEY_LOG, KEY_POSTURA, KEY_REMOVIDOS, KEY_SESSOES } from "./dados";
+import type { RegistroBikeIndoor, RegistroCorpo, RegistroPostura, RegistroSessao, SerieRegistrada } from "./tipos";
 
 // Sync com merge entre o app e o servidor (onde o MCP também grava). Cada registro tem uma
 // chave natural e um carimbo de tempo; a gravação mais recente vence. Remoções viram lápides
@@ -21,6 +21,7 @@ export const chaveSerie = (s: Pick<SerieRegistrada, "exercicioId" | "data" | "se
 export const chaveSessao = (r: Pick<RegistroSessao, "data" | "sessaoTipo">) => `sessao:${r.data}|${r.sessaoTipo}`;
 export const chaveBike = (data: string) => `bike:${data}`;
 export const chaveCorpo = (chave: string) => `corpo:${chave}`;
+export const chavePostura = (chave: string) => `postura:${chave}`;
 
 const carimboSessao = (r: RegistroSessao) => r.atualizadoEm ?? r.fimISO ?? r.inicioISO;
 
@@ -103,12 +104,24 @@ export function mesclar(base: Record<string, string>, entrada: Record<string, st
     corpo[c.chave] = c;
   }
 
+  const posturaEntrada = Object.values(analisar<Record<string, RegistroPostura>>(entrada[KEY_POSTURA], {}));
+  const posturaBase = Object.values(analisar<Record<string, RegistroPostura>>(base[KEY_POSTURA], {}));
+  const postura: Record<string, RegistroPostura> = {};
+  for (const p of semRemovidos(
+    unir(posturaEntrada, posturaBase, (p) => chavePostura(p.chave), (p) => p.registradoEm),
+    (p) => p.registradoEm,
+    lapides,
+  )) {
+    postura[p.chave] = p;
+  }
+
   // Só escreve a chave se algum dos lados a tinha: não cria "[]" onde não havia nada.
   const algum = (k: string) => k in base || k in entrada;
   if (algum(KEY_LOG)) resultado[KEY_LOG] = JSON.stringify(log);
   if (algum(KEY_SESSOES)) resultado[KEY_SESSOES] = JSON.stringify(sessoes);
   if (algum(KEY_BIKE)) resultado[KEY_BIKE] = JSON.stringify(bike);
   if (algum(KEY_CORPO)) resultado[KEY_CORPO] = JSON.stringify(corpo);
+  if (algum(KEY_POSTURA)) resultado[KEY_POSTURA] = JSON.stringify(postura);
   if (algum(KEY_REMOVIDOS)) resultado[KEY_REMOVIDOS] = JSON.stringify(removidos);
   return resultado;
 }

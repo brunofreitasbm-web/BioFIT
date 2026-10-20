@@ -114,6 +114,29 @@ export interface RegistroCorpo {
   registradoEm: string; // ISO — quando foi importada; desempata o sync
 }
 
+// ===== Postura (avaliação por foto) =====
+
+export interface Ponto2D {
+  x: number; // 0–1, fração da largura da foto
+  y: number; // 0–1, fração da altura da foto
+}
+
+export type VistaPostura = "perfil" | "frontal";
+
+// Uma captura de postura: os pontos marcados na foto (do detector e dos toques) e os ângulos
+// calculados. A foto não é guardada. `chave` é única por captura ("postura:<quando>:<vista>").
+export interface RegistroPostura {
+  chave: string;
+  vista: VistaPostura;
+  data: string; // YYYY-MM-DD local
+  quando: string; // YYYY-MM-DDTHH:mm:ss local
+  proporcao: number; // largura / altura da foto, para refazer as contas a partir dos pontos
+  pontos: Record<string, Ponto2D>;
+  medidas: Record<string, number>;
+  confiancaDeteccao: number | null; // visibilidade média dos pontos do detector (0–1); null = tudo manual
+  registradoEm: string; // ISO — desempata o sync
+}
+
 // Aba "Calibração RIR": na rodada 1, antes da última série de um exercício "Teste falha",
 // anota-se o palpite de reps até a falha. O real vem da própria série registrada.
 export interface PalpiteCalibracao {

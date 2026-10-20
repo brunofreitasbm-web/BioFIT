@@ -52,9 +52,17 @@ Composição corporal (bioimpedância da balança AvaBio / Avanutri):
 | `importar_bioimpedancia` | Recebe o link do botão “Acessar Relatório” do e-mail “Relatório bioimpedância” (noreply@avanutrionline.com) e importa as medições. Cada link traz as 6 mais recentes até aquela data; reimportar não duplica (cada medição tem id próprio) e, se não há nada novo, nem grava |
 | `evolucao_corpo` | Série de medições com hora do dia, tendência por mês (por data), massa magra por segmento, veredito cruzado com a força (`recomposicao_em_curso`, `dentro_do_ruido`, `ganho_de_massa`, `ganho_sem_retorno`, `alerta_perda_de_massa`, `inconclusivo`, `dados_insuficientes`), confiança e avisos |
 | `remover_corpo` | Apaga as medições de uma data |
-| `relatorio_semanal` | Ganha o bloco `corpo`: última medição e lembrete após 14 dias |
+| `relatorio_semanal` | Ganha o bloco `corpo`: última medição e lembrete após 14 dias (e o bloco `postura`: última sessão de perfil e lembrete após 30 dias) |
 
 A bioimpedância é ruidosa (hidratação, refeição, hora do dia). A análise usa tendência por data e massa magra/força como sinal principal, trata variações pequenas como ruído (`RUIDO_GORDURA_PP`, `RUIDO_MASSA_MAGRA_KG` em `lib/corpo.ts`: pontos de partida, não medidos) e rebaixa a confiança quando as medições foram feitas em horários muito diferentes. Com confiança baixa **e** mais de 45 dias sem medir dentro da janela, o veredito vira `inconclusivo` (a conta original fica em `leituraProvisoria`, só como pista). O app mostra tudo isso na aba **Corpo** do Relatório (somente leitura).
+
+Postura (avaliação por foto, feita no app em Relatório → Postura; a foto não é guardada, só os pontos e os ângulos):
+
+| Ferramenta | O que faz |
+| --- | --- |
+| `evolucao_postura` | Sessões de perfil (ângulo e índice de cifose por três pontos tocados nas costas — C7, ápice, T12, conta do flexicurve; ângulo craniovertebral; inclinação do tronco) e frontais (olhos, ombros, quadril, joelhos), cada uma a mediana das capturas do dia; tendência por data por medida; veredito (`cifose_melhorando`, `cifose_piorando`, `dentro_do_ruido`, `misto`, `dados_insuficientes`), confiança e avisos |
+
+Nenhum modelo de pose aberto enxerga a coluna torácica, então a cifose depende dos três toques do usuário; os demais pontos vêm do MediaPipe Pose e podem ser corrigidos. A faixa de ruído entre sessões (`RUIDO_ANGULO_GRAUS`, `RUIDO_INDICE_CIFOSE` em `lib/postura.ts`) é ponto de partida, não medido. É medida de foto, não diagnóstico.
 
 Escrita de treino (anotações `readOnlyHint=false`; a resposta traz o estado do dia depois da gravação):
 
