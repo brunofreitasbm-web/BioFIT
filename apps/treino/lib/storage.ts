@@ -3,6 +3,7 @@ import type {
   PalpiteCalibracao,
   RegistroBikeIndoor,
   RegistroCorpo,
+  RegistroPostura,
   RegistroSessao,
   SerieRegistrada,
   SessaoTreino,
@@ -19,6 +20,7 @@ import {
   KEY_ESCOLHAS,
   KEY_INICIO,
   KEY_LOG,
+  KEY_POSTURA,
   KEY_REMOVIDOS,
   KEY_SESSOES,
   KEY_VERSAO,
@@ -27,7 +29,7 @@ import {
   type DadosTreino,
   type SessaoConcluida,
 } from "./dados";
-import { chaveBike, chavesAlteradas, chaveSerie, mesclar, registrarRemocao, type Removido } from "./merge";
+import { chaveBike, chavePostura, chavesAlteradas, chaveSerie, mesclar, registrarRemocao, type Removido } from "./merge";
 
 export type { SessaoConcluida };
 const VERSAO_PROGRAMA = "ulppl-meso1";
@@ -350,6 +352,35 @@ export function getTodosCorpo(): Record<string, RegistroCorpo> {
   }
 }
 
+// ===== Postura (avaliação por foto; o app grava, o MCP só lê) =====
+
+export function getTodasPosturas(): Record<string, RegistroPostura> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(KEY_POSTURA);
+    return raw ? (JSON.parse(raw) as Record<string, RegistroPostura>) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function salvarPostura(registro: RegistroPostura): boolean {
+  try {
+    gravarLocal(KEY_POSTURA, JSON.stringify({ ...getTodasPosturas(), [registro.chave]: registro }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function removerPostura(chave: string): void {
+  const todas = getTodasPosturas();
+  if (!todas[chave]) return;
+  delete todas[chave];
+  anotarRemocao(chavePostura(chave));
+  gravarLocal(KEY_POSTURA, JSON.stringify(todas));
+}
+
 // ===== Lápides (remoções) e leitura em bloco =====
 
 function getRemovidos(): Removido[] {
@@ -382,6 +413,7 @@ export function lerDadosLocais(): DadosTreino {
     [KEY_CALIBRACAO]: ls.getItem(KEY_CALIBRACAO),
     [KEY_ESCOLHAS]: ls.getItem(KEY_ESCOLHAS),
     [KEY_CORPO]: ls.getItem(KEY_CORPO),
+    [KEY_POSTURA]: ls.getItem(KEY_POSTURA),
     [KEY_INICIO]: ls.getItem(KEY_INICIO),
   });
 }
@@ -391,7 +423,7 @@ export function lerDadosLocais(): DadosTreino {
 // é um JSON com o valor bruto de cada chave, para restaurar em outro aparelho ou após limpar
 // os dados do site.
 
-const CHAVES_BACKUP = [KEY_LOG, KEY_INICIO, KEY_SESSOES, KEY_ESCOLHAS, KEY_BIKE, KEY_CALIBRACAO, KEY_VERSAO, KEY_ARQUIVO_PPL, KEY_REMOVIDOS, KEY_CORPO];
+const CHAVES_BACKUP = [KEY_LOG, KEY_INICIO, KEY_SESSOES, KEY_ESCOLHAS, KEY_BIKE, KEY_CALIBRACAO, KEY_VERSAO, KEY_ARQUIVO_PPL, KEY_REMOVIDOS, KEY_CORPO, KEY_POSTURA];
 // Chaves que guardam texto puro (não JSON).
 const CHAVES_TEXTO = [KEY_INICIO, KEY_VERSAO];
 const BACKUP_FORMATO = "biofit-treino-backup";

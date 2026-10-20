@@ -5,8 +5,8 @@
 //     que há rede; sem rede, abre a última versão vista)
 //   - /_next/static, ícones, fontes: cache primeiro (arquivos com hash, imutáveis)
 // Trocar VERSAO descarta os caches antigos no próximo activate.
-const VERSAO = "biofit-v2";
-const PAGINAS = ["/", "/relatorio", "/relatorio/frequencia", "/relatorio/exercicios", "/relatorio/corpo"];
+const VERSAO = "biofit-v3";
+const PAGINAS = ["/", "/relatorio", "/relatorio/frequencia", "/relatorio/exercicios", "/relatorio/corpo", "/relatorio/postura", "/relatorio/postura/nova"];
 const ARQUIVOS = ["/manifest.webmanifest", "/icon-192.png"];
 
 // Só o HTML não basta offline: a tela é montada pelos scripts da página (client components).
@@ -43,16 +43,22 @@ self.addEventListener("activate", (event) => {
 });
 
 function estatico(url) {
-  return url.pathname.startsWith("/_next/static/") || /\.(png|svg|woff2?|webmanifest)$/.test(url.pathname);
+  return url.pathname.startsWith("/_next/static/") || /\.(png|svg|woff2?|webmanifest|task)$/.test(url.pathname);
+}
+
+// WASM do MediaPipe (detector de pose): vem do CDN com versão fixa na URL, então é imutável.
+// Guardado na primeira vez para a avaliação postural funcionar sem rede depois.
+function wasmMediaPipe(url) {
+  return url.origin === "https://cdn.jsdelivr.net" && url.pathname.startsWith("/npm/@mediapipe/tasks-vision@");
 }
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return;
+  if (url.origin !== self.location.origin && !wasmMediaPipe(url)) return;
 
-  if (estatico(url)) {
+  if (estatico(url) || wasmMediaPipe(url)) {
     event.respondWith(
       caches.match(req).then(
         (hit) =>

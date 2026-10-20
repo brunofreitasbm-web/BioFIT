@@ -21,6 +21,7 @@ const INSTRUCOES = [
   "Dados de treino do BioFIT (app de musculação, programa A→E em mesociclos com deload).",
   "Leitura: plano_do_dia (o que fazer hoje, com carga sugerida), treino_do_dia (o que foi feito), status_programa, resumo_periodo, relatorio_volume, progresso, historico_exercicio, relatorio_semanal, listar_exercicios.",
   "Composição corporal (bioimpedância Avanutri): evolucao_corpo para ler; importar_bioimpedancia recebe o link do botão “Acessar Relatório” do e-mail “Relatório bioimpedância” (remetente noreply@avanutrionline.com) e importa até 6 medições, sem duplicar. A bioimpedância é ruidosa: não conclua progresso ou piora sem olhar o veredito, a confiança e os avisos de evolucao_corpo.\nEscrita de treino: registrar_series, remover_serie, iniciar_sessao, terminar_sessao, registrar_bike. Confirme com o usuário carga/reps antes de gravar; use ids de plano_do_dia ou listar_exercicios.",
+  "Postura (fotos avaliadas no app, sem guardar a foto): evolucao_postura traz cifose torácica, ângulo craniovertebral, tronco e alinhamento frontal por sessão, com veredito e confiança. Diferença de 2–3° entre sessões é ruído de protocolo, não evolução.",
   "Os dados vêm do último sync do app (ao gravar, abrir e trocar de aba); o app recebe o que você gravar no próximo sync. Chame status_sync se precisar saber o quão atual está.",
 ].join(" ");
 
