@@ -2,6 +2,9 @@ import type { ReactNode } from "react";
 import { Barlow, Barlow_Condensed } from "next/font/google";
 import "./globals.css";
 import { NavTabs } from "@/components/NavTabs";
+import { TimerDescanso } from "@/components/TimerDescanso";
+import { RegistrarSW } from "@/components/RegistrarSW";
+import { IniciarSync } from "@/components/IniciarSync";
 
 // Self-hospedadas via next/font (sem chamada de rede em runtime — importante pra usar
 // offline na academia). Barlow Condensed é a voz esportiva dos títulos e números de
@@ -23,6 +26,9 @@ const body = Barlow({
 export const metadata = {
   title: "BioFIT Treino",
   description: "Programa sequencial U/L/Push/Pull/Legs — treino do dia, registro e relatório",
+  manifest: "/manifest.webmanifest",
+  icons: { icon: "/icon.svg", apple: "/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "BioFIT", statusBarStyle: "default" },
 };
 
 export const viewport = {
@@ -37,8 +43,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <div className="mx-auto flex min-h-dvh max-w-xl flex-col">
           <main className="flex-1 pb-24">{children}</main>
+          <TimerDescanso />
           <NavTabs />
         </div>
+        <RegistrarSW />
+        <IniciarSync />
       </body>
     </html>
   );

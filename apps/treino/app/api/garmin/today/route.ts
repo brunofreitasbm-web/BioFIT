@@ -48,9 +48,37 @@ export async function GET() {
       passos: maisRecente.passos ?? null,
     };
 
+    // Janela dos últimos 30 dias (mais antigo primeiro) para o Coach cruzar com a bioimpedância.
+    const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+    const janela = {
+      diario: ordenado
+        .slice(0, 30)
+        .reverse()
+        .map((d) => ({
+          data: d.data,
+          sonoHoras: num(d.sono_minutos) !== null ? Math.round((d.sono_minutos / 60) * 10) / 10 : null,
+          sonoScore: num(d.sono_score),
+          hrvMs: num(d.vfc_noturna_ms),
+          fcRepouso: num(d.fc_repouso_bpm),
+          passos: num(d.passos),
+          estresse: num(d.estresse_medio),
+          bodyBattery: num(d.body_battery_acordar ?? d.body_battery_max),
+        })),
+      treinos: (Array.isArray(data?.treinos) ? data.treinos : [])
+        .slice(0, 30)
+        .map((t: Record<string, unknown>) => ({
+          data: typeof t.biofit_sessao_data === "string" ? t.biofit_sessao_data : String(t.inicio_utc ?? "").slice(0, 10),
+          tipo: String(t.tipo ?? ""),
+          duracaoMin: num(t.duracao_s) !== null ? Math.round((t.duracao_s as number) / 60) : null,
+          fcMedia: num(t.fc_media) !== null ? Math.round(t.fc_media as number) : null,
+          calorias: num(t.calorias),
+        })),
+    };
+
     return NextResponse.json({
       disponivel: true,
       biometria,
+      janela,
     });
   } catch (error) {
     console.error("[Erro na rota Garmin]:", error);

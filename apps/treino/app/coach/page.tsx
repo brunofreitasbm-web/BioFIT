@@ -29,7 +29,8 @@ import { getDataInicio, getSessaoEscolhida } from "@/lib/storage";
 import { getStatusPrograma, sessaoSugerida as calcularSessaoSugerida, toISODate } from "@/lib/program";
 import { SESSAO_NOME } from "@/lib/exercicios";
 import type { ContextoTreinoIA } from "@/lib/ai/prompts";
-import { contextoBioimpedancia } from "@/lib/bioimpedancia";
+import { contextoIntegrado } from "@/lib/ai/contextoIntegrado";
+import type { GarminJanela } from "@/lib/ai/prompts";
 import { BioimpedanciaCard } from "@/components/BioimpedanciaCard";
 
 const PROMPTS_SUGERIDOS = [
@@ -54,6 +55,7 @@ export default function CoachPage() {
   const fimRef = useRef<HTMLDivElement | null>(null);
 
   const [contexto, setContexto] = useState<ContextoTreinoIA | null>(null);
+  const garminJanelaRef = useRef<GarminJanela | null>(null);
 
   useEffect(() => {
     setMensagens(getSavedChatHistory());
@@ -78,14 +80,16 @@ export default function CoachPage() {
           },
         }
       : {};
-    setContexto({ ...base, bioimpedancia: contextoBioimpedancia() });
+    setContexto({ ...base, ...contextoIntegrado(null) });
 
     fetch("/api/garmin/today")
       .then((r) => r.json())
       .then((d) => {
         if (d?.disponivel && d.biometria) {
+          garminJanelaRef.current = d.janela ?? null;
           setContexto((c) => ({
             ...(c ?? {}),
+            ...contextoIntegrado(garminJanelaRef.current),
             biometriaGarmin: {
               bodyBattery: d.biometria.bodyBattery ?? undefined,
               sonoHoras: d.biometria.sonoHoras ?? undefined,
@@ -99,7 +103,7 @@ export default function CoachPage() {
   }, []);
 
   function atualizarBioimpedancia() {
-    setContexto((c) => ({ ...(c ?? {}), bioimpedancia: contextoBioimpedancia() }));
+    setContexto((c) => ({ ...(c ?? {}), ...contextoIntegrado(garminJanelaRef.current) }));
   }
 
   useEffect(() => {

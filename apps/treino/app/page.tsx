@@ -21,7 +21,8 @@ import { calcularStreak } from "@/lib/motivacao";
 import { recordesPessoais } from "@/lib/relatorio";
 import { seriesDoExercicioNaData, ultimaExecucao } from "@/lib/storage";
 import { GarminCard, type GarminBiometria } from "@/components/GarminCard";
-import { contextoBioimpedancia } from "@/lib/bioimpedancia";
+import { contextoIntegrado } from "@/lib/ai/contextoIntegrado";
+import type { GarminJanela } from "@/lib/ai/prompts";
 import type { ContextoTreinoIA } from "@/lib/ai/prompts";
 import type { ExercicioEfetivo } from "@/lib/tipos";
 
@@ -39,6 +40,7 @@ export default function HojePage() {
   const [coachExercicio, setCoachExercicio] = useState<ExercicioEfetivo | null>(null);
   const [garminBiometria, setGarminBiometria] = useState<GarminBiometria | null>(null);
   const [garminCarregando, setGarminCarregando] = useState(false);
+  const [garminJanela, setGarminJanela] = useState<GarminJanela | null>(null);
 
   const hojeISO = toISODate(hoje);
 
@@ -55,6 +57,7 @@ export default function HojePage() {
       .then((data) => {
         if (data?.disponivel && data.biometria) {
           setGarminBiometria(data.biometria);
+          setGarminJanela(data.janela ?? null);
         }
       })
       .catch(() => {})
@@ -105,7 +108,7 @@ export default function HojePage() {
       hrvStatus: garminBiometria.hrvStatus ?? undefined,
     } : null,
     streakDias: calcularStreak(hojeISO),
-    bioimpedancia: coachAberto ? contextoBioimpedancia() : null,
+    ...(coachAberto ? contextoIntegrado(garminJanela) : {}),
   } : null;
 
   // Fluxo guiado: mantém só um exercício da sessão principal aberto por vez. Ao completar
