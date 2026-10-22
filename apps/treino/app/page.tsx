@@ -20,6 +20,7 @@ import { AiCoachFloatingButton } from "@/components/ai/AiCoachFloatingButton";
 import { calcularStreak } from "@/lib/motivacao";
 import { recordesPessoais } from "@/lib/relatorio";
 import { seriesDoExercicioNaData, ultimaExecucao } from "@/lib/storage";
+import { GarminCard, type GarminBiometria } from "@/components/GarminCard";
 import type { ContextoTreinoIA } from "@/lib/ai/prompts";
 import type { ExercicioEfetivo } from "@/lib/tipos";
 
@@ -35,6 +36,8 @@ export default function HojePage() {
   const [progressoPorExercicio, setProgressoPorExercicio] = useState<Record<string, { feitas: number; total: number }>>({});
   const [coachAberto, setCoachAberto] = useState(false);
   const [coachExercicio, setCoachExercicio] = useState<ExercicioEfetivo | null>(null);
+  const [garminBiometria, setGarminBiometria] = useState<GarminBiometria | null>(null);
+  const [garminCarregando, setGarminCarregando] = useState(false);
 
   const hojeISO = toISODate(hoje);
 
@@ -43,6 +46,18 @@ export default function HojePage() {
     setDataInicioState(getDataInicio() ?? hojeISO);
     setEscolha(getSessaoEscolhida(hojeISO));
     setPronto(true);
+
+    // Carrega métricas biométricas do Garmin
+    setGarminCarregando(true);
+    fetch("/api/garmin/today")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.disponivel && data.biometria) {
+          setGarminBiometria(data.biometria);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setGarminCarregando(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -82,6 +97,12 @@ export default function HojePage() {
     seriesHoje: coachExercicio ? seriesDoExercicioNaData(coachExercicio.id, hojeISO) : undefined,
     historicoUltimaSessao: coachExercicio ? ultimaExecucao(coachExercicio.id, hojeISO) : undefined,
     recorde1RM: coachExercicio ? recordesPessoais(coachExercicio.id, hojeISO).melhor1RM?.kg ?? null : null,
+    biometriaGarmin: garminBiometria ? {
+      bodyBattery: garminBiometria.bodyBattery ?? undefined,
+      sonoHoras: garminBiometria.sonoHoras ?? undefined,
+      stress: garminBiometria.stress ?? undefined,
+      hrvStatus: garminBiometria.hrvStatus ?? undefined,
+    } : null,
     streakDias: calcularStreak(hojeISO),
   } : null;
 
@@ -211,6 +232,8 @@ export default function HojePage() {
       )}
 
       <SeletorSessao hojeISO={hojeISO} sessaoSugerida={sessaoSugerida} valorAtual={escolha} onEscolher={escolher} />
+
+      <GarminCard biometria={garminBiometria} carregando={garminCarregando} />
 
       {status && <ProgressoMeso status={status} />}
 

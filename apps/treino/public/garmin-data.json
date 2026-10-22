@@ -1,0 +1,62 @@
+{
+  "diario": [
+    {
+      "data": "2026-10-21",
+      "vfc_noturna_ms": 50,
+      "vfc_status": "NONE",
+      "vfc_media_semanal_ms": null,
+      "sono_minutos": 345,
+      "sono_score": 76,
+      "fc_repouso_bpm": 49,
+      "passos": 7218,
+      "estresse_medio": 21,
+      "body_battery_max": 91,
+      "body_battery_acordar": 91
+    },
+    {
+      "data": "2026-10-20",
+      "vfc_noturna_ms": 43,
+      "vfc_status": "NONE",
+      "vfc_media_semanal_ms": null,
+      "sono_minutos": 213,
+      "sono_score": 43,
+      "fc_repouso_bpm": 53,
+      "passos": 12772,
+      "estresse_medio": 25,
+      "body_battery_max": 80,
+      "body_battery_acordar": 70
+    }
+  ],
+  "treinos": [
+    {
+      "garmin_activity_id": 24802113673,
+      "inicio_utc": "2026-10-21T11:32:06+00:00",
+      "tipo": "strength_training",
+      "duracao_s": 2656,
+      "fc_media": 86.0,
+      "fc_max": 119.0,
+      "calorias": 197.0,
+      "biofit_sessao_data": "2026-10-21"
+    },
+    {
+      "garmin_activity_id": 24797500373,
+      "inicio_utc": "2026-10-20T23:06:57+00:00",
+      "tipo": "walking",
+      "duracao_s": 1367,
+      "fc_media": 78.11265544989027,
+      "fc_max": 97.0,
+      "calorias": 62.0,
+      "biofit_sessao_data": "2026-10-20"
+    },
+    {
+      "garmin_activity_id": 24790526624,
+      "inicio_utc": "2026-10-20T12:24:09+00:00",
+      "tipo": "strength_training",
+      "duracao_s": 2394,
+      "fc_media": 100.0,
+      "fc_max": 125.0,
+      "calorias": 230.0,
+      "biofit_sessao_data": "2026-10-20"
+    }
+  ]
+}

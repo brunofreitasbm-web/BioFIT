@@ -159,20 +159,31 @@ def main():
         for f in sorted(faltando):
             print("  -", f)
 
+    # Salva cópia local para consumo imediato pelo app e pelo Coach IA
+    caminho_local = os.path.join(os.path.dirname(os.path.abspath(__file__)), "apps", "treino", "public", "garmin-data.json")
+    try:
+        os.makedirs(os.path.dirname(caminho_local), exist_ok=True)
+        with open(caminho_local, "w", encoding="utf-8") as f:
+            json.dump(corpo, f, indent=2, ensure_ascii=False)
+        print(f"[OK] Dados locais do Garmin salvos para o BioFIT: {caminho_local}")
+    except Exception as e:
+        print(f"Aviso: erro ao salvar cópia local ({e})")
+
     if args.dry_run:
         print(json.dumps(corpo, indent=2, ensure_ascii=False)[:6000])
         return
 
     token = os.environ.get("BIOFIT_GARMIN_INGEST_TOKEN", "")
     if not token:
-        sys.exit("Defina BIOFIT_GARMIN_INGEST_TOKEN no ambiente.")
+        print("Aviso: BIOFIT_GARMIN_INGEST_TOKEN não definido. Dados salvos localmente no app, envio ao Supabase ignorado.")
+        return
     r = requests.post(
         INGEST_URL,
         headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
         data=json.dumps(corpo),
         timeout=60,
     )
-    print(r.status_code, r.text)
+    print("Envio Supabase:", r.status_code, r.text)
     r.raise_for_status()
 
 
