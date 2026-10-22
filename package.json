@@ -5,6 +5,8 @@
     "apps/*"
   ],
   "scripts": {
+    "dev": "npm run dev -w @biofit/treino",
+    "dev:treino": "npm run dev -w @biofit/treino",
     "build:treino": "npm run build -w @biofit/treino",
     "build": "npm run build -w @biofit/treino"
   },
