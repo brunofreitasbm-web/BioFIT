@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronUp, Film, Lightbulb, Timer, Check, Link2, TrendingUp, Trophy } from "lucide-react";
+import { ChevronDown, ChevronUp, Film, Lightbulb, Timer, Check, Link2, TrendingUp, Trophy, Sparkles } from "lucide-react";
 import type { ExercicioEfetivo, SerieRegistrada } from "@/lib/tipos";
 import { GrupoBadge } from "./GrupoBadge";
 import { VideoModal } from "./VideoModal";
@@ -42,6 +42,7 @@ export function ExercicioCard({
   expandido,
   onToggleExpandido,
   onProgresso,
+  onConsultarCoach,
 }: {
   exercicio: ExercicioEfetivo;
   status: StatusPrograma;
@@ -49,6 +50,7 @@ export function ExercicioCard({
   expandido: boolean;
   onToggleExpandido: () => void;
   onProgresso?: (exercicioId: string, feitas: number, total: number) => void;
+  onConsultarCoach?: (exercicio: ExercicioEfetivo) => void;
 }) {
   const [series, setSeries] = useState<SerieRegistrada[]>([]);
   const [ultima, setUltima] = useState<SerieRegistrada[]>([]);
@@ -305,6 +307,20 @@ export function ExercicioCard({
                 <span className="block text-[11px] text-ink-muted">{sugestao.motivo}</span>
               </span>
               <span className="shrink-0 text-[11px] font-medium text-brand underline">usar</span>
+            </button>
+          )}
+
+          {onConsultarCoach && (
+            <button
+              type="button"
+              onClick={() => onConsultarCoach(exercicio)}
+              className="mb-2.5 flex items-center justify-between w-full rounded-lg border border-brand/25 bg-brand-soft/60 px-3 py-2 text-xs text-brand hover:border-brand/50 hover:bg-brand-soft transition-all active:scale-[0.99]"
+            >
+              <span className="flex items-center gap-2 font-semibold">
+                <Sparkles size={14} className="text-brand shrink-0" />
+                BioFIT Coach (DeepSeek)
+              </span>
+              <span className="text-[11px] text-ink-muted">Ajuste de carga ou máquina ocupada →</span>
             </button>
           )}
 

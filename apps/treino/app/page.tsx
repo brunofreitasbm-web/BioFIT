@@ -14,7 +14,14 @@ import { BikeIndoorCard } from "@/components/BikeIndoorCard";
 import { ProgressoMeso } from "@/components/ProgressoMeso";
 import { AderenciaCard } from "@/components/AderenciaCard";
 import type { EscolhaDoDia } from "@/lib/tipos";
-import { AlertTriangle, ArrowRight, Coffee, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, Coffee, CheckCircle2, Sparkles } from "lucide-react";
+import { AiCoachModal } from "@/components/ai/AiCoachModal";
+import { AiCoachFloatingButton } from "@/components/ai/AiCoachFloatingButton";
+import { calcularStreak } from "@/lib/motivacao";
+import { recordesPessoais } from "@/lib/relatorio";
+import { seriesDoExercicioNaData, ultimaExecucao } from "@/lib/storage";
+import type { ContextoTreinoIA } from "@/lib/ai/prompts";
+import type { ExercicioEfetivo } from "@/lib/tipos";
 
 
 const DIAS_SEMANA_LABEL = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -26,6 +33,8 @@ export default function HojePage() {
   const [escolha, setEscolha] = useState<EscolhaDoDia | null>(null);
   const [exercicioAbertoId, setExercicioAbertoId] = useState<string | null>(null);
   const [progressoPorExercicio, setProgressoPorExercicio] = useState<Record<string, { feitas: number; total: number }>>({});
+  const [coachAberto, setCoachAberto] = useState(false);
+  const [coachExercicio, setCoachExercicio] = useState<ExercicioEfetivo | null>(null);
 
   const hojeISO = toISODate(hoje);
 
@@ -45,6 +54,36 @@ export default function HojePage() {
 
   const insightHoje = status ? gerarInsightHoje(status, hojeISO, sessaoEfetiva) : null;
   const insightProximo = status ? gerarInsightProximo(sessaoEfetiva, sessaoSugerida, status.meso) : null;
+
+  const handleAbrirCoach = useCallback((ex?: ExercicioEfetivo) => {
+    setCoachExercicio(ex ?? (exercicioAbertoId ? exercicios.find((e) => e.id === exercicioAbertoId) ?? null : null));
+    setCoachAberto(true);
+  }, [exercicioAbertoId, exercicios]);
+
+  const contextoCoach: ContextoTreinoIA | null = status ? {
+    sessao: sessaoEfetiva,
+    sessaoNome: sessaoEfetiva ? SESSAO_NOME[sessaoEfetiva] : undefined,
+    statusPrograma: {
+      meso: status.meso,
+      rodada: status.rodada,
+      isDeload: status.isDeload,
+    },
+    exercicioAtual: coachExercicio ? {
+      id: coachExercicio.id,
+      nome: coachExercicio.nome,
+      grupoMuscular: coachExercicio.grupoMuscular,
+      seriesPrescritas: coachExercicio.series,
+      repsPrescritas: coachExercicio.reps,
+      descanso: coachExercicio.descanso,
+      partida: coachExercicio.partida,
+      composto: coachExercicio.composto,
+      notas: coachExercicio.notas,
+    } : null,
+    seriesHoje: coachExercicio ? seriesDoExercicioNaData(coachExercicio.id, hojeISO) : undefined,
+    historicoUltimaSessao: coachExercicio ? ultimaExecucao(coachExercicio.id, hojeISO) : undefined,
+    recorde1RM: coachExercicio ? recordesPessoais(coachExercicio.id, hojeISO).melhor1RM?.kg ?? null : null,
+    streakDias: calcularStreak(hojeISO),
+  } : null;
 
   // Fluxo guiado: mantém só um exercício da sessão principal aberto por vez. Ao completar
   // todas as séries do exercício aberto, avança sozinho para o próximo pendente da lista.
@@ -221,6 +260,7 @@ export default function HojePage() {
                 expandido={exercicioAbertoId === ex.id}
                 onToggleExpandido={() => handleToggleExercicio(ex.id)}
                 onProgresso={handleProgresso}
+                onConsultarCoach={handleAbrirCoach}
               />
             ))}
           </div>
@@ -240,6 +280,14 @@ export default function HojePage() {
           </div>
         </div>
       )}
+
+      <AiCoachFloatingButton onClick={() => handleAbrirCoach()} />
+
+      <AiCoachModal
+        aberto={coachAberto}
+        onFechar={() => setCoachAberto(false)}
+        contextoInicial={contextoCoach}
+      />
     </div>
   );
 }
