@@ -2,21 +2,47 @@ import type {
   EscolhaDoDia,
   PalpiteCalibracao,
   RegistroBikeIndoor,
+  RegistroCorpo,
+  RegistroPostura,
   RegistroSessao,
   SerieRegistrada,
   SessaoTreino,
 } from "./tipos";
 import { CHAVES_STORAGE_PPL_V4 } from "./arquivo/pplV4";
+import {
+  dadosDoBackup,
+  diasTreinadosUnicosEm,
+  erroMedioCalibracaoEm,
+  KEY_ARQUIVO_PPL,
+  KEY_BIKE,
+  KEY_CALIBRACAO,
+  KEY_CORPO,
+  KEY_ESCOLHAS,
+  KEY_INICIO,
+  KEY_LOG,
+  KEY_POSTURA,
+  KEY_REMOVIDOS,
+  KEY_SESSOES,
+  KEY_VERSAO,
+  sessoesConcluidasEm,
+  ultimaExecucaoEm,
+  type DadosTreino,
+  type SessaoConcluida,
+} from "./dados";
+import { chaveBike, chavePostura, chavesAlteradas, chaveSerie, mesclar, registrarRemocao, type Removido } from "./merge";
 
-const KEY_LOG = "treino:log";
-const KEY_INICIO = "treino:dataInicio";
-const KEY_SESSOES = "treino:sessoesPorDia";
-const KEY_ESCOLHAS = "treino:escolhaPorDia";
-const KEY_BIKE = "treino:bikeIndoor";
-const KEY_CALIBRACAO = "treino:calibracaoRIR";
-const KEY_VERSAO = "treino:versaoPrograma";
-const KEY_ARQUIVO_PPL = "treino:arquivo:ppl-v4";
+export type { SessaoConcluida };
 const VERSAO_PROGRAMA = "ulppl-meso1";
+
+// Gancho chamado após cada gravação, para o envio ao servidor (lib/sync.ts) agendar um sync.
+let aoGravar: (() => void) | null = null;
+export function registrarAoGravar(fn: (() => void) | null): void {
+  aoGravar = fn;
+}
+function gravarLocal(chave: string, valor: string): void {
+  window.localStorage.setItem(chave, valor);
+  aoGravar?.();
+}
 
 
 export function getDataInicio(): string | null {
@@ -30,7 +56,7 @@ export function getDataInicio(): string | null {
 
 export function setDataInicio(iso: string): boolean {
   try {
-    window.localStorage.setItem(KEY_INICIO, iso);
+    gravarLocal(KEY_INICIO, iso);
     return true;
   } catch {
     return false;
@@ -49,7 +75,7 @@ export function getLog(): SerieRegistrada[] {
 
 function saveLog(log: SerieRegistrada[]): boolean {
   try {
-    window.localStorage.setItem(KEY_LOG, JSON.stringify(log));
+    gravarLocal(KEY_LOG, JSON.stringify(log));
     return true;
   } catch {
     return false;
@@ -68,6 +94,7 @@ export function upsertSerie(entry: SerieRegistrada): boolean {
 
 export function removerSerie(exercicioId: string, data: string, serieNumero: number): boolean {
   const log = getLog().filter((s) => !(s.exercicioId === exercicioId && s.data === data && s.serieNumero === serieNumero));
+  anotarRemocao(chaveSerie({ exercicioId, data, serieNumero }));
   return saveLog(log);
 }
 
@@ -78,10 +105,7 @@ export function seriesDoExercicioNaData(exercicioId: string, data: string): Seri
 }
 
 export function ultimaExecucao(exercicioId: string, antesDe?: string): SerieRegistrada[] {
-  const registros = getLog().filter((s) => s.exercicioId === exercicioId && (!antesDe || s.data < antesDe));
-  if (registros.length === 0) return [];
-  const ultimaData = registros.reduce((max, r) => (r.data > max ? r.data : max), registros[0].data);
-  return registros.filter((r) => r.data === ultimaData).sort((a, b) => a.serieNumero - b.serieNumero);
+  return ultimaExecucaoEm(getLog(), exercicioId, antesDe);
 }
 
 // ===== Sessões (iniciar/terminar treino) =====
@@ -99,7 +123,7 @@ export function getTodasSessoes(): Record<string, RegistroSessao[]> {
 
 function saveSessoesPorDia(map: Record<string, RegistroSessao[]>): boolean {
   try {
-    window.localStorage.setItem(KEY_SESSOES, JSON.stringify(map));
+    gravarLocal(KEY_SESSOES, JSON.stringify(map));
     return true;
   } catch {
     return false;
@@ -118,7 +142,8 @@ export function iniciarSessao(data: string, sessaoTipo: SessaoTreino): boolean {
   const map = getTodasSessoes();
   const lista = map[data] ?? [];
   const idx = lista.findIndex((r) => r.sessaoTipo === sessaoTipo);
-  const novo: RegistroSessao = { data, sessaoTipo, inicioISO: new Date().toISOString(), fimISO: null };
+  const agora = new Date().toISOString();
+  const novo: RegistroSessao = { data, sessaoTipo, inicioISO: agora, fimISO: null, atualizadoEm: agora };
   if (idx >= 0) lista[idx] = novo;
   else lista.push(novo);
   map[data] = lista;
@@ -131,6 +156,7 @@ export function terminarSessao(data: string, sessaoTipo: SessaoTreino): boolean 
   const atual = lista.find((r) => r.sessaoTipo === sessaoTipo);
   if (!atual) return false;
   atual.fimISO = new Date().toISOString();
+  atual.atualizadoEm = atual.fimISO;
   if (typeof window !== "undefined") {
     try {
       window.localStorage.removeItem(`draft_session_${sessaoTipo}`);
@@ -147,6 +173,7 @@ export function reabrirSessao(data: string, sessaoTipo: SessaoTreino): boolean {
   const atual = lista.find((r) => r.sessaoTipo === sessaoTipo);
   if (!atual) return false;
   atual.fimISO = null;
+  atual.atualizadoEm = new Date().toISOString();
   return saveSessoesPorDia(map);
 }
 
@@ -170,7 +197,7 @@ export function setSessaoEscolhida(data: string, valor: EscolhaDoDia): boolean {
   const map = getEscolhas();
   map[data] = valor;
   try {
-    window.localStorage.setItem(KEY_ESCOLHAS, JSON.stringify(map));
+    gravarLocal(KEY_ESCOLHAS, JSON.stringify(map));
     return true;
   } catch {
     return false;
@@ -181,7 +208,7 @@ export function limparSessaoEscolhida(data: string): boolean {
   const map = getEscolhas();
   delete map[data];
   try {
-    window.localStorage.setItem(KEY_ESCOLHAS, JSON.stringify(map));
+    gravarLocal(KEY_ESCOLHAS, JSON.stringify(map));
     return true;
   } catch {
     return false;
@@ -190,46 +217,12 @@ export function limparSessaoEscolhida(data: string): boolean {
 
 // ===== Sessões concluídas do programa (fila A → E) =====
 
-const SESSOES_PROGRAMA: SessaoTreino[] = ["A", "B", "C", "D", "E"];
-
-function ehSessaoDoPrograma(tipo: string): tipo is SessaoTreino {
-  return (SESSOES_PROGRAMA as string[]).includes(tipo);
-}
-
-export interface SessaoConcluida {
-  data: string;
-  tipo: SessaoTreino;
-  quando: string; // ISO — para ordenar sessões do mesmo dia
-}
-
-// Uma sessão conta como concluída se foi terminada no timer OU se tem série registrada
-// (quem esquece de apertar "Terminar" não perde a sessão). Registros do PPL não entram:
-// têm tipo PUSH/PULL/LEGS e séries sem `sessao`.
 export function sessoesConcluidas(dataInicioISO: string): SessaoConcluida[] {
-  const porChave = new Map<string, SessaoConcluida>();
-  for (const lista of Object.values(getTodasSessoes())) {
-    for (const r of lista) {
-      if (!r.fimISO || r.data < dataInicioISO || !ehSessaoDoPrograma(r.sessaoTipo)) continue;
-      porChave.set(`${r.data}:${r.sessaoTipo}`, { data: r.data, tipo: r.sessaoTipo, quando: r.fimISO });
-    }
-  }
-  for (const s of getLog()) {
-    if (!s.sessao || s.data < dataInicioISO || (s.cargaKg === null && s.reps === null)) continue;
-    const chave = `${s.data}:${s.sessao}`;
-    const atual = porChave.get(chave);
-    if (!atual || s.registradoEm > atual.quando) porChave.set(chave, { data: s.data, tipo: s.sessao, quando: s.registradoEm });
-  }
-  return Array.from(porChave.values()).sort((a, b) => (a.quando < b.quando ? -1 : 1));
+  return sessoesConcluidasEm({ log: getLog(), sessoes: getTodasSessoes() }, dataInicioISO);
 }
 
 export function diasTreinadosUnicos(): string[] {
-  const dias = new Set(getLog().map((s) => s.data));
-  for (const lista of Object.values(getTodasSessoes())) {
-    for (const sessao of lista) {
-      if (sessao.fimISO) dias.add(sessao.data);
-    }
-  }
-  return Array.from(dias).sort();
+  return diasTreinadosUnicosEm({ log: getLog(), sessoes: getTodasSessoes() });
 }
 
 // ===== Calibração RIR (rodada 1) =====
@@ -252,7 +245,7 @@ export function salvarPalpite(entry: PalpiteCalibracao): boolean {
   const lista = getPalpites().filter((p) => !(p.exercicioId === entry.exercicioId && p.data === entry.data));
   lista.push(entry);
   try {
-    window.localStorage.setItem(KEY_CALIBRACAO, JSON.stringify(lista));
+    gravarLocal(KEY_CALIBRACAO, JSON.stringify(lista));
     return true;
   } catch {
     return false;
@@ -262,16 +255,7 @@ export function salvarPalpite(entry: PalpiteCalibracao): boolean {
 // Erro médio (real − palpite) da calibração. O "real" é a última série registrada do
 // exercício naquele dia. Erro médio > 2 = você para cedo demais.
 export function erroMedioCalibracao(): { amostras: number; erroMedio: number | null } {
-  const log = getLog();
-  const erros: number[] = [];
-  for (const p of getPalpites()) {
-    const doDia = log.filter((s) => s.exercicioId === p.exercicioId && s.data === p.data && s.reps !== null);
-    if (doDia.length === 0) continue;
-    const ultima = doDia.reduce((a, b) => (b.serieNumero > a.serieNumero ? b : a));
-    erros.push((ultima.reps as number) - p.palpite);
-  }
-  if (erros.length === 0) return { amostras: 0, erroMedio: null };
-  return { amostras: erros.length, erroMedio: Math.round((erros.reduce((a, b) => a + b, 0) / erros.length) * 10) / 10 };
+  return erroMedioCalibracaoEm({ log: getLog(), palpites: getPalpites() });
 }
 
 // ===== Migração PPL → U/L/PPL Meso 1 =====
@@ -327,7 +311,7 @@ export function saveBikeIndoor(entry: RegistroBikeIndoor): boolean {
     const raw = window.localStorage.getItem(KEY_BIKE);
     const map = raw ? (JSON.parse(raw) as Record<string, RegistroBikeIndoor>) : {};
     map[entry.data] = entry;
-    window.localStorage.setItem(KEY_BIKE, JSON.stringify(map));
+    gravarLocal(KEY_BIKE, JSON.stringify(map));
     return true;
   } catch {
     return false;
@@ -340,7 +324,8 @@ export function removerBikeIndoor(data: string): boolean {
     const raw = window.localStorage.getItem(KEY_BIKE);
     const map = raw ? (JSON.parse(raw) as Record<string, RegistroBikeIndoor>) : {};
     delete map[data];
-    window.localStorage.setItem(KEY_BIKE, JSON.stringify(map));
+    anotarRemocao(chaveBike(data));
+    gravarLocal(KEY_BIKE, JSON.stringify(map));
     return true;
   } catch {
     return false;
@@ -359,12 +344,90 @@ export function getTodosBikeIndoor(): Record<string, RegistroBikeIndoor> {
 
 
 
+// ===== Composição corporal (importada pelo MCP; o app só lê) =====
+
+export function getTodosCorpo(): Record<string, RegistroCorpo> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(KEY_CORPO);
+    return raw ? (JSON.parse(raw) as Record<string, RegistroCorpo>) : {};
+  } catch {
+    return {};
+  }
+}
+
+// ===== Postura (avaliação por foto; o app grava, o MCP só lê) =====
+
+export function getTodasPosturas(): Record<string, RegistroPostura> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(KEY_POSTURA);
+    return raw ? (JSON.parse(raw) as Record<string, RegistroPostura>) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function salvarPostura(registro: RegistroPostura): boolean {
+  try {
+    gravarLocal(KEY_POSTURA, JSON.stringify({ ...getTodasPosturas(), [registro.chave]: registro }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function removerPostura(chave: string): void {
+  const todas = getTodasPosturas();
+  if (!todas[chave]) return;
+  delete todas[chave];
+  anotarRemocao(chavePostura(chave));
+  gravarLocal(KEY_POSTURA, JSON.stringify(todas));
+}
+
+// ===== Lápides (remoções) e leitura em bloco =====
+
+function getRemovidos(): Removido[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(KEY_REMOVIDOS);
+    return raw ? (JSON.parse(raw) as Removido[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+// Grava sem disparar o sync: quem chama já grava a chave principal logo em seguida.
+function anotarRemocao(chave: string): void {
+  try {
+    window.localStorage.setItem(KEY_REMOVIDOS, JSON.stringify(registrarRemocao(getRemovidos(), chave, new Date().toISOString())));
+  } catch {
+    // sem storage: a remoção vale só neste aparelho
+  }
+}
+
+// Tudo de uma vez, no formato das funções puras de lib/dados.ts.
+export function lerDadosLocais(): DadosTreino {
+  if (typeof window === "undefined") return dadosDoBackup({});
+  const ls = window.localStorage;
+  return dadosDoBackup({
+    [KEY_LOG]: ls.getItem(KEY_LOG),
+    [KEY_SESSOES]: ls.getItem(KEY_SESSOES),
+    [KEY_BIKE]: ls.getItem(KEY_BIKE),
+    [KEY_CALIBRACAO]: ls.getItem(KEY_CALIBRACAO),
+    [KEY_ESCOLHAS]: ls.getItem(KEY_ESCOLHAS),
+    [KEY_CORPO]: ls.getItem(KEY_CORPO),
+    [KEY_POSTURA]: ls.getItem(KEY_POSTURA),
+    [KEY_INICIO]: ls.getItem(KEY_INICIO),
+  });
+}
+
 // ===== Backup (export/import) =====
 // Tudo que o app guarda vive em chaves "treino:*" do localStorage deste navegador. O backup
 // é um JSON com o valor bruto de cada chave, para restaurar em outro aparelho ou após limpar
 // os dados do site.
 
-const CHAVES_BACKUP = [KEY_LOG, KEY_INICIO, KEY_SESSOES, KEY_ESCOLHAS, KEY_BIKE, KEY_CALIBRACAO, KEY_VERSAO, KEY_ARQUIVO_PPL];
+const CHAVES_BACKUP = [KEY_LOG, KEY_INICIO, KEY_SESSOES, KEY_ESCOLHAS, KEY_BIKE, KEY_CALIBRACAO, KEY_VERSAO, KEY_ARQUIVO_PPL, KEY_REMOVIDOS, KEY_CORPO, KEY_POSTURA];
 // Chaves que guardam texto puro (não JSON).
 const CHAVES_TEXTO = [KEY_INICIO, KEY_VERSAO];
 const BACKUP_FORMATO = "biofit-treino-backup";
@@ -385,6 +448,22 @@ export function exportarTudo(): BackupTreino {
     }
   }
   return { formato: BACKUP_FORMATO, versao: 1, exportadoEm: new Date().toISOString(), dados };
+}
+
+// Aplica o que o servidor devolveu no sync, mesclando com o que está aqui agora (uma série
+// gravada durante o envio não se perde). Não dispara o sync de novo. Retorna se algo mudou.
+export function aplicarDadosSincronizados(remoto: Record<string, string>): boolean {
+  if (typeof window === "undefined") return false;
+  const local = exportarTudo().dados;
+  const conhecidos = Object.fromEntries(Object.entries(remoto).filter(([k]) => CHAVES_BACKUP.includes(k)));
+  const mesclado = mesclar(conhecidos, local);
+  const alteradas = chavesAlteradas(local, mesclado).filter((k) => CHAVES_BACKUP.includes(k));
+  try {
+    for (const chave of alteradas) window.localStorage.setItem(chave, mesclado[chave]);
+  } catch {
+    return false;
+  }
+  return alteradas.length > 0;
 }
 
 // Valida o arquivo e SUBSTITUI os dados atuais (chaves ausentes no backup são apagadas).
@@ -417,7 +496,7 @@ export function importarTudo(texto: string): string | null {
   try {
     for (const chave of CHAVES_BACKUP) {
       const valor = dados[chave];
-      if (typeof valor === "string") window.localStorage.setItem(chave, valor);
+      if (typeof valor === "string") gravarLocal(chave, valor);
       else window.localStorage.removeItem(chave);
     }
   } catch {

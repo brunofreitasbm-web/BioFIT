@@ -3,8 +3,8 @@ import { getSessaoCompleta, SESSAO_LABEL } from "./exercicios";
 import { addDiasISO, proximaDaFila, RODADAS_TREINO, type StatusPrograma } from "./program";
 import type { SessaoTreino } from "./tipos";
 
-export function calcularStreak(hojeISO: string): number {
-  const dias = new Set(diasTreinadosUnicos());
+export function calcularStreak(hojeISO: string, diasTreinados: string[] = diasTreinadosUnicos()): number {
+  const dias = new Set(diasTreinados);
   if (dias.size === 0) return 0;
   let streak = 0;
   let cursor = hojeISO;

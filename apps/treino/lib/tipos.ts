@@ -28,6 +28,11 @@ export interface VariacaoExercicio {
   partida: string; // "45", "42,5", "calibrar", "peso corporal"
   notas: string;
   youtubeId: string | null;
+  // Grupos trabalhados indiretamente, com peso (0,5 = meia série por série feita). Entram no
+  // volume por grupo do relatório, não na frequência.
+  secundarios?: Partial<Record<GrupoMuscular, number>>;
+  // Pasta das fotos início/fim em `public/exercicios/` (free-exercise-db). null = sem foto.
+  imagem?: string | null;
 }
 
 // Prescrição de uma posição dentro da sessão — vale para as duas variações (meso 1 e 2).
@@ -66,6 +71,7 @@ export interface RegistroSessao {
   sessaoTipo: SessaoTreino | SessaoLegada;
   inicioISO: string;
   fimISO: string | null;
+  atualizadoEm?: string; // ISO — última mudança (iniciar/terminar/reabrir), desempata o sync
 }
 
 export interface RegistroBikeIndoor {
@@ -73,6 +79,62 @@ export interface RegistroBikeIndoor {
   tempoMinutos: number;
   concluido: boolean;
   registradoEm: string; // ISO timestamp
+}
+
+// Massa magra e gorda de um segmento do corpo (bioimpedância segmentada).
+export interface SegmentoCorpo {
+  massaMagraKg: number | null;
+  massaGordaKg: number | null;
+}
+
+export type NomeSegmento = "bracoDireito" | "bracoEsquerdo" | "tronco" | "pernaDireita" | "pernaEsquerda";
+
+// Uma medição de composição corporal (hoje, só a importada dos relatórios da Avanutri).
+// `chave` é única por medição ("avanutri:<id>") e é o que o sync usa para não duplicar.
+export interface RegistroCorpo {
+  chave: string;
+  fonte: "avanutri";
+  data: string; // YYYY-MM-DD, horário local de quem mediu
+  quando: string; // YYYY-MM-DDTHH:mm:ss, mesmo horário local (a hora do dia importa na leitura)
+  pesoKg: number;
+  gorduraPct: number | null;
+  massaGordaKg: number | null;
+  massaLivreKg: number | null; // sem gordura (ffm)
+  musculoEsqueleticoKg: number | null;
+  aguaTotalL: number | null;
+  aguaIntraL: number | null;
+  aguaExtraL: number | null;
+  gorduraVisceral: number | null;
+  imc: number | null;
+  proteinaKg: number | null;
+  mineraisKg: number | null;
+  tmbKcal: number | null;
+  idadeMetabolica: number | null;
+  segmentos: Record<NomeSegmento, SegmentoCorpo> | null;
+  registradoEm: string; // ISO — quando foi importada; desempata o sync
+}
+
+// ===== Postura (avaliação por foto) =====
+
+export interface Ponto2D {
+  x: number; // 0–1, fração da largura da foto
+  y: number; // 0–1, fração da altura da foto
+}
+
+export type VistaPostura = "perfil" | "frontal";
+
+// Uma captura de postura: os pontos marcados na foto (do detector e dos toques) e os ângulos
+// calculados. A foto não é guardada. `chave` é única por captura ("postura:<quando>:<vista>").
+export interface RegistroPostura {
+  chave: string;
+  vista: VistaPostura;
+  data: string; // YYYY-MM-DD local
+  quando: string; // YYYY-MM-DDTHH:mm:ss local
+  proporcao: number; // largura / altura da foto, para refazer as contas a partir dos pontos
+  pontos: Record<string, Ponto2D>;
+  medidas: Record<string, number>;
+  confiancaDeteccao: number | null; // visibilidade média dos pontos do detector (0–1); null = tudo manual
+  registradoEm: string; // ISO — desempata o sync
 }
 
 // Aba "Calibração RIR": na rodada 1, antes da última série de um exercício "Teste falha",

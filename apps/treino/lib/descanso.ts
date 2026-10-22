@@ -1,4 +1,5 @@
-import type { ExercicioEfetivo, GrupoMuscular, SessaoTreino } from "./tipos";
+import { estimar1RM } from "./rm";
+import type { ExercicioEfetivo, GrupoMuscular, SerieRegistrada, SessaoTreino } from "./tipos";
 import { getExercicio, gruposDaSessao } from "./exercicios";
 import { getLog } from "./storage";
 import type { StatusPrograma } from "./program";
@@ -19,9 +20,9 @@ function diasEntre(dataAnteriorISO: string, dataAtualISO: string): number {
   return Math.round((b - a) / 86400000);
 }
 
-export function statusDescansoPorSessao(tipo: SessaoTreino, hojeISO: string): StatusGrupo[] {
+export function statusDescansoPorSessao(tipo: SessaoTreino, hojeISO: string, todoLog: SerieRegistrada[] = getLog()): StatusGrupo[] {
   const grupos = gruposDaSessao(tipo);
-  const log = getLog().filter((s) => (s.cargaKg !== null || s.reps !== null) && s.data < hojeISO);
+  const log = todoLog.filter((s) => (s.cargaKg !== null || s.reps !== null) && s.data < hojeISO);
 
   return grupos.map((grupo) => {
     let ultimaData: string | null = null;
@@ -62,7 +63,7 @@ export function alvoDeEsforco(exercicio: ExercicioEfetivo, status: StatusProgram
 
 // e1RM (Epley), como na aba "Registro": compara exposições com reps diferentes.
 export function e1rm(cargaKg: number, reps: number): number {
-  return Math.round(cargaKg * (1 + reps / 30) * 10) / 10;
+  return Math.round(estimar1RM(cargaKg, reps) * 10) / 10;
 }
 
 // Converte o texto de descanso da planilha ("2-3 min", "90 s", "60-90 s") em segundos,
