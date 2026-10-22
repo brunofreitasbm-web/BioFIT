@@ -21,6 +21,7 @@ import { calcularStreak } from "@/lib/motivacao";
 import { recordesPessoais } from "@/lib/relatorio";
 import { seriesDoExercicioNaData, ultimaExecucao } from "@/lib/storage";
 import { GarminCard, type GarminBiometria } from "@/components/GarminCard";
+import { contextoBioimpedancia } from "@/lib/bioimpedancia";
 import type { ContextoTreinoIA } from "@/lib/ai/prompts";
 import type { ExercicioEfetivo } from "@/lib/tipos";
 
@@ -104,6 +105,7 @@ export default function HojePage() {
       hrvStatus: garminBiometria.hrvStatus ?? undefined,
     } : null,
     streakDias: calcularStreak(hojeISO),
+    bioimpedancia: coachAberto ? contextoBioimpedancia() : null,
   } : null;
 
   // Fluxo guiado: mantém só um exercício da sessão principal aberto por vez. Ao completar

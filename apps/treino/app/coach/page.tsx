@@ -29,11 +29,13 @@ import { getDataInicio, getSessaoEscolhida } from "@/lib/storage";
 import { getStatusPrograma, sessaoSugerida as calcularSessaoSugerida, toISODate } from "@/lib/program";
 import { SESSAO_NOME } from "@/lib/exercicios";
 import type { ContextoTreinoIA } from "@/lib/ai/prompts";
+import { contextoBioimpedancia } from "@/lib/bioimpedancia";
+import { BioimpedanciaCard } from "@/components/BioimpedanciaCard";
 
 const PROMPTS_SUGERIDOS = [
-  "Como organizar o descanso e sono para hipertrofia máxima?",
-  "Quando devo trocar os exercícios do Mesociclo 1 para o 2?",
-  "Como saber se atingi a falha técnica de verdade ou parei antes?",
+  "Analise minha última bioimpedância e me diga o que ajustar no treino.",
+  "Estou ganhando massa magra ou só peso? Considere meus treinos e recuperação.",
+  "Meu sono e Body Battery de hoje permitem treinar pesado?",
   "Qual a melhor estratégia para o Deload na Rodada 5?",
 ];
 
@@ -65,18 +67,40 @@ export default function CoachPage() {
     const sessaoEfetiva = sessaoEscolhida === "DESCANSO" ? null : (sessaoEscolhida ?? sessaoSug);
     const status = getStatusPrograma(dataInicio, hojeISO, sessaoEfetiva);
 
-    if (status) {
-      setContexto({
-        sessao: sessaoEfetiva,
-        sessaoNome: sessaoEfetiva ? SESSAO_NOME[sessaoEfetiva] : "Descanso",
-        statusPrograma: {
-          meso: status.meso,
-          rodada: status.rodada,
-          isDeload: status.isDeload,
-        },
-      });
-    }
+    const base: ContextoTreinoIA = status
+      ? {
+          sessao: sessaoEfetiva,
+          sessaoNome: sessaoEfetiva ? SESSAO_NOME[sessaoEfetiva] : "Descanso",
+          statusPrograma: {
+            meso: status.meso,
+            rodada: status.rodada,
+            isDeload: status.isDeload,
+          },
+        }
+      : {};
+    setContexto({ ...base, bioimpedancia: contextoBioimpedancia() });
+
+    fetch("/api/garmin/today")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.disponivel && d.biometria) {
+          setContexto((c) => ({
+            ...(c ?? {}),
+            biometriaGarmin: {
+              bodyBattery: d.biometria.bodyBattery ?? undefined,
+              sonoHoras: d.biometria.sonoHoras ?? undefined,
+              stress: d.biometria.stress ?? undefined,
+              hrvStatus: d.biometria.hrvStatus ?? undefined,
+            },
+          }));
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  function atualizarBioimpedancia() {
+    setContexto((c) => ({ ...(c ?? {}), bioimpedancia: contextoBioimpedancia() }));
+  }
 
   useEffect(() => {
     fimRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -161,7 +185,7 @@ export default function CoachPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: atualizadas.map((m) => ({ role: m.role, content: m.content })),
-          contexto,
+          context: contexto,
           apiKey: getLocalDeepSeekKey() || undefined,
         }),
       });
@@ -284,6 +308,7 @@ export default function CoachPage() {
             )}
           </div>
         )}
+        <BioimpedanciaCard onAtualizar={atualizarBioimpedancia} />
 
         {erro && (
           <div className="flex items-center gap-2 rounded-xl border border-danger/40 bg-danger-soft p-3 text-xs text-danger">
