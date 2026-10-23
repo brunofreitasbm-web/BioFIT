@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bike, Check, Circle, ChevronDown, ChevronUp } from "lucide-react";
+import { Bike, Check, Circle, ChevronDown } from "lucide-react";
+import { ICON, STROKE } from "@/lib/icones";
 import { cn } from "@/lib/cn";
 import { getBikeIndoor, saveBikeIndoor, removerBikeIndoor } from "@/lib/storage";
 
@@ -119,10 +120,10 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
             aria-hidden="true"
             className={cn(
               "flex h-9 w-9 items-center justify-center rounded-xl transition-all",
-              concluido ? "bg-accent text-accent-ink" : "bg-base-700 text-ink-muted"
+              concluido ? "bg-accent text-on-solid" : "bg-base-700 text-ink-muted"
             )}
           >
-            <Bike aria-hidden="true" size={19} strokeWidth={2} />
+            <Bike aria-hidden="true" size={ICON.md} />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -147,18 +148,18 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
         </div>
 
         <div className="flex items-center gap-1 text-ink-faint">
-          {expandido ? (
-            <ChevronUp aria-hidden="true" size={18} />
-          ) : (
-            <ChevronDown aria-hidden="true" size={18} />
-          )}
+          <ChevronDown
+            aria-hidden="true"
+            size={ICON.md}
+            className={cn("transition-transform duration-200", expandido && "rotate-180")}
+          />
         </div>
       </button>
 
       {expandido && (
-        <div id="bike-indoor-content" className="mt-3 pt-3 border-t border-line/50 transition-all">
+        <div id="bike-indoor-content" className="anim-revelar mt-3 border-t border-line/50 pt-3">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1.5 rounded-lg border border-line bg-base-900 px-3 py-1.5">
+            <div className="flex min-h-11 items-center gap-1.5 rounded-lg border border-line bg-base-900 px-3 focus-within:border-brand">
               <span className="text-xs text-ink-faint" id="bike-duracao-label">
                 Duração:
               </span>
@@ -173,7 +174,7 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
                 placeholder="30"
                 aria-labelledby="bike-duracao-label"
                 aria-describedby="bike-duracao-unidade"
-                className="w-12 bg-transparent text-sm font-semibold text-ink text-center outline-none focus:border-brand"
+                className="w-14 bg-transparent py-2 text-center text-lg font-bold tabular-nums text-ink outline-none"
               />
               <span className="text-xs font-medium text-ink-muted" id="bike-duracao-unidade">
                 min
@@ -188,7 +189,7 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
                   onClick={() => handlePresetClick(m)}
                   aria-pressed={tempo === m.toString()}
                   className={cn(
-                    "min-h-11 rounded-lg border px-2.5 text-xs font-medium transition-colors",
+                    "toque min-h-11 min-w-11 rounded-lg border px-3 text-sm font-medium",
                     tempo === m.toString()
                       ? "border-brand bg-brand-soft font-semibold text-brand"
                       : "border-line bg-base-900 text-ink-muted hover:border-brand/40"
@@ -211,18 +212,18 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
             disabled={!tempo || parseInt(tempo, 10) <= 0}
             onClick={handleCheckToggle}
             className={cn(
-              "mt-3 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all active:scale-[0.99]",
+              "toque mt-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-bold",
               !tempo || parseInt(tempo, 10) <= 0
                 ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-50"
                 : concluido
-                ? "bg-accent text-accent-ink shadow-sm hover:bg-accent/90"
-                : "border border-line bg-base-700 text-ink hover:border-brand/50"
+                ? "bg-accent text-on-solid shadow-sm hover:bg-accent/90"
+                : "bg-brand text-on-solid hover:bg-brand-hover shadow-sm"
             )}
           >
             {concluido ? (
-              <Check aria-hidden="true" size={16} strokeWidth={3} />
+              <Check aria-hidden="true" size={ICON.sm} strokeWidth={STROKE.forte} />
             ) : (
-              <Circle aria-hidden="true" size={15} strokeWidth={2.25} />
+              <Circle aria-hidden="true" size={ICON.sm} />
             )}
             <span>
               {concluido ? `Concluído (${tempo} min)` : "Marcar como Concluído"}

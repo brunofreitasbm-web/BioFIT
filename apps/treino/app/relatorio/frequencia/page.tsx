@@ -1,5 +1,7 @@
 "use client";
 
+import { BarChart3, Dumbbell } from "lucide-react";
+import { EstadoVazio } from "@/components/EstadoVazio";
 import { useEffect, useState } from "react";
 import {
   calcularFrequenciaPorGrupo,
@@ -11,6 +13,7 @@ import { corCalor } from "@/lib/cor";
 import { cn } from "@/lib/cn";
 import { SESSAO_NOME } from "@/lib/exercicios";
 import { RelatorioTabs } from "@/components/RelatorioTabs";
+import { HeatmapAnual } from "@/components/HeatmapAnual";
 
 const PERIODOS: { label: string; valor: number | "tudo" }[] = [
   { label: "7 dias", valor: 7 },
@@ -48,10 +51,16 @@ export default function FrequenciaPage() {
   return (
     <div className="p-4 space-y-6">
       <header className="mb-2 space-y-2">
-        <h1 className="font-display text-[2rem] font-bold uppercase leading-none tracking-tight text-ink">Frequência de Treinos</h1>
+        <h1 className="text-xl font-semibold text-ink">Frequência de Treinos</h1>
         <p className="text-sm text-ink-muted">Quais treinos e grupos musculares você tem feito com mais regularidade</p>
         <RelatorioTabs ativa="/relatorio/frequencia" />
       </header>
+
+      {/* Últimos 12 meses — independe do seletor de período abaixo */}
+      <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm space-y-3">
+        <h2 className="text-base font-semibold text-ink">Últimos 12 meses</h2>
+        <HeatmapAnual />
+      </section>
 
       {/* Seletor de Período */}
       <div className="flex gap-2">
@@ -63,7 +72,7 @@ export default function FrequenciaPage() {
             aria-pressed={periodo === p.valor}
             className={cn(
               "min-h-11 rounded-full border px-3.5 text-xs font-medium transition-colors",
-              periodo === p.valor ? "border-brand bg-brand text-brand-ink shadow-sm" : "border-line bg-base-800 text-ink-muted hover:text-ink",
+              periodo === p.valor ? "border-brand bg-brand text-on-solid shadow-sm" : "border-line bg-base-800 text-ink-muted hover:text-ink",
             )}
           >
             {p.label}
@@ -79,7 +88,7 @@ export default function FrequenciaPage() {
         </div>
 
         {totalSessoes === 0 ? (
-          <p className="py-4 text-center text-xs text-ink-muted">Nenhum treino concluído no período selecionado.</p>
+          <EstadoVazio Icone={Dumbbell} texto="Nenhum treino concluído no período selecionado." />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {porSessao.map((s) => (
@@ -108,10 +117,10 @@ export default function FrequenciaPage() {
         </div>
 
         {porGrupo.every((g) => g.diasTreinados === 0) ? (
-          <p className="py-4 text-center text-xs text-ink-muted">
-            Ainda não há séries registradas neste período. Marque suas séries na aba <strong className="text-ink">Hoje</strong> para a
-            frequência por grupo aparecer aqui.
-          </p>
+          <EstadoVazio
+            Icone={BarChart3}
+            texto="Ainda não há séries registradas neste período. Marque suas séries na aba Hoje para a frequência por grupo aparecer aqui."
+          />
         ) : (
           <div className="space-y-2.5">
             {porGrupo.map((g) => (
@@ -122,7 +131,7 @@ export default function FrequenciaPage() {
                     {g.diasTreinados} {g.diasTreinados === 1 ? "dia" : "dias"} · última em {formatarDataBR(g.ultimaData)}
                   </span>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-base-900">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-base-900 dark:bg-base-700">
                   <div
                     className="h-full rounded-full transition-[width]"
                     style={{

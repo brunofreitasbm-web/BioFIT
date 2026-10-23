@@ -187,7 +187,7 @@ export function BioimpedanciaCard({ onAtualizar }: { onAtualizar?: () => void })
           <button
             type="button"
             onClick={salvar}
-            className="mt-3 min-h-11 w-full rounded-lg bg-brand text-sm font-semibold text-brand-ink hover:bg-brand-hover"
+            className="mt-3 min-h-11 w-full rounded-lg bg-brand text-sm font-semibold text-on-solid hover:bg-brand-hover"
           >
             Salvar medição
           </button>
