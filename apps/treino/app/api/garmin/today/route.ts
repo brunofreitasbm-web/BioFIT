@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { lerGarmin } from "@/lib/servidor/garmin";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const filePath = path.join(process.cwd(), "public", "garmin-data.json");
-
-    if (!fs.existsSync(filePath)) {
+    const data = await lerGarmin();
+    if (!data) {
       return NextResponse.json({
         disponivel: false,
         mensagem: "Nenhum dado do Garmin sincronizado ainda. Execute a sincronização.",
@@ -16,11 +14,8 @@ export async function GET() {
       });
     }
 
-    const fileContent = fs.readFileSync(filePath, "utf-8");
-    const data = JSON.parse(fileContent);
-
-    const diario = data?.diario;
-    if (!Array.isArray(diario) || diario.length === 0) {
+    const diario = data.diario;
+    if (diario.length === 0) {
       return NextResponse.json({
         disponivel: false,
         biometria: null,
@@ -64,7 +59,7 @@ export async function GET() {
           estresse: num(d.estresse_medio),
           bodyBattery: num(d.body_battery_acordar ?? d.body_battery_max),
         })),
-      treinos: (Array.isArray(data?.treinos) ? data.treinos : [])
+      treinos: data.treinos
         .slice(0, 30)
         .map((t: Record<string, unknown>) => ({
           data: typeof t.biofit_sessao_data === "string" ? t.biofit_sessao_data : String(t.inicio_utc ?? "").slice(0, 10),

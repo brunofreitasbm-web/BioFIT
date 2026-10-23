@@ -13,7 +13,8 @@ Primeiro uso (pede e-mail, senha e código MFA no terminal; a senha NÃO fica
 salva, só os tokens em ~/.garminconnect):
     python biofit_garmin_sync.py --login
 
-Uso diário (usa os tokens salvos, sem senha):
+Uso diário (usa os tokens salvos, sem senha). O app na Vercel lê do Supabase, então o
+token é obrigatório (no Windows, uma vez: setx BIOFIT_GARMIN_INGEST_TOKEN "<token>"):
     export BIOFIT_GARMIN_INGEST_TOKEN="o mesmo valor cadastrado no Supabase"
     python biofit_garmin_sync.py              # últimos 3 dias
     python biofit_garmin_sync.py --dias 60    # histórico (backfill)
@@ -175,8 +176,9 @@ def main():
 
     token = os.environ.get("BIOFIT_GARMIN_INGEST_TOKEN", "")
     if not token:
-        print("Aviso: BIOFIT_GARMIN_INGEST_TOKEN não definido. Dados salvos localmente no app, envio ao Supabase ignorado.")
-        return
+        # Sem token o app publicado (Vercel) não recebe nada: falha alto, não em silêncio.
+        sys.exit("ERRO: BIOFIT_GARMIN_INGEST_TOKEN não definido; nada foi enviado ao Supabase (só a cópia local). "
+                 "Defina uma vez no Windows: setx BIOFIT_GARMIN_INGEST_TOKEN \"<token>\" e abra um novo terminal.")
     r = requests.post(
         INGEST_URL,
         headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
