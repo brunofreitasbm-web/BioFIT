@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Trophy } from "lucide-react";
+import { ArrowLeft, Dumbbell, Trophy } from "lucide-react";
+import { EstadoVazio } from "@/components/EstadoVazio";
+import { ICON } from "@/lib/icones";
 import { getExercicio } from "@/lib/exercicios";
 import { historicoExercicio, recordesPessoais, type PontoHistorico, type RecordesPessoais } from "@/lib/relatorio";
 import { GrupoBadge } from "@/components/GrupoBadge";
-import { CHART_COLORS } from "@/lib/colors";
 
 function formatarDataCurta(dataIso: string): string {
   const [, mes, dia] = dataIso.split("-");
@@ -61,27 +62,27 @@ function GraficoEvolucao({ hist, prs }: { hist: PontoHistorico[]; prs: Set<strin
       <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Gráfico de evolução do 1RM estimado e da carga máxima">
         {ticks.map((t) => (
           <g key={t}>
-            <line x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} stroke={CHART_COLORS.grid} strokeWidth={1} />
-            <text x={PAD.left - 4} y={y(t) + 3} textAnchor="end" fontSize={9} fill={CHART_COLORS.label}>
+            <line x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} className="stroke-line" strokeWidth={1} />
+            <text x={PAD.left - 4} y={y(t) + 3} textAnchor="end" fontSize={9} className="fill-ink-faint">
               {Math.round(t)}
             </text>
           </g>
         ))}
-        <text x={PAD.left} y={H - 6} fontSize={9} fill={CHART_COLORS.label}>
+        <text x={PAD.left} y={H - 6} fontSize={9} className="fill-ink-faint">
           {formatarDataCurta(hist[0].data)}
         </text>
         {hist.length > 1 && (
-          <text x={W - PAD.right} y={H - 6} textAnchor="end" fontSize={9} fill={CHART_COLORS.label}>
+          <text x={W - PAD.right} y={H - 6} textAnchor="end" fontSize={9} className="fill-ink-faint">
             {formatarDataCurta(hist[hist.length - 1].data)}
           </text>
         )}
-        <path d={caminho((p) => p.cargaMaxKg)} fill="none" stroke={CHART_COLORS.label} strokeWidth={1.5} strokeDasharray="4 3" />
-        <path d={caminho((p) => p.melhor1RM)} fill="none" stroke={CHART_COLORS.brand} strokeWidth={2} />
+        <path d={caminho((p) => p.cargaMaxKg)} fill="none" className="stroke-ink-faint" strokeWidth={1.5} strokeDasharray="4 3" />
+        <path d={caminho((p) => p.melhor1RM)} fill="none" className="stroke-brand" strokeWidth={2} />
         {hist.map((p, i) =>
           prs.has(p.data) ? (
-            <circle key={p.data} cx={x(i)} cy={y(p.melhor1RM)} r={4.5} fill={CHART_COLORS.accent} stroke={CHART_COLORS.surface} strokeWidth={1.5} />
+            <circle key={p.data} cx={x(i)} cy={y(p.melhor1RM)} r={4.5} className="fill-accent stroke-base-800" strokeWidth={1.5} />
           ) : (
-            <circle key={p.data} cx={x(i)} cy={y(p.melhor1RM)} r={3} fill={CHART_COLORS.brand} />
+            <circle key={p.data} cx={x(i)} cy={y(p.melhor1RM)} r={3} className="fill-brand" />
           ),
         )}
       </svg>
@@ -117,16 +118,16 @@ export default function ExercicioEvolucaoPage() {
   return (
     <div className="p-4 space-y-5">
       <Link href="/relatorio/exercicios" className="inline-flex min-h-11 items-center gap-1 text-xs font-medium text-ink-muted hover:text-ink">
-        <ArrowLeft aria-hidden="true" size={14} /> Exercícios
+        <ArrowLeft aria-hidden="true" size={ICON.sm} /> Exercícios
       </Link>
 
       <header className="space-y-1.5">
-        <h1 className="font-display text-2xl font-bold uppercase leading-tight tracking-tight text-ink">{exercicio?.nome ?? "Exercício não encontrado"}</h1>
+        <h1 className="text-xl font-semibold text-ink">{exercicio?.nome ?? "Exercício não encontrado"}</h1>
         {exercicio && <GrupoBadge grupo={exercicio.grupoMuscular} />}
       </header>
 
       {hist && hist.length === 0 && (
-        <p className="py-8 text-center text-xs text-ink-muted">Sem séries com carga e reps para este exercício.</p>
+        <EstadoVazio Icone={Dumbbell} texto="Sem séries com carga e reps para este exercício." />
       )}
 
       {hist && hist.length > 0 && recordes && (
@@ -170,7 +171,7 @@ export default function ExercicioEvolucaoPage() {
                     </td>
                     <td className="py-1.5 text-right">
                       <span className="inline-flex items-center gap-1">
-                        {prs.has(p.data) && <Trophy aria-label="Recorde" size={11} className="text-accent" />}
+                        {prs.has(p.data) && <Trophy aria-label="Recorde" size={ICON.xs} className="text-accent" />}
                         {formatarKg(p.melhor1RM)}
                       </span>
                     </td>

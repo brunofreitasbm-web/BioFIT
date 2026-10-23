@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronUp, Film, Lightbulb, Timer, Check, Link2, TrendingUp, Trophy, Sparkles } from "lucide-react";
+import { useBackLayers } from "@/hooks/useBackHandler";
+import { ArrowRight, ChevronDown, Image as ImageIcon, Layers, Lightbulb, ListOrdered, Check, Link2, Sparkles, TrendingUp, Trophy, Zap } from "lucide-react";
+import { ICON, STROKE } from "@/lib/icones";
 import type { ExercicioEfetivo, SerieRegistrada } from "@/lib/tipos";
 import { GrupoBadge } from "./GrupoBadge";
-import { VideoModal } from "./VideoModal";
+import { ImagemExercicio } from "./ImagemExercicio";
 import { cn } from "@/lib/cn";
 import { alvoDeEsforco, e1rm, parseDescansoSegundos } from "@/lib/descanso";
 import { EXERCICIOS_ASSISTIDOS, GRUPOS_INFERIORES, partidaKg } from "@/lib/exercicios";
@@ -12,12 +14,7 @@ import { sugerirProximaCarga } from "@/lib/progressao";
 import { estimar1RM, recordesPessoais } from "@/lib/relatorio";
 import { seriesDaRodada, type StatusPrograma } from "@/lib/program";
 import { getPalpite, salvarPalpite, seriesDoExercicioNaData, ultimaExecucao, upsertSerie } from "@/lib/storage";
-
-function formatarDescanso(segundos: number): string {
-  const m = Math.floor(segundos / 60);
-  const s = segundos % 60;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
+import { iniciarDescanso } from "@/lib/timerDescanso";
 
 function melhorE1rm(series: SerieRegistrada[]): number | null {
   let melhor: number | null = null;
@@ -58,9 +55,13 @@ export function ExercicioCard({
   const [recorde1RMAnterior, setRecorde1RMAnterior] = useState<number | null>(null);
   // Incrementa a cada toque na sugestão para a linha de input repopular os campos.
   const [preenchimento, setPreenchimento] = useState<{ kg: string; reps: string; n: number } | null>(null);
-  const [videoAberto, setVideoAberto] = useState(false);
-  const [descansoRestante, setDescansoRestante] = useState<number | null>(null);
+  const [fotoAberta, setFotoAberta] = useState(false);
   const [dicasAbertas, setDicasAbertas] = useState(false);
+
+  // Botão/gesto voltar do celular fecha a foto aberta (ver hooks/useBackHandler).
+  useBackLayers([
+    { active: fotoAberta, back: () => setFotoAberta(false) },
+  ]);
   const [seriesIndividuais, setSeriesIndividuais] = useState(false);
   const [erroSalvar, setErroSalvar] = useState(false);
   const [palpite, setPalpite] = useState("");
@@ -73,7 +74,6 @@ export function ExercicioCard({
     setRecorde1RMAnterior(recordesPessoais(exercicio.id, data).melhor1RM?.kg ?? null);
     setPreenchimento(null);
     setPalpite(getPalpite(exercicio.id, data)?.toString() ?? "");
-    setDescansoRestante(null);
     setDicasAbertas(false);
     setSeriesIndividuais(false);
   }, [exercicio.id, data]);
@@ -111,12 +111,6 @@ export function ExercicioCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exercicio.id, feitas, totalSeries]);
 
-  useEffect(() => {
-    if (descansoRestante === null || descansoRestante <= 0) return;
-    const id = setTimeout(() => setDescansoRestante((v) => (v === null ? null : v - 1)), 1000);
-    return () => clearTimeout(id);
-  }, [descansoRestante]);
-
   function registrar(serieNumero: number, kgStr: string, repsStr: string, registradoEm: string): boolean {
     const anterior = series.find((s) => s.serieNumero === serieNumero);
     return upsertSerie({
@@ -134,9 +128,12 @@ export function ExercicioCard({
   function aposSalvar(salvou: boolean) {
     setErroSalvar(!salvou);
     setSeries(seriesDoExercicioNaData(exercicio.id, data));
-    if (salvou) {
+    // Biset: o 1º exercício do par emenda direto no 2º, sem descanso entre eles; o timer
+    // só corre depois do 2º.
+    const emendaNoBiset = exercicio.bisetCom !== undefined && exercicio.ordem < exercicio.bisetCom;
+    if (salvou && !emendaNoBiset) {
       const segundos = parseDescansoSegundos(exercicio.descanso);
-      if (segundos) setDescansoRestante(segundos);
+      if (segundos) iniciarDescanso(segundos, `${exercicio.sessao}${exercicio.ordem} · ${exercicio.nome}`);
     }
   }
 
@@ -190,8 +187,8 @@ export function ExercicioCard({
   return (
     <div
       className={cn(
-        "rounded-2xl border bg-base-800 shadow-panel transition-colors duration-200",
-        expandido ? "border-brand/50" : completo ? "border-accent/30" : "border-line",
+        "rounded-xl border bg-base-800 shadow-panel transition-colors duration-200",
+        completo ? "border-accent/40 bg-accent-soft/40" : "border-line",
       )}
     >
       <div className="flex w-full items-center gap-2 p-3 text-left">
@@ -199,74 +196,67 @@ export function ExercicioCard({
           type="button"
           onClick={onToggleExpandido}
           aria-expanded={expandido}
-          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+          className="flex min-h-12 min-w-0 flex-1 items-center gap-2 text-left"
         >
-          <span
-            aria-hidden="true"
-            className={cn(
-              "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl font-display text-lg font-bold tabular-nums transition-colors",
-              completo
-                ? "bg-accent text-accent-ink"
-                : expandido
-                  ? "bg-brand text-brand-ink"
-                  : "bg-base-700 text-ink-muted",
-            )}
-          >
-            {completo ? <Check size={20} strokeWidth={3} /> : `${exercicio.sessao}${exercicio.ordem}`}
-          </span>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className={cn("font-semibold leading-snug [overflow-wrap:anywhere]", completo ? "text-ink-muted" : "text-ink")}>
-                {exercicio.nome}
+              <span className="rounded-md bg-base-600 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-ink-muted">
+                {exercicio.sessao}
+                {exercicio.ordem}
               </span>
-              {completo && <span className="sr-only">(concluído)</span>}
+              <span className="line-clamp-2 min-w-0 text-[15px] font-semibold leading-tight tracking-tight text-ink">{exercicio.nome}</span>
+              {completo && (
+                <span className="anim-confirmar flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-on-solid">
+                  <Check aria-hidden="true" size={ICON.xs} strokeWidth={STROKE.forte} />
+                </span>
+              )}
               {bateuPR && (
-                <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent">
-                  <Trophy aria-hidden="true" size={11} strokeWidth={2.5} /> PR
+                <span className="anim-pr inline-flex shrink-0 items-center gap-0.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold text-accent">
+                  <Trophy aria-hidden="true" size={ICON.xs} strokeWidth={STROKE.forte} /> PR
                 </span>
               )}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <GrupoBadge grupo={exercicio.grupoMuscular} />
-              <span className="text-xs tabular-nums text-ink-muted">
-                <strong className="font-semibold text-ink">{totalSeries}×{exercicio.reps}</strong> · {exercicio.descanso}
+              <span className="text-[11px] text-ink-muted">
+                {totalSeries}×{exercicio.reps} · desc. {exercicio.descanso}
               </span>
               {exercicio.bisetCom && (
                 <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-brand">
-                  <Link2 aria-hidden="true" size={12} strokeWidth={2.25} /> biset
+                  <Link2 aria-hidden="true" size={ICON.xs} /> biset
                 </span>
               )}
               {alvo.testeFalha && (
-                <span className="rounded-md bg-danger-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-danger">
-                  teste de falha
+                <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-danger">
+                  <Zap aria-hidden="true" size={ICON.xs} /> teste de falha
                 </span>
               )}
             </div>
           </div>
-          {expandido ? (
-            <ChevronUp aria-hidden="true" size={18} className="shrink-0 text-ink-faint" />
-          ) : (
-            <ChevronDown aria-hidden="true" size={18} className="shrink-0 text-ink-faint" />
-          )}
+          <ChevronDown
+            aria-hidden="true"
+            size={ICON.md}
+            className={cn("shrink-0 text-ink-faint transition-transform duration-200", expandido && "rotate-180")}
+          />
         </button>
 
-        {exercicio.youtubeId && (
+        {expandido && exercicio.imagem && (
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              setVideoAberto(true);
+              setFotoAberta(true);
             }}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-line bg-base-700 text-ink-muted"
-            aria-label={`Ver vídeo de ${exercicio.nome}`}
+            className="toque flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-line bg-base-700 text-ink-muted hover:border-brand/40 hover:text-brand"
+            aria-label={`Ver foto de ${exercicio.nome}`}
           >
-            <Film aria-hidden="true" size={18} strokeWidth={1.75} />
+            <ImageIcon aria-hidden="true" size={ICON.md} />
           </button>
         )}
       </div>
 
       {expandido && (
-        <div className="border-t border-line px-3 pb-3 pt-2.5">
+        <div className="anim-revelar border-t border-line p-3 pt-3">
           {erroSalvar && (
             <p role="alert" className="mb-2 text-[11px] font-medium text-danger">
               Não foi possível salvar no dispositivo. Tente novamente.
@@ -283,8 +273,12 @@ export function ExercicioCard({
                 className="flex min-h-11 items-center gap-1 text-[11px] text-ink-faint"
                 aria-expanded={dicasAbertas}
               >
-                {dicasAbertas ? <ChevronUp aria-hidden="true" size={14} /> : <ChevronDown aria-hidden="true" size={14} />}
-                <Lightbulb aria-hidden="true" size={13} strokeWidth={2} /> Notas
+                <ChevronDown
+                  aria-hidden="true"
+                  size={ICON.sm}
+                  className={cn("transition-transform duration-200", dicasAbertas && "rotate-180")}
+                />
+                <Lightbulb aria-hidden="true" size={ICON.sm} /> Notas
               </button>
               {dicasAbertas && <p className="mt-1.5 text-sm text-ink-muted">{exercicio.notas}</p>}
             </div>
@@ -299,28 +293,29 @@ export function ExercicioCard({
               className="mb-2 flex min-h-11 w-full items-center gap-2 rounded-lg border border-brand/30 bg-brand-soft px-3 py-2 text-left"
               aria-label={`Usar sugestão: ${sugestao.cargaKg} kg por ${sugestao.repsAlvo} repetições`}
             >
-              <TrendingUp aria-hidden="true" size={16} strokeWidth={2} className="shrink-0 text-brand" />
+              <TrendingUp aria-hidden="true" size={ICON.sm} className="shrink-0 text-brand" />
               <span className="min-w-0 flex-1">
-                <span className="block font-display text-base font-bold uppercase tracking-wide text-brand">
-                  Hoje {String(sugestao.cargaKg).replace(".", ",")} kg × {sugestao.repsAlvo}
+                <span className="block text-xs font-semibold text-brand">
+                  Hoje: {String(sugestao.cargaKg).replace(".", ",")} kg × {sugestao.repsAlvo}
                 </span>
                 <span className="block text-[11px] text-ink-muted">{sugestao.motivo}</span>
               </span>
-              <span className="shrink-0 text-[11px] font-medium text-brand underline">usar</span>
+              <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-brand">
+                usar <ArrowRight aria-hidden="true" size={ICON.xs} />
+              </span>
             </button>
           )}
-
           {onConsultarCoach && (
             <button
               type="button"
               onClick={() => onConsultarCoach(exercicio)}
-              className="mb-2.5 flex items-center justify-between w-full rounded-lg border border-brand/25 bg-brand-soft/60 px-3 py-2 text-xs text-brand hover:border-brand/50 hover:bg-brand-soft transition-all active:scale-[0.99]"
+              className="mb-2 flex min-h-11 w-full items-center justify-between gap-2 rounded-lg border border-brand/25 bg-brand-soft px-3 py-2 text-left"
             >
-              <span className="flex items-center gap-2 font-semibold">
-                <Sparkles size={14} className="text-brand shrink-0" />
-                BioFIT Coach (DeepSeek)
+              <span className="flex items-center gap-2 text-xs font-semibold text-brand">
+                <Sparkles aria-hidden="true" size={ICON.sm} className="shrink-0" />
+                BioFIT Coach
               </span>
-              <span className="text-[11px] text-ink-muted">Ajuste de carga ou máquina ocupada →</span>
+              <span className="text-[11px] text-ink-muted">Ajuste de carga ou máquina ocupada</span>
             </button>
           )}
 
@@ -350,39 +345,29 @@ export function ExercicioCard({
             </div>
           )}
 
-          {descansoRestante !== null && descansoRestante > 0 && (
-            <div className="mb-3 flex items-center justify-between rounded-lg border border-brand/30 bg-brand-soft px-3 py-2">
-              <span className="flex items-center gap-1.5 text-xs font-medium text-brand">
-                <Timer aria-hidden="true" size={15} strokeWidth={2} /> Descanso: {formatarDescanso(descansoRestante)}
-              </span>
-              <button
-                type="button"
-                onClick={() => setDescansoRestante(null)}
-                className="min-h-11 px-2 text-[11px] font-medium text-brand underline"
-              >
-                pular
-              </button>
-            </div>
-          )}
-
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs tabular-nums text-ink-faint">
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-[11px] text-ink-faint">
               {feitas}/{totalSeries} séries{e1rmHoje ? ` · e1RM hoje ${e1rmHoje}` : ""}
             </span>
             <button
               type="button"
               onClick={() => setSeriesIndividuais((v) => !v)}
-              className="min-h-9 text-xs font-medium text-ink-muted underline decoration-line underline-offset-4 hover:text-ink"
+              className="toque flex min-h-11 items-center gap-1 text-[11px] font-medium text-ink-muted hover:text-ink"
             >
+              {seriesIndividuais ? (
+                <Layers aria-hidden="true" size={ICON.xs} />
+              ) : (
+                <ListOrdered aria-hidden="true" size={ICON.xs} />
+              )}
               {seriesIndividuais ? "Usar 1 campo para todas" : "Ajustar série por série"}
             </button>
           </div>
 
           {seriesIndividuais ? (
-            <div className="grid grid-cols-[auto_1fr_1fr_auto] items-center gap-x-2 gap-y-2 text-xs">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">Série</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">Carga (kg)</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">{unidadeReps}</span>
+            <div className="grid grid-cols-[1.25rem_1fr_1fr_auto] items-center gap-x-2.5 gap-y-2 text-xs">
+              <span className="text-ink-faint">Série</span>
+              <span className="text-ink-faint">Carga (kg)</span>
+              <span className="text-ink-faint">{unidadeReps}</span>
               <span />
               {Array.from({ length: totalSeries }, (_, i) => i + 1).map((n) => {
                 const s = series.find((x) => x.serieNumero === n);
@@ -401,9 +386,9 @@ export function ExercicioCard({
               })}
             </div>
           ) : (
-            <div className="grid grid-cols-[1fr_1fr_auto] items-center gap-x-2 gap-y-1 text-xs">
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">Carga (kg)</span>
-              <span className="text-[10px] font-semibold uppercase tracking-wide text-ink-faint">{unidadeReps} · todas</span>
+            <div className="grid grid-cols-[1fr_1fr_auto] items-center gap-x-2.5 text-xs">
+              <span className="mb-1 text-[11px] font-medium text-ink-muted">Carga (kg)</span>
+              <span className="mb-1 text-[11px] font-medium text-ink-muted">{unidadeReps}</span>
               <span />
               <LinhaReplicada
                 totalSeries={totalSeries}
@@ -439,8 +424,8 @@ export function ExercicioCard({
         </div>
       )}
 
-      {videoAberto && exercicio.youtubeId && (
-        <VideoModal youtubeId={exercicio.youtubeId} titulo={exercicio.nome} onClose={() => setVideoAberto(false)} />
+      {fotoAberta && exercicio.imagem && (
+        <ImagemExercicio pasta={exercicio.imagem} titulo={exercicio.nome} onClose={() => setFotoAberta(false)} />
       )}
     </div>
   );
@@ -502,7 +487,7 @@ function LinhaReplicada({
         aria-label="Carga em quilos, todas as séries"
         value={kg}
         onChange={(e) => setKg(e.target.value)}
-        className="h-12 w-full rounded-xl border border-line bg-base-700 px-3 text-center font-display text-xl font-bold tabular-nums text-ink placeholder:text-ink-faint placeholder:font-sans placeholder:text-sm placeholder:font-normal focus:border-brand focus:outline-none"
+        className="campo-serie"
       />
       <input
         type="number"
@@ -514,23 +499,23 @@ function LinhaReplicada({
         aria-label="Repetições, todas as séries"
         value={reps}
         onChange={(e) => setReps(e.target.value)}
-        className="h-12 w-full rounded-xl border border-line bg-base-700 px-3 text-center font-display text-xl font-bold tabular-nums text-ink placeholder:text-ink-faint placeholder:font-sans placeholder:text-sm placeholder:font-normal focus:border-brand focus:outline-none"
+        className="campo-serie"
       />
       <button
         type="button"
         disabled={isDisabled}
         onClick={() => !isDisabled && onConfirmarTodas(kg, reps)}
         className={cn(
-          "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border text-base font-semibold transition-all duration-150",
+          "toque flex h-12 w-12 shrink-0 items-center justify-center rounded-full border text-base font-semibold",
           isDisabled
             ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-40"
             : todasFeitas
-            ? "border-accent bg-accent-soft text-accent"
-            : "border-brand bg-brand text-brand-ink shadow-glow hover:bg-brand-hover active:scale-95",
+            ? "anim-confirmar border-accent bg-accent text-on-solid"
+            : "border-brand bg-brand text-on-solid shadow-sm hover:bg-brand-hover",
         )}
         aria-label={`Confirmar as ${totalSeries} séries`}
       >
-        <Check aria-hidden="true" size={18} strokeWidth={3} />
+        <Check aria-hidden="true" size={ICON.md} strokeWidth={STROKE.forte} />
       </button>
     </>
   );
@@ -568,7 +553,7 @@ function FragmentoLinha({
 
   return (
     <>
-      <span className="w-6 text-center font-display text-base font-bold text-ink-faint">{n}</span>
+      <span className="text-center text-sm font-semibold tabular-nums text-ink-muted">{n}</span>
       <input
         type="number"
         inputMode="decimal"
@@ -579,7 +564,7 @@ function FragmentoLinha({
         aria-label={`Carga em quilos, série ${n}`}
         value={kg}
         onChange={(e) => setKg(e.target.value)}
-        className="h-12 w-full rounded-xl border border-line bg-base-700 px-3 text-center font-display text-xl font-bold tabular-nums text-ink placeholder:text-ink-faint placeholder:font-sans placeholder:text-sm placeholder:font-normal focus:border-brand focus:outline-none"
+        className="campo-serie"
       />
       <input
         type="number"
@@ -591,23 +576,23 @@ function FragmentoLinha({
         aria-label={`Repetições, série ${n}`}
         value={reps}
         onChange={(e) => setReps(e.target.value)}
-        className="h-12 w-full rounded-xl border border-line bg-base-700 px-3 text-center font-display text-xl font-bold tabular-nums text-ink placeholder:text-ink-faint placeholder:font-sans placeholder:text-sm placeholder:font-normal focus:border-brand focus:outline-none"
+        className="campo-serie"
       />
       <button
         type="button"
         disabled={isDisabled}
         onClick={() => !isDisabled && onConfirmar(kg, reps)}
         className={cn(
-          "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border text-base font-semibold transition-all duration-150",
+          "toque flex h-12 w-12 shrink-0 items-center justify-center rounded-full border text-base font-semibold",
           isDisabled
             ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-40"
             : feita
-            ? "border-accent bg-accent-soft text-accent"
-            : "border-brand bg-brand text-brand-ink shadow-glow hover:bg-brand-hover active:scale-95",
+            ? "anim-confirmar border-accent bg-accent text-on-solid"
+            : "border-brand bg-brand text-on-solid shadow-sm hover:bg-brand-hover",
         )}
         aria-label={`Confirmar série ${n}`}
       >
-        <Check aria-hidden="true" size={18} strokeWidth={3} />
+        <Check aria-hidden="true" size={ICON.md} strokeWidth={STROKE.forte} />
       </button>
     </>
   );

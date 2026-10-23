@@ -3,7 +3,7 @@
 export function corCalor(intensidade: number): string {
   const t = Math.max(0, Math.min(1, intensidade));
   const stops: [number, [number, number, number]][] = [
-    [0, [58, 78, 130]], // azul frio (visível sobre o fundo escuro)
+    [0, [42, 58, 107]], // brand.soft (frio)
     [0.35, [79, 155, 255]], // azul
     [0.6, [255, 207, 92]], // amarelo
     [0.8, [255, 138, 92]], // laranja

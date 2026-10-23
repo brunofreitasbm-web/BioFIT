@@ -47,11 +47,7 @@ function gravarLocal(chave: string, valor: string): void {
 
 export function getDataInicio(): string | null {
   if (typeof window === "undefined") return null;
-  try {
-    return window.localStorage.getItem(KEY_INICIO);
-  } catch {
-    return null; // storage bloqueado (aba privada, iframe de terceiros)
-  }
+  return window.localStorage.getItem(KEY_INICIO);
 }
 
 export function setDataInicio(iso: string): boolean {

@@ -230,7 +230,7 @@ export default function CoachPage() {
       <header className="sticky top-0 z-10 border-b border-line bg-base-950/80 backdrop-blur-md px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand text-brand-ink">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand text-on-solid">
               <Sparkles size={18} />
             </div>
             <div>
@@ -288,7 +288,7 @@ export default function CoachPage() {
               <button
                 type="button"
                 onClick={salvarChave}
-                className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-brand-ink hover:bg-brand-hover"
+                className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-on-solid hover:bg-brand-hover"
               >
                 Salvar
               </button>
@@ -352,7 +352,7 @@ export default function CoachPage() {
                 className={cn(
                   "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed shadow-sm",
                   msg.role === "user"
-                    ? "bg-brand text-brand-ink font-medium"
+                    ? "bg-brand text-on-solid font-medium"
                     : "border border-line bg-base-800 text-ink",
                 )}
               >
@@ -383,7 +383,7 @@ export default function CoachPage() {
             className={cn(
               "flex h-11 w-11 items-center justify-center rounded-xl border border-line transition-all shrink-0",
               gravando
-                ? "bg-danger text-danger-ink border-danger animate-pulse"
+                ? "bg-danger text-on-solid border-danger animate-pulse"
                 : "bg-base-800 text-ink-muted hover:text-ink",
             )}
             title="Ditar por voz"
@@ -403,7 +403,7 @@ export default function CoachPage() {
           <button
             type="submit"
             disabled={carregando || !inputTexto.trim()}
-            className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand text-brand-ink transition-all hover:bg-brand-hover active:scale-95 disabled:opacity-40 shrink-0"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand text-on-solid transition-all hover:bg-brand-hover active:scale-95 disabled:opacity-40 shrink-0"
           >
             {carregando ? <RefreshCw size={18} className="animate-spin" /> : <Send size={18} />}
           </button>

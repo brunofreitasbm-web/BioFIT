@@ -236,13 +236,13 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-base-950/80 p-0 sm:p-4 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-base-950/80 p-0 sm:p-4 backdrop-blur-sm anim-revelar"
     >
       <div className="flex h-[92dvh] sm:h-[85vh] w-full max-w-lg flex-col rounded-t-2xl sm:rounded-2xl border border-line bg-base-900 shadow-2xl overflow-hidden">
         {/* Cabeçalho */}
         <header className="flex items-center justify-between border-b border-line bg-base-800 px-4 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand to-brand-hover text-brand-ink shadow-sm">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand to-brand-hover text-on-solid shadow-sm">
               <Sparkles size={20} className="animate-pulse" />
             </div>
             <div>
@@ -305,7 +305,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
 
         {/* Painel expansível de configuração da chave */}
         {mostrarConfigChave && (
-          <div className="border-b border-line bg-base-800/90 p-4 animate-slide-down">
+          <div className="border-b border-line bg-base-800/90 p-4 anim-revelar">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-ink">
                 Chave da API DeepSeek
@@ -323,7 +323,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
               <button
                 type="button"
                 onClick={handleSalvarChave}
-                className="flex items-center gap-1 rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-brand-ink transition-transform active:scale-95 hover:bg-brand-hover"
+                className="flex items-center gap-1 rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-on-solid transition-transform active:scale-95 hover:bg-brand-hover"
               >
                 {chaveSalvaComSucesso ? <Check size={14} /> : "Salvar"}
               </button>
@@ -395,8 +395,8 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
                   className={cn(
                     "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm",
                     msg.role === "user"
-                      ? "rounded-br-xs bg-brand text-brand-ink font-medium"
-                      : "rounded-bl-xs border border-line bg-base-800 text-ink",
+                      ? "rounded-br-sm bg-brand text-on-solid font-medium"
+                      : "rounded-bl-sm border border-line bg-base-800 text-ink",
                   )}
                 >
                   {msg.content ? (
@@ -449,7 +449,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
               className={cn(
                 "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line transition-all",
                 gravandoAudio
-                  ? "bg-danger text-danger-ink border-danger animate-pulse"
+                  ? "bg-danger text-on-solid border-danger animate-pulse"
                   : "bg-base-700 text-ink-muted hover:text-ink hover:border-brand/50",
               )}
             >
@@ -468,7 +468,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
             <button
               type="submit"
               disabled={carregando || !inputTexto.trim()}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand text-brand-ink transition-all hover:bg-brand-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand text-on-solid transition-all hover:bg-brand-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {carregando ? <RefreshCw size={18} className="animate-spin" /> : <Send size={18} />}
             </button>

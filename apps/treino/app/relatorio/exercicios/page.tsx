@@ -29,7 +29,7 @@ export default function ExerciciosPage() {
   return (
     <div className="p-4 space-y-6">
       <header className="mb-2 space-y-2">
-        <h1 className="font-display text-[2rem] font-bold uppercase leading-none tracking-tight text-ink">Evolução por Exercício</h1>
+        <h1 className="text-xl font-semibold text-ink">Evolução por Exercício</h1>
         <p className="text-sm text-ink-muted">1RM estimado (Epley) e recordes de cada exercício que você já registrou</p>
         <RelatorioTabs ativa="/relatorio/exercicios" />
       </header>

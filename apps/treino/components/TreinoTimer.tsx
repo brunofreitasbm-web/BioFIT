@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Play, Square, CheckCircle2 } from "lucide-react";
+import { Play, RotateCcw, Square, CheckCircle2 } from "lucide-react";
+import { ICON } from "@/lib/icones";
 import { getSessaoAtiva, iniciarSessao, reabrirSessao, terminarSessao } from "@/lib/storage";
 import { SESSAO_NOME } from "@/lib/exercicios";
 import type { RegistroSessao, SessaoTreino } from "@/lib/tipos";
+import { liberarTela, manterTelaLigada } from "@/lib/wakelock";
+import { pararDescanso } from "@/lib/timerDescanso";
 
 function formatarDuracao(ms: number): string {
   const totalSegundos = Math.max(0, Math.floor(ms / 1000));
@@ -28,7 +31,12 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
   useEffect(() => {
     if (!registro || registro.fimISO) return;
     const id = setInterval(() => setAgora(Date.now()), 1000);
-    return () => clearInterval(id);
+    // Treino em andamento = tela ligada (o celular não apaga entre as séries).
+    manterTelaLigada();
+    return () => {
+      clearInterval(id);
+      liberarTela();
+    };
   }, [registro]);
 
   function iniciar() {
@@ -40,6 +48,7 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
   function terminar() {
     if (!window.confirm(`Terminar o treino ${nome} agora? Dá pra reabrir depois se precisar.`)) return;
     terminarSessao(hojeISO, sessaoTipo);
+    pararDescanso();
     setRegistro(getSessaoAtiva(hojeISO, sessaoTipo));
   }
 
@@ -54,9 +63,9 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
       <button
         type="button"
         onClick={iniciar}
-        className="mb-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-brand py-3.5 text-center font-display text-xl font-bold uppercase tracking-wide text-brand-ink shadow-glow transition-colors duration-150 hover:bg-brand-hover active:scale-[0.99]"
+        className="toque mb-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-brand text-center text-base font-bold text-on-solid shadow-panel hover:bg-brand-hover"
       >
-        <Play aria-hidden="true" size={17} strokeWidth={2.25} fill="currentColor" />
+        <Play aria-hidden="true" size={ICON.md} fill="currentColor" />
         Iniciar treino {nome}
       </button>
     );
@@ -71,14 +80,14 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
             <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-danger" aria-hidden="true" />
             Treino {nome} em andamento
           </span>
-          <span className="tabular-nums text-sm font-semibold text-ink">{formatarDuracao(decorrido)}</span>
+          <span className="font-display text-2xl font-bold tabular-nums text-ink">{formatarDuracao(decorrido)}</span>
         </div>
         <button
           type="button"
           onClick={terminar}
-          className="flex shrink-0 items-center gap-1.5 rounded-xl bg-danger px-4 py-3 text-sm font-semibold text-danger-ink transition-colors hover:opacity-90"
+          className="toque flex min-h-14 shrink-0 items-center gap-1.5 rounded-xl bg-danger px-4 text-sm font-semibold text-on-solid hover:opacity-90"
         >
-          <Square aria-hidden="true" size={15} strokeWidth={2.25} fill="currentColor" />
+          <Square aria-hidden="true" size={ICON.sm} fill="currentColor" />
           Terminar
         </button>
       </div>
@@ -89,11 +98,15 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
   return (
     <div className="mb-4 flex items-center justify-between rounded-xl border border-accent/30 bg-accent-soft px-4 py-3">
       <span className="flex items-center gap-1.5 text-sm font-medium text-accent">
-        <CheckCircle2 aria-hidden="true" size={17} strokeWidth={2} />
+        <CheckCircle2 aria-hidden="true" size={ICON.md} />
         Treino {nome} concluído · {formatarDuracao(duracaoFinal)}
       </span>
-      <button type="button" onClick={reabrir} className="min-h-11 px-2 text-xs font-medium text-ink-muted underline">
-        reabrir
+      <button
+        type="button"
+        onClick={reabrir}
+        className="toque flex min-h-11 items-center gap-1 px-2 text-xs font-medium text-ink-muted hover:text-ink"
+      >
+        <RotateCcw aria-hidden="true" size={ICON.xs} /> reabrir
       </button>
     </div>
   );

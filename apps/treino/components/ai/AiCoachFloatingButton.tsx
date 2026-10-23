@@ -13,7 +13,7 @@ export function AiCoachFloatingButton({ onClick, notificacao }: AiCoachFloatingB
       type="button"
       onClick={onClick}
       aria-label="Abrir BioFIT AI Coach"
-      className="fixed bottom-20 right-4 z-30 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-brand to-brand-hover text-brand-ink shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 border border-brand-hover/40"
+      className="fixed bottom-20 right-4 z-30 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-brand to-brand-hover text-on-solid shadow-lg shadow-brand/20 transition-all hover:scale-105 active:scale-95 border border-brand-hover/40"
     >
       <Sparkles size={22} className="animate-pulse" />
       {notificacao && (
