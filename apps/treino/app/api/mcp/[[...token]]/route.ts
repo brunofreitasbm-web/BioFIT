@@ -101,7 +101,8 @@ async function tratar(msg: RpcRequest): Promise<unknown | null> {
 }
 
 export async function POST(req: Request, { params }: { params: { token?: string[] } }) {
-  const candidato = tokenDoHeader(req) ?? params.token?.[0] ?? null;
+  const tokenUrl = params.token?.filter(Boolean).join("/") || null;
+  const candidato = tokenDoHeader(req) ?? tokenUrl;
   if (!tokenValido(candidato, process.env.MCP_TOKEN)) {
     return NextResponse.json({ erro: "Não autorizado." }, { status: 401 });
   }
@@ -128,5 +129,17 @@ export async function POST(req: Request, { params }: { params: { token?: string[
 
 // Sem canal SSE servidor→cliente: a especificação permite 405.
 export function GET() {
-  return new NextResponse(null, { status: 405, headers: { Allow: "POST" } });
+  return new NextResponse(null, { status: 405, headers: { Allow: "POST, OPTIONS" } });
+}
+
+export function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      Allow: "POST, GET, OPTIONS",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Authorization, Content-Type, Mcp-Session-Id",
+    },
+  });
 }
