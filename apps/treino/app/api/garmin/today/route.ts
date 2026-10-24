@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { lerGarmin } from "@/lib/servidor/garmin";
 
 export const runtime = "nodejs";
+// Sem isso o Next pré-renderiza a resposta no build e o cartão fica congelado até o próximo deploy.
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {

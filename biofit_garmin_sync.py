@@ -161,7 +161,7 @@ def main():
             print("  -", f)
 
     # Salva cópia local para consumo imediato pelo app e pelo Coach IA
-    caminho_local = os.path.join(os.path.dirname(os.path.abspath(__file__)), "apps", "treino", "public", "garmin-data.json")
+    caminho_local = os.path.join(os.path.dirname(os.path.abspath(__file__)), "apps", "treino", ".local", "garmin-data.json")
     try:
         os.makedirs(os.path.dirname(caminho_local), exist_ok=True)
         with open(caminho_local, "w", encoding="utf-8") as f:
