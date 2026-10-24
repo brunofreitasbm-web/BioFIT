@@ -37,6 +37,21 @@ O usuário (você) precisa ter autorizado o app na Garmin; sem isso nada é entr
 
 Escrito a partir da documentação, sem payload real. Se um campo vier sempre nulo, o log `[garmin webhook]` mostra quais resumos chegaram (`ignorados` lista os não reconhecidos); ajuste `lib/servidor/garminHealth.ts`.
 
+## Plano do dia (`plano_do_dia`)
+
+Para **hoje**, o plano traz `prontidaoGarmin` (regras em `lib/prontidao.ts`, limiares no topo do arquivo):
+
+| Nível | Quando | Ajuste |
+| --- | --- | --- |
+| `sem_dados` | Sem sono/Body Battery de **hoje** (relógio não sincronizou) | Nenhum: treino como planejado |
+| `normal` | Sono ≥ 6 h, score ≥ 60, Body Battery ao acordar ≥ 50 | Nenhum |
+| `atencao` | Só um dos dois ruins (sono < 6 h ou score < 60; **ou** Body Battery < 50) | +1 RIR, não subir carga, sem teste de falha |
+| `baixa` | Sono **e** Body Battery ruins | Igual, e −1 série por exercício (mínimo 2) |
+
+Cada exercício ganha `ajusteHoje`. As cargas sugeridas pela dupla progressão e o histórico **não** são alterados, e o plano nunca manda pular o treino. Em semana de deload o nível aparece, mas sem ajuste. Duas noites seguidas com menos de 6 h pesam mais que uma.
+
+Só o MCP usa isso; a tela de treino do app ainda mostra o plano sem o ajuste.
+
 ## Legado
 
 `biofit_garmin_sync.py`, `sync-garmin.bat` e `configurar-agendador-garmin.ps1` (sync pelo PC via garminconnect, não oficial) continuam funcionando e gravam nas mesmas tabelas pela função `biofit-garmin-ingest`. Com o push funcionando, desligue a tarefa `BioFIT_Garmin_Sync` do Agendador do Windows.

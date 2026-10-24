@@ -92,6 +92,40 @@ describe("leitura", () => {
     expect(json.recuperacao.length).toBeGreaterThan(0);
   });
 
+  describe("plano_do_dia com Garmin", () => {
+    function comGarmin(diario: object[]) {
+      const base = globalThis.fetch;
+      vi.stubGlobal("fetch", vi.fn(async (url: string, init: { body: string }) =>
+        String(url).includes("biofit_garmin_get") ? new Response(JSON.stringify({ diario, treinos: [] })) : base(url, init as never)));
+    }
+
+    it("sono e Body Battery ruins hoje: ajusteHoje em cada exercício, cargas sugeridas intactas", async () => {
+      const sem = (await chamar("plano_do_dia")).json;
+      comGarmin([{ data: HOJE, sono_minutos: 270, sono_score: 48, body_battery_acordar: 28 }]);
+      const { json } = await chamar("plano_do_dia");
+      expect(json.prontidaoGarmin).toMatchObject({ nivel: "baixa" });
+      const ex = json.exercicios[0];
+      expect(ex.ajusteHoje).toMatchObject({ naoProgredirCarga: true, semTesteDeFalha: true });
+      expect(ex.ajusteHoje.series).toBe(Math.max(Math.min(2, ex.series), ex.series - 1));
+      expect(json.exercicios.map((e: { sugestao: unknown }) => e.sugestao)).toEqual(sem.exercicios.map((e: { sugestao: unknown }) => e.sugestao));
+    });
+
+    it("dado só de ontem ou Garmin fora do ar: plano normal, sem ajuste", async () => {
+      comGarmin([{ data: "2026-09-01", sono_minutos: 200, body_battery_acordar: 10 }]);
+      let r = (await chamar("plano_do_dia")).json;
+      expect(r.prontidaoGarmin.nivel).toBe("sem_dados");
+      expect(r.exercicios.every((e: { ajusteHoje?: unknown }) => e.ajusteHoje === undefined)).toBe(true);
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      r = (await chamar("plano_do_dia")).json; // fetch falso devolve 404 para biofit_garmin_get
+      expect(r.prontidaoGarmin.nivel).toBe("sem_dados");
+    });
+
+    it("data diferente de hoje não recebe prontidão", async () => {
+      comGarmin([{ data: HOJE, sono_minutos: 200, body_battery_acordar: 10 }]);
+      expect((await chamar("plano_do_dia", { data: "2026-10-01" })).json.prontidaoGarmin).toBeNull();
+    });
+  });
+
   it("plano_do_dia respeita sessão forçada e exercício sem histórico usa a partida", async () => {
     const { json } = await chamar("plano_do_dia", { sessao: "E" });
     expect(json.sessao).toBe("E");
