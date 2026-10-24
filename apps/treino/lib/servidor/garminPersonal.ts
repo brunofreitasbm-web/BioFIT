@@ -70,6 +70,28 @@ const eObj = (v: unknown): v is Obj => typeof v === "object" && v !== null && !A
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
 const inteiro = (v: unknown): number | null => (num(v) === null ? null : Math.round(v as number));
 
+// Primeiro valor numérico de uma chave em qualquer nível. O resumo diário da Personal API não tem
+// formato documentado; procurar pelo nome tolera aninhamento diferente do sync antigo.
+export function achar(o: unknown, ...nomes: string[]): number | null {
+  const visitar = (v: unknown, nivel: number): number | null => {
+    if (nivel > 6) return null;
+    if (Array.isArray(v)) {
+      for (const x of v) {
+        const r = visitar(x, nivel + 1);
+        if (r !== null) return r;
+      }
+    } else if (eObj(v)) {
+      for (const n of nomes) if (num(v[n]) !== null) return v[n] as number;
+      for (const x of Object.values(v)) {
+        const r = visitar(x, nivel + 1);
+        if (r !== null) return r;
+      }
+    }
+    return null;
+  };
+  return visitar(o, 0);
+}
+
 function g(o: unknown, ...caminho: string[]): unknown {
   let atual = o;
   for (const p of caminho) {
@@ -124,12 +146,11 @@ function bodyBattery(resp: unknown, dia: string): { max: number | null; acordar:
 }
 
 export function converterDia(dia: string, r: RespostasDia): LinhaDiario | null {
-  const resumo = doDia(r.resumo, dia);
   const bb = bodyBattery(r.bodyBattery, dia);
 
   const segSono = num(g(r.sono, "dailySleepDTO", "sleepTimeSeconds") ?? g(r.sono, "sleepTimeSeconds"));
   const statusBruto = g(r.hrv, "hrvSummary", "status") ?? g(r.hrv, "status");
-  const estresse = num(g(resumo, "averageStressLevel"));
+  const estresse = achar(r.resumo, "averageStressLevel", "avgStressLevel", "overallStressLevel");
 
   const linha: LinhaDiario = {
     data: dia,
@@ -137,13 +158,13 @@ export function converterDia(dia: string, r: RespostasDia): LinhaDiario | null {
     // "NONE" é a Garmin dizendo "sem classificação": vira nulo para o cartão mostrar os ms.
     vfc_status: typeof statusBruto === "string" && statusBruto !== "NONE" ? statusBruto.slice(0, 60) : null,
     vfc_media_semanal_ms: num(g(r.hrv, "hrvSummary", "weeklyAvg") ?? g(r.hrv, "weeklyAvg")),
-    fc_repouso_bpm: inteiro(g(resumo, "restingHeartRate") ?? g(resumo, "restingHeartRateInBeatsPerMinute")),
+    fc_repouso_bpm: inteiro(achar(r.resumo, "restingHeartRate", "restingHeartRateInBeatsPerMinute", "lastSevenDaysAvgRestingHeartRate")),
     sono_minutos: segSono === null ? null : Math.round(segSono / 60),
     sono_score: inteiro(g(r.sono, "dailySleepDTO", "sleepScores", "overall", "value") ?? g(r.sono, "sleepScores", "overall", "value")),
-    body_battery_acordar: inteiro(g(resumo, "bodyBatteryAtWakeTime") ?? bb.acordar),
-    body_battery_max: inteiro(g(resumo, "bodyBatteryHighestValue") ?? bb.max),
+    body_battery_acordar: inteiro(achar(r.resumo, "bodyBatteryAtWakeTime") ?? bb.acordar),
+    body_battery_max: inteiro(achar(r.resumo, "bodyBatteryHighestValue") ?? bb.max),
     estresse_medio: estresse !== null && estresse >= 0 ? Math.round(estresse) : null,
-    passos: inteiro(g(resumo, "totalSteps") ?? g(resumo, "steps")),
+    passos: inteiro(achar(r.resumo, "totalSteps", "steps")),
   };
   return Object.entries(linha).some(([k, v]) => k !== "data" && v !== null) ? linha : null;
 }

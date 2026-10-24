@@ -67,7 +67,8 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, diario: 0, treinos: 0, falhas, formato }, { status: falhas.length ? 502 : 200 });
   }
   try {
-    return NextResponse.json({ ok: true, ...(await gravarGarmin({ diario, treinos })), falhas });
+    // `formato` = só nomes de campos (sem valores): a resposta já exige o segredo e o log da Vercel trunca.
+    return NextResponse.json({ ok: true, ...(await gravarGarmin({ diario, treinos })), falhas, formato });
   } catch (e) {
     console.error("[garmin sync] falha ao gravar:", e);
     return NextResponse.json({ erro: "falha_ao_gravar", falhas }, { status: 502 });

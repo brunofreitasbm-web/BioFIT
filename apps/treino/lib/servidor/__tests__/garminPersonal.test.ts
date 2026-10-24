@@ -41,6 +41,12 @@ describe("converterDia", () => {
     expect(l.estresse_medio).toBeNull();
   });
 
+  it("acha os campos do resumo em qualquer nível de aninhamento", () => {
+    const aninhado = { allMetrics: { dias: [{ calendarDate: DIA, resumo: { restingHeartRate: 51, totalSteps: 4321, averageStressLevel: 30 } }] } };
+    const l = converterDia(DIA, { sono: null, hrv: null, resumo: aninhado, bodyBattery: null })!;
+    expect(l).toMatchObject({ fc_repouso_bpm: 51, passos: 4321, estresse_medio: 30 });
+  });
+
   it("dia sem nenhuma métrica não gera linha", () => {
     expect(converterDia(DIA, { sono: null, hrv: null, resumo: [], bodyBattery: null })).toBeNull();
   });
@@ -128,7 +134,10 @@ describe("GET /api/garmin/sync", () => {
     const f = garminFalso();
     const r = await GET(req(`Bearer ${CRON}`));
     expect(r.status).toBe(200);
-    expect(await r.json()).toMatchObject({ ok: true, diario: 2, treinos: 1, falhas: [] });
+    const corpoResp = await r.json();
+    expect(corpoResp).toMatchObject({ ok: true, diario: 2, treinos: 1, falhas: [] });
+    expect(corpoResp.formato.resumo.length).toBeGreaterThan(0); // só nomes, sem valores
+    expect(JSON.stringify(corpoResp)).not.toContain("7218");
     const urls = f.mock.calls.map((c) => String(c[0]));
     expect(urls.some((u) => u.includes("dailySleep?date=2026-10-23"))).toBe(true);
     expect(urls.some((u) => u.includes("dailySleep?date=2026-10-24"))).toBe(true);
