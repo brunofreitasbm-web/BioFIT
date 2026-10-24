@@ -4,7 +4,6 @@ import { rpc } from "@/lib/servidor/backup";
 import type { Convertido } from "@/lib/servidor/garminHealth";
 
 // Dados do Garmin no formato de `garmin-data.json` (o mesmo que o biofit_garmin_sync.py grava).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type LinhaGarmin = Record<string, any>;
 
 export interface DadosGarmin {
@@ -16,13 +15,13 @@ const vazio: DadosGarmin = { diario: [], treinos: [] };
 
 // Na Vercel não existe o arquivo do PC: o sync envia à edge function `biofit-garmin-ingest` e o
 // app lê via RPC `biofit_garmin_get` (mesmo segredo do backup). Sem as variáveis do Supabase
-// (dev local), cai no `public/garmin-data.json`, que é só uma cópia do último sync local.
+// (dev local), cai no `.local/garmin-data.json` (fora de `public/`, que a Vercel serve; ignorado pelo git).
 export function supabaseConfigurado(): boolean {
   return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY && process.env.BIOFIT_DB_SECRET);
 }
 
 function lerArquivoLocal(): DadosGarmin | null {
-  const filePath = path.join(process.cwd(), "public", "garmin-data.json");
+  const filePath = path.join(process.cwd(), ".local", "garmin-data.json");
   if (!fs.existsSync(filePath)) return null;
   const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
   return {

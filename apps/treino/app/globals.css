@@ -62,6 +62,38 @@
   }
 }
 
+/* Tema preto e laranja (era o visual da branch Garmin/Coach IA). Só sobrescreve os tokens acima,
+   então nenhum componente muda de classe. Ativado por data-tema="laranja" no <html> (layout.tsx);
+   sem o atributo, o app volta ao azul claro/escuro do sistema. Sempre escuro, em qualquer aparelho.
+   Contrastes medidos contra o card (base-800): ink 15,5:1 · muted 7,8:1 · faint 5,5:1 ·
+   brand 6,6:1 · accent 8,7:1 · danger 6,2:1; texto sobre brand (on-solid) 7,3:1. */
+:root[data-tema="laranja"] {
+  color-scheme: dark;
+
+  --c-base-950: 10 12 15;
+  --c-base-900: 15 18 22;
+  --c-base-800: 24 28 34;
+  --c-base-700: 34 39 48;
+  --c-base-600: 44 50 59;
+  --c-base-500: 58 65 76;
+  --c-line: 51 58 68;
+  --c-ink: 242 244 247;
+  --c-ink-muted: 168 176 188;
+  --c-ink-faint: 139 147 160;
+  --c-brand: 255 122 26;
+  --c-brand-soft: 51 33 15;
+  --c-brand-hover: 255 143 61;
+  --c-accent: 52 210 122;
+  --c-accent-soft: 17 41 27;
+  --c-warn: 240 162 58;
+  --c-danger: 255 107 122;
+  --c-danger-soft: 51 22 27;
+  --c-on-solid: 20 16 12;
+
+  --shadow-panel: inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 8px 24px -12px rgba(0, 0, 0, 0.7);
+  --shadow-nav: 0 -1px 0 rgba(255, 255, 255, 0.04), 0 -8px 24px -12px rgba(0, 0, 0, 0.7);
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;

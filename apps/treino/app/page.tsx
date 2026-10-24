@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getDataInicio, getSessaoEscolhida, migrarParaMeso1, seriesDoExercicioNaData, setSessaoEscolhida, ultimaExecucao } from "@/lib/storage";
 import { recordesPessoais } from "@/lib/relatorio";
 import { addDiasISO, getStatusAderencia, getStatusPrograma, sessaoSugerida as calcularSessaoSugerida, toISODate } from "@/lib/program";
@@ -71,7 +71,11 @@ export default function HojePage() {
   const sessaoEfetiva = escolha === "DESCANSO" ? null : (escolha ?? sessaoSugerida);
   const status = pronto ? getStatusPrograma(dataInicio, hojeISO, sessaoEfetiva) : null;
   const aderencia = pronto ? getStatusAderencia(dataInicio, hojeISO) : null;
-  const exercicios = sessaoEfetiva && status ? getSessaoCompleta(sessaoEfetiva, status.meso) : [];
+  const mesoAtual = status?.meso;
+  const exercicios = useMemo(
+    () => (sessaoEfetiva && mesoAtual !== undefined ? getSessaoCompleta(sessaoEfetiva, mesoAtual) : []),
+    [sessaoEfetiva, mesoAtual],
+  );
 
   const insightHoje = status ? gerarInsightHoje(status, hojeISO, sessaoEfetiva) : null;
   const insightProximo = status ? gerarInsightProximo(sessaoEfetiva, sessaoSugerida, status.meso) : null;
