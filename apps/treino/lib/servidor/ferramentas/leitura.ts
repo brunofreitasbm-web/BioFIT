@@ -3,6 +3,7 @@ import { alvoDeEsforco, statusDescansoPorSessao } from "@/lib/descanso";
 import { EXERCICIOS_ASSISTIDOS, getSessaoCompleta, GRUPOS_INFERIORES, partidaKg, SESSAO_LABEL, SESSOES } from "@/lib/exercicios";
 import { calcularStreak, labelRodada } from "@/lib/motivacao";
 import { getStatusAderencia, getStatusPrograma, proximaDaFila, seriesDaRodada } from "@/lib/program";
+import { avaliarProntidao, deslocarRir, type Prontidao } from "@/lib/prontidao";
 import { sugerirProximaCarga } from "@/lib/progressao";
 import {
   calcularFrequenciaPorGrupo,
@@ -17,6 +18,7 @@ import {
   semanasNoPeriodo,
 } from "@/lib/relatorio";
 import type { SerieRegistrada } from "@/lib/tipos";
+import { lerGarmin } from "../garmin";
 import { blocoCorpo } from "./corpo";
 import { blocoPostura } from "./postura";
 import {
@@ -35,6 +37,26 @@ import {
   type Contexto,
   type FerramentaLeitura,
 } from "./comum";
+
+// Prontidão só vale para hoje: o dado de outro dia não diz nada sobre o treino de amanhã. Falha ao
+// ler o Garmin não pode derrubar o plano.
+async function prontidaoDoDia(data: string, hoje: string, deload: boolean): Promise<Prontidao | null> {
+  if (data !== hoje) return null;
+  try {
+    const dados = await lerGarmin();
+    const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+    const dias = (dados?.diario ?? []).map((l) => ({
+      data: String(l.data),
+      sonoHoras: num(l.sono_minutos) === null ? null : Math.round((num(l.sono_minutos)! / 60) * 10) / 10,
+      sonoScore: num(l.sono_score),
+      bodyBatteryAcordar: num(l.body_battery_acordar),
+    }));
+    return avaliarProntidao(dias, hoje, deload);
+  } catch (e) {
+    console.error("[plano_do_dia] Garmin indisponível:", e);
+    return avaliarProntidao([], hoje, deload);
+  }
+}
 
 const semArgs = { type: "object", properties: {}, additionalProperties: false };
 
@@ -175,7 +197,7 @@ export const LEITURA: FerramentaLeitura[] = [
     tipo: "leitura",
     name: "plano_do_dia",
     description:
-      "Treino PLANEJADO para um dia, como o app mostra: sessão (escolhida no app ou próxima da fila A→E), cada exercício com séries (já reduzidas no deload), faixa de reps, descanso, notas, alvo de RIR, carga sugerida pela dupla progressão e o que já foi feito no dia; e a recuperação dos grupos (48 h). Use antes de orientar o treino ou registrar séries.",
+      "Treino PLANEJADO para um dia, como o app mostra: sessão (escolhida no app ou próxima da fila A→E), cada exercício com séries (já reduzidas no deload), faixa de reps, descanso, notas, alvo de RIR, carga sugerida pela dupla progressão e o que já foi feito no dia; e a recuperação dos grupos (48 h). Para hoje, inclui 'prontidaoGarmin' (sono e Body Battery do relógio): quando o nível for 'atencao' ou 'baixa', cada exercício traz 'ajusteHoje' (séries ajustadas, alvo de RIR +1, sem subir carga, sem teste de falha) e você deve apresentar esse ajuste ao usuário; 'sem_dados' significa treino como planejado. As cargas sugeridas não são alteradas. Use antes de orientar o treino ou registrar séries.",
     inputSchema: {
       type: "object",
       properties: {
@@ -184,7 +206,7 @@ export const LEITURA: FerramentaLeitura[] = [
       },
       additionalProperties: false,
     },
-    executar(args, ctx) {
+    async executar(args, ctx) {
       const data = dataArg(args, "data") ?? ctx.hoje;
       const inicio = exigirDataInicio(ctx);
       const doDia = sessaoDoDia(ctx, data);
@@ -194,10 +216,13 @@ export const LEITURA: FerramentaLeitura[] = [
       }
       const status = getStatusPrograma(inicio, data, sessao, ctx.dados);
       const log = ctx.dados.log;
+      const prontidao = await prontidaoDoDia(data, ctx.hoje, status.isDeload);
+      const ajuste = prontidao?.ajuste ?? null;
       return {
         data,
         sessao,
         titulo: SESSAO_LABEL[sessao],
+        prontidaoGarmin: prontidao,
         escolhidaNoApp: doDia.escolhida && !sessaoArg(args),
         programa: { meso: status.meso, rodada: status.rodada, deload: status.isDeload, rotulo: labelRodada(status) },
         recuperacao: statusDescansoPorSessao(sessao, data, log),
@@ -219,6 +244,14 @@ export const LEITURA: FerramentaLeitura[] = [
             nome: ex.nome,
             grupo: ex.grupoMuscular,
             series: seriesDaRodada(ex.series, status.isDeload),
+            ajusteHoje: ajuste
+              ? {
+                  series: Math.max(Math.min(2, seriesDaRodada(ex.series, status.isDeload)), seriesDaRodada(ex.series, status.isDeload) - ajuste.reduzirSeries),
+                  rirAlvo: deslocarRir(alvoDeEsforco(ex, status).rirAlvo, ajuste.rirExtra),
+                  naoProgredirCarga: true,
+                  semTesteDeFalha: true,
+                }
+              : undefined,
             reps: ex.reps,
             descanso: ex.descanso,
             composto: ex.composto,

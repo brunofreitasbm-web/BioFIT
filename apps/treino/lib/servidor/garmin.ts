@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { rpc } from "@/lib/servidor/backup";
+import type { Convertido } from "@/lib/servidor/garminHealth";
 
 // Dados do Garmin no formato de `garmin-data.json` (o mesmo que o biofit_garmin_sync.py grava).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -37,4 +38,10 @@ export async function lerGarmin(): Promise<DadosGarmin | null> {
     diario: Array.isArray(r?.diario) ? r.diario : vazio.diario,
     treinos: Array.isArray(r?.treinos) ? r.treinos : vazio.treinos,
   };
+}
+
+// Grava o que o webhook da Garmin Health API entregou (merge no banco: campo nulo não apaga).
+export async function gravarGarmin(c: Pick<Convertido, "diario" | "treinos">): Promise<{ diario: number; treinos: number }> {
+  const r = (await rpc("biofit_garmin_put", { p_diario: c.diario, p_treinos: c.treinos })) as { diario?: number; treinos?: number } | null;
+  return { diario: r?.diario ?? 0, treinos: r?.treinos ?? 0 };
 }
