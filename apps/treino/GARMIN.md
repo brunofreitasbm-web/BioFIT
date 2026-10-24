@@ -1,4 +1,36 @@
-# Garmin no BioFIT (Health API, modo push)
+# Garmin no BioFIT
+
+Há dois caminhos para os dados chegarem ao Supabase (`biofit_garmin_diario`, `biofit_garmin_treino`), lidos pelo quadro "Recuperação Garmin" (`/api/garmin/today`), pelo `plano_do_dia` e pela ferramenta `recuperacao_garmin` do MCP:
+
+1. **Personal API (recomendado, abaixo):** chave pessoal; o BioFIT busca 1x por dia via Vercel Cron.
+2. **Health API em modo push** (seção seguinte): exige conta de desenvolvedor aprovada pela Garmin; hoje sem uso.
+
+## Personal API (busca diária)
+
+Fluxo: Vercel Cron (07:00 em Belém) → `GET /api/garmin/sync` → troca a chave por um token (24 h) → busca **ontem e hoje** (sono, VFC, resumo diário, Body Battery, atividades) → `biofit_garmin_put` (merge: nulo não apaga).
+
+### Passo a passo
+
+1. Gere a chave em `https://connect.garmin.com/app/settings/personalApiToken` (aparece uma vez; validade de 30 dias a 1 ano; a Garmin avisa por e-mail ~1 semana antes de expirar).
+2. Vercel → Settings → Environment Variables (Production), depois **Redeploy**:
+
+| Variável | O que é |
+| --- | --- |
+| `GARMIN_PERSONAL_API_KEY` | A chave do passo 1. Só na Vercel, nunca no repositório |
+| `CRON_SECRET` | Senha qualquer com 24+ caracteres (`openssl rand -base64 32 \| tr -d '=+/'`). A Vercel a envia sozinha ao cron; sem ela a rota recusa tudo |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `BIOFIT_DB_SECRET` | As mesmas do backup (ver `MCP.md`) |
+
+3. Teste sem esperar as 7h: Vercel → Settings → **Cron Jobs** → `/api/garmin/sync` → **Run**.
+4. Vercel → **Logs**, linha `[garmin sync]`: mostra quantos dias/atividades foram gravados, falhas por endpoint e a **estrutura** das respostas (só nomes de campos, sem valores).
+
+### Limites e cuidados
+
+- **Formato não documentado.** A Garmin não publica os campos das respostas; o conversor usa os mesmos do `biofit_garmin_sync.py` (que rodou com dados reais) e aceita variações. Se um campo vier vazio, a `estrutura` no log mostra o nome real; ajuste `lib/servidor/garminPersonal.ts`.
+- **Horário.** No plano grátis da Vercel o cron roda 1x por dia, com horário aproximado (pode atrasar até ~1 h). Se o relógio ainda não sincronizou às 7h, o sono de hoje não vem; o plano trata como "sem dados" e a execução do dia seguinte completa (busca ontem e hoje).
+- **Chave expirada** (ou revogada): o log mostra `Troca de token falhou: HTTP 401`; gere outra e troque a variável. O quadro não avisa por si só; ele mostra a data de referência.
+- Dados que a Garmin não entrega por API (ex.: VO2 máx., tempo de recuperação) podem faltar.
+
+## Health API (push, alternativa)
 
 Fluxo: relógio → Garmin Connect → **Garmin Health API** → `POST /api/garmin/webhook/<GARMIN_WEBHOOK_TOKEN>` → Supabase (`biofit_garmin_diario`, `biofit_garmin_treino`) → quadro "Recuperação Garmin" (`/api/garmin/today`) e ferramenta `recuperacao_garmin` do MCP.
 
