@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { posicaoLupa } from "@/components/OverlayPostura";
-import { recorteCover } from "@/components/CameraPostura";
+import { recorteComZoom, recorteCover } from "@/components/CameraPostura";
 
 describe("posição da lupa", () => {
   const L = 360;
@@ -59,5 +59,16 @@ describe("recorte do object-cover num quadro 9:16", () => {
       expect(r.sx + r.sw).toBeLessThanOrEqual(w + 1e-9);
       expect(r.sy + r.sh).toBeLessThanOrEqual(h + 1e-9);
     }
+  });
+});
+
+describe("zoom digital", () => {
+  it("1× não altera o recorte", () => {
+    const r = recorteCover(1080, 1920);
+    expect(recorteComZoom(r, 1)).toEqual(r);
+  });
+
+  it("2× reduz à metade, centrado", () => {
+    expect(recorteComZoom({ sx: 0, sy: 0, sw: 1080, sh: 1920 }, 2)).toEqual({ sx: 270, sy: 480, sw: 540, sh: 960 });
   });
 });

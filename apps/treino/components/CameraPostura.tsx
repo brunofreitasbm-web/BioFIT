@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, EyeOff, ArrowLeftRight, Image as ImageIcon, PersonStanding, SwitchCamera, Timer } from "lucide-react";
+import { Camera, EyeOff, ArrowLeftRight, Image as ImageIcon, PersonStanding, SwitchCamera, Timer, ZoomIn, ZoomOut } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ALTURA, CENTRO, LARGURA, NIVEIS, contorno } from "@/lib/contornoCorpo";
 import { ICON } from "@/lib/icones";
@@ -32,6 +32,23 @@ export function recorteCover(vw: number, vh: number): { sx: number; sy: number; 
   const sh = vw / PROPORCAO_QUADRO;
   return { sx: 0, sy: (vh - sh) / 2, sw: vw, sh };
 }
+
+// Zoom digital: reduz o recorte em torno do centro, igual ao que o `scale` mostra na tela.
+export function recorteComZoom(r: { sx: number; sy: number; sw: number; sh: number }, zoom: number) {
+  const sw = r.sw / zoom;
+  const sh = r.sh / zoom;
+  return { sx: r.sx + (r.sw - sw) / 2, sy: r.sy + (r.sh - sh) / 2, sw, sh };
+}
+
+// Faixa de zoom: a do hardware, quando a câmera expõe (aceita < 1× em lentes ultra-wide);
+// senão só digital, de 1× a 4× (não dá para afastar sem lente).
+interface FaixaZoom {
+  min: number;
+  max: number;
+  step: number;
+  nativo: boolean;
+}
+const FAIXA_DIGITAL: FaixaZoom = { min: 1, max: 4, step: 0.1, nativo: false };
 
 export function GuiaCorpo({ vista, virado, rotulos = true }: { vista: "perfil" | "frontal"; virado: boolean; rotulos?: boolean }) {
   const d = contorno(vista);
@@ -84,6 +101,21 @@ export function CameraPostura({ silhueta, aoCapturar }: { silhueta: "perfil" | "
   const [contagem, setContagem] = useState<number | null>(null);
   const [guia, setGuia] = useState(true);
   const [virado, setVirado] = useState(false);
+  const [faixa, setFaixa] = useState<FaixaZoom>(FAIXA_DIGITAL);
+  const [zoom, setZoom] = useState(1);
+  const trackRef = useRef<MediaStreamTrack | null>(null);
+  const zoomDigitalRef = useRef(1);
+
+  // Hardware: aplica na câmera. Digital: só guarda; a prévia e o recorte usam o valor.
+  function aplicarZoom(z: number) {
+    const v = Math.min(faixa.max, Math.max(faixa.min, Math.round(z / faixa.step) * faixa.step));
+    setZoom(v);
+    if (faixa.nativo) {
+      trackRef.current?.applyConstraints({ advanced: [{ zoom: v } as MediaTrackConstraintSet] }).catch(() => undefined);
+    } else {
+      zoomDigitalRef.current = v;
+    }
+  }
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -98,6 +130,18 @@ export function CameraPostura({ silhueta, aoCapturar }: { silhueta: "perfil" | "
         if (cancelado) {
           stream.getTracks().forEach((t) => t.stop());
           return;
+        }
+        const track = stream.getVideoTracks()[0];
+        trackRef.current = track;
+        const caps = track.getCapabilities?.() as (MediaTrackCapabilities & { zoom?: { min: number; max: number; step?: number } }) | undefined;
+        zoomDigitalRef.current = 1;
+        if (caps?.zoom && caps.zoom.max > caps.zoom.min) {
+          const atual = (track.getSettings() as { zoom?: number }).zoom ?? caps.zoom.min;
+          setFaixa({ min: caps.zoom.min, max: caps.zoom.max, step: Math.max(caps.zoom.step ?? 0.1, 0.01), nativo: true });
+          setZoom(atual);
+        } else {
+          setFaixa(FAIXA_DIGITAL);
+          setZoom(1);
         }
         const v = videoRef.current;
         if (v) {
@@ -129,7 +173,7 @@ export function CameraPostura({ silhueta, aoCapturar }: { silhueta: "perfil" | "
   function disparar() {
     const v = videoRef.current;
     if (!v || !v.videoWidth) return;
-    const { sx, sy, sw, sh } = recorteCover(v.videoWidth, v.videoHeight);
+    const { sx, sy, sw, sh } = recorteComZoom(recorteCover(v.videoWidth, v.videoHeight), zoomDigitalRef.current);
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(sw);
     canvas.height = Math.round(sh);
@@ -161,7 +205,8 @@ export function CameraPostura({ silhueta, aoCapturar }: { silhueta: "perfil" | "
           playsInline
           muted
           autoPlay
-          className={cn("h-full w-full object-cover", facing === "user" && "-scale-x-100")}
+          className="h-full w-full object-cover"
+          style={{ transform: `${facing === "user" ? "scaleX(-1) " : ""}scale(${faixa.nativo ? 1 : zoom})` }}
         />
         {guia && <GuiaCorpo vista={silhueta} virado={virado} />}
         {contagem !== null && (
@@ -189,6 +234,26 @@ export function CameraPostura({ silhueta, aoCapturar }: { silhueta: "perfil" | "
           )}
         </div>
       </div>
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={() => aplicarZoom(zoom - faixa.step * 2)} disabled={zoom <= faixa.min} className="toque flex h-10 w-10 items-center justify-center rounded-full border border-line bg-base-800 text-ink-muted disabled:opacity-40" aria-label="Afastar (zoom menor)">
+          <ZoomOut size={ICON.md} aria-hidden="true" />
+        </button>
+        <input
+          type="range"
+          min={faixa.min}
+          max={faixa.max}
+          step={faixa.step}
+          value={zoom}
+          onChange={(e) => aplicarZoom(Number(e.target.value))}
+          className="h-10 flex-1 accent-brand"
+          aria-label="Zoom da câmera"
+        />
+        <button type="button" onClick={() => aplicarZoom(zoom + faixa.step * 2)} disabled={zoom >= faixa.max} className="toque flex h-10 w-10 items-center justify-center rounded-full border border-line bg-base-800 text-ink-muted disabled:opacity-40" aria-label="Aproximar (zoom maior)">
+          <ZoomIn size={ICON.md} aria-hidden="true" />
+        </button>
+        <span className="w-10 text-right text-xs tabular-nums text-ink-muted">{zoom.toFixed(1)}×</span>
+      </div>
+      {!faixa.nativo && <p className="text-center text-[11px] text-ink-faint">Esta câmera só aproxima. Para afastar, dê um passo para trás ou use a lente grande-angular (trocar câmera).</p>}
       <p className="text-center text-[11px] text-ink-faint">
         {silhueta === "perfil"
           ? "Encaixe o corpo no contorno, com a orelha, o ombro e o quadril sobre o prumo. Vire o contorno para o lado em que você está olhando."
