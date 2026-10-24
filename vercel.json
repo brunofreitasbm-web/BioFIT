@@ -2,5 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "buildCommand": "npm run build",
-  "outputDirectory": "apps/treino/.next"
+  "outputDirectory": "apps/treino/.next",
+  "crons": [
+    {
+      "path": "/api/garmin/sync",
+      "schedule": "0 10 * * *"
+    }
+  ]
 }
