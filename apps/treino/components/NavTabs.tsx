@@ -17,23 +17,33 @@ export function NavTabs() {
   // A área /isabela tem navegação própria (app/isabela/layout.tsx).
   if (pathname.startsWith("/isabela")) return null;
 
+  const ativa = TABS.findIndex(({ href }) => (href === "/" ? pathname === "/" : pathname.startsWith(href)));
+
   return (
     <nav
       role="navigation"
       aria-label="Navegação Principal"
-      className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-xl border-t border-line bg-base-900/95 shadow-nav backdrop-blur"
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      className="vidro-barra fixed inset-x-3 bottom-3 z-20 mx-auto max-w-[calc(36rem-1.5rem)] rounded-2xl border shadow-nav"
+      style={{ marginBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="flex">
-        {TABS.map(({ href, label, Icon }) => {
-          const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+      <div className="relative flex p-1">
+        {/* Pílula que desliza até a aba ativa: uma só peça, movida por transform. */}
+        {ativa >= 0 && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-1 left-1 rounded-xl bg-brand/15 shadow-[inset_0_1px_0_rgb(255_255_255/0.12)] transition-transform duration-[420ms] ease-[cubic-bezier(0.34,1.32,0.64,1)]"
+            style={{ width: `calc((100% - 0.5rem) / ${TABS.length})`, transform: `translateX(${ativa * 100}%)` }}
+          />
+        )}
+        {TABS.map(({ href, label, Icon }, i) => {
+          const active = i === ativa;
           return (
             <Link
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "toque flex min-h-14 flex-1 flex-col items-center gap-0.5 py-2.5 text-xs",
+                "toque relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-2 text-xs transition-colors duration-200",
                 active ? "font-semibold text-brand" : "font-medium text-ink-muted hover:text-ink",
               )}
             >
@@ -41,13 +51,9 @@ export function NavTabs() {
                 aria-hidden="true"
                 size={ICON.lg}
                 strokeWidth={active ? STROKE.forte : 2}
-                className={cn("transition-transform duration-150", active && "-translate-y-px scale-110")}
+                className={cn("transition-transform duration-300 ease-[cubic-bezier(0.34,1.32,0.64,1)]", active && "-translate-y-px scale-110")}
               />
-              <span className={cn(active && "font-semibold")}>{label}</span>
-              <span
-                className={cn("h-0.5 w-5 rounded-full transition-all duration-150", active ? "bg-brand" : "bg-transparent")}
-                aria-hidden="true"
-              />
+              <span>{label}</span>
             </Link>
           );
         })}

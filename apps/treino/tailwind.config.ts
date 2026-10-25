@@ -3,11 +3,11 @@ import type { Config } from "tailwindcss";
 const v = (nome: string) => `rgb(var(--c-${nome}) / <alpha-value>)`;
 
 const config: Config = {
-  // `dark:` vale no tema laranja (sempre escuro) e, sem tema, quando o sistema está em escuro.
+  // `dark:` vale nos temas laranja e vidro (sempre escuros) e, sem tema, quando o sistema está em escuro.
   darkMode: [
     "variant",
     [
-      "&:where([data-tema=laranja], [data-tema=laranja] *)",
+      "&:where([data-tema=laranja], [data-tema=laranja] *, [data-tema=vidro], [data-tema=vidro] *)",
       "@media (prefers-color-scheme: dark) { &:where(html:not([data-tema]), html:not([data-tema]) *) }",
     ],
   ],

@@ -133,25 +133,25 @@ export default function ExercicioEvolucaoPage() {
       {hist && hist.length > 0 && recordes && (
         <>
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl border border-line bg-base-800 p-3 shadow-sm">
+            <div className="rounded-xl border vidro p-3 shadow-sm">
               <p className="text-[11px] text-ink-muted">Melhor 1RM estimado</p>
               <p className="text-lg font-bold text-ink">{formatarKg(recordes.melhor1RM!.kg)} kg</p>
               <p className="text-[11px] text-ink-faint">
                 {formatarKg(recordes.melhor1RM!.cargaKg)} kg × {recordes.melhor1RM!.reps} · {formatarDataCurta(recordes.melhor1RM!.data)}
               </p>
             </div>
-            <div className="rounded-xl border border-line bg-base-800 p-3 shadow-sm">
+            <div className="rounded-xl border vidro p-3 shadow-sm">
               <p className="text-[11px] text-ink-muted">Maior carga</p>
               <p className="text-lg font-bold text-ink">{formatarKg(recordes.cargaMax!.kg)} kg</p>
               <p className="text-[11px] text-ink-faint">{formatarDataCurta(recordes.cargaMax!.data)}</p>
             </div>
           </div>
 
-          <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+          <section className="rounded-xl border vidro p-4 shadow-sm">
             <GraficoEvolucao hist={hist} prs={prs} />
           </section>
 
-          <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+          <section className="rounded-xl border vidro p-4 shadow-sm">
             <h2 className="mb-2 text-base font-semibold text-ink">Sessões</h2>
             <table className="w-full text-xs">
               <thead>

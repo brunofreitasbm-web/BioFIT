@@ -92,7 +92,7 @@ export function BackupCard() {
   }
 
   return (
-    <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm space-y-3">
+    <section className="rounded-xl border vidro p-4 shadow-sm space-y-3">
       <div>
         <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
           <HardDriveDownload aria-hidden="true" size={ICON.md} className="text-ink-muted" /> Backup do histórico

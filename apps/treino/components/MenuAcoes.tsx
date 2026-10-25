@@ -38,7 +38,7 @@ export function MenuAcoes({ acoes, rotulo }: { acoes: AcaoMenu[]; rotulo: string
         <MoreHorizontal aria-hidden="true" size={ICON.md} />
       </button>
       {aberto && (
-        <div role="menu" className="anim-revelar absolute right-0 top-full z-20 mt-1 min-w-[13rem] overflow-hidden rounded-xl border border-line bg-base-700 py-1 shadow-panel">
+        <div role="menu" className="anim-revelar absolute right-0 top-full z-20 mt-1 min-w-[13rem] overflow-hidden vidro-forte rounded-xl border py-1 shadow-nav">
           {acoes.map(({ label, Icon, onSelect }) => (
             <ItemMenu
               key={label}

@@ -122,7 +122,7 @@ export default function NovaPosturaPage() {
 
       {etapa === "protocolo" && (
         <>
-          <section className="space-y-3 rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+          <section className="space-y-3 rounded-xl border vidro p-4 shadow-sm">
             <div className="flex gap-1.5 rounded-full border border-line bg-base-700 p-1 text-sm font-medium">
               {(["perfil", "frontal"] as VistaPostura[]).map((v) => (
                 <button
@@ -191,7 +191,7 @@ export default function NovaPosturaPage() {
               </button>
             ))}
           </div>
-          <section className="space-y-2 rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+          <section className="space-y-2 rounded-xl border vidro p-4 shadow-sm">
             {deteccao === "carregando" && <p className="text-sm text-ink-muted">Detectando a pose… (na primeira vez baixa o modelo, ~20 MB)</p>}
             {deteccao === "sem_pessoa" && <p className="text-sm text-danger">Não achei ninguém na foto. Os pontos estão num gabarito: arraste cada um para o lugar, ou refaça a foto.</p>}
             {deteccao === "falhou" && <p className="text-sm text-danger">Detector indisponível (sem rede na primeira vez?). Marque todos os pontos à mão arrastando.</p>}
@@ -216,7 +216,7 @@ export default function NovaPosturaPage() {
           </section>
           <section className="grid grid-cols-2 gap-2">
             {MEDIDAS_POR_VISTA[vista].map((m: Medida) => (
-              <div key={m} className="rounded-xl border border-line bg-base-800 p-3 shadow-sm">
+              <div key={m} className="rounded-xl border vidro p-3 shadow-sm">
                 <p className="text-[11px] uppercase tracking-wide text-ink-faint">{INFO_MEDIDA[m].curto}</p>
                 <p className="font-display text-2xl font-bold tabular-nums text-ink">
                   {fmt(medidas[m])}
@@ -247,7 +247,7 @@ export default function NovaPosturaPage() {
 
       {etapa === "salvo" && (
         <>
-          <section className="space-y-2 rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+          <section className="space-y-2 rounded-xl border vidro p-4 shadow-sm">
             <h2 className="flex items-center gap-2 text-base font-semibold text-accent">
               <Check size={ICON.md} aria-hidden="true" /> Captura salva ({salvasHoje}/{CAPTURAS_POR_SESSAO} hoje)
             </h2>

@@ -79,13 +79,13 @@ export function TimerDescanso() {
       role="timer"
       aria-live={terminou ? "assertive" : "off"}
       className="fixed inset-x-0 z-20 mx-auto max-w-xl px-3"
-      style={{ bottom: "calc(4.75rem + env(safe-area-inset-bottom))" }}
+      style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom))" }}
     >
       <div
         className={
           terminou
             ? "anim-confirmar overflow-hidden rounded-xl border border-accent bg-accent text-on-solid shadow-panel"
-            : "overflow-hidden rounded-xl border border-brand/40 bg-base-800 shadow-panel"
+            : "vidro-forte overflow-hidden rounded-xl border shadow-nav ring-1 ring-brand/40"
         }
       >
         <div className="flex items-center gap-2 px-3 py-2">

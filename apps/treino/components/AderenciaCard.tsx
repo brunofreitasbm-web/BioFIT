@@ -21,7 +21,7 @@ export function AderenciaCard({ aderencia }: { aderencia: StatusAderencia }) {
     <div
       className={cn(
         "mb-3 rounded-xl border p-3",
-        aderencia.decisao === "CAIR_UPPER_LOWER" ? "border-danger/30 bg-danger-soft" : "border-line bg-base-800 shadow-panel",
+        aderencia.decisao === "CAIR_UPPER_LOWER" ? "border-danger/30 bg-danger-soft" : "vidro",
       )}
     >
       <div className="mb-1 flex items-center justify-between text-xs">

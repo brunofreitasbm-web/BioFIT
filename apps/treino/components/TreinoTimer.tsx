@@ -75,7 +75,7 @@ export function TreinoTimer({ hojeISO, sessaoTipo }: { hojeISO: string; sessaoTi
     const decorrido = agora - new Date(registro.inicioISO).getTime();
     return (
       <div className="mb-4 flex items-center gap-2">
-        <div className="flex flex-1 items-center justify-between rounded-xl border border-line bg-base-800 px-4 py-3">
+        <div className="flex flex-1 items-center justify-between rounded-xl border vidro px-4 py-3">
           <span className="flex items-center gap-1.5 text-sm text-ink-muted">
             <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-danger" aria-hidden="true" />
             Treino {nome} em andamento
