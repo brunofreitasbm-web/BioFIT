@@ -14,6 +14,8 @@ const TABS = [
 
 export function NavTabs() {
   const pathname = usePathname();
+  // A área /isabela tem navegação própria (app/isabela/layout.tsx).
+  if (pathname.startsWith("/isabela")) return null;
 
   return (
     <nav

@@ -8,10 +8,7 @@
     "dev": "npm run dev -w @biofit/treino",
     "dev:treino": "npm run dev -w @biofit/treino",
     "build:treino": "npm run build -w @biofit/treino",
-    "build": "npm run build -w @biofit/treino",
-    "dev:clone": "npm run dev -w @biofit/treino-clone",
-    "build:clone": "npm run build -w @biofit/treino-clone",
-    "test:clone": "npm run test -w @biofit/treino-clone"
+    "build": "npm run build -w @biofit/treino"
   },
   "devDependencies": {
     "typescript": "^5.6.3"
