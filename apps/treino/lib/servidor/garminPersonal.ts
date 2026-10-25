@@ -135,10 +135,14 @@ function lista(v: unknown): Obj[] {
   return [];
 }
 
-function doDia(v: unknown, dia: string): Obj | null {
+// `estrito` (respostas de INTERVALO): só vale o item cuja data bate. Sem isso, um único item
+// (ex.: os passos parciais de hoje) seria atribuído a todos os dias da janela. Na chamada por dia,
+// uma resposta de um item só é o próprio dia, mesmo quando não traz a data.
+function doDia(v: unknown, dia: string, estrito = false): Obj | null {
   const itens = lista(v);
   const achado = itens.find((i) => i.calendarDate === dia || i.date === dia || i.startDate === dia);
   if (achado) return achado;
+  if (estrito) return null;
   if (itens.length === 1) return itens[0];
   return eObj(v) && itens.length === 0 ? v : null;
 }
@@ -149,12 +153,14 @@ export interface RespostasDia {
   resumo: unknown;
   bodyBattery: unknown;
   passos?: unknown;
+  // Resumo, passos e Body Battery vieram de chamadas de intervalo: lookup estrito por data.
+  intervalo?: boolean;
 }
 
 // Body Battery vem como pares [epoch_ms, valor]. "Acordar" = maior valor antes do meio-dia
 // (Belém), a mesma aproximação do webhook; o resumo diário, quando traz, tem prioridade.
-function bodyBattery(resp: unknown, dia: string): { max: number | null; acordar: number | null } {
-  const item = doDia(resp, dia) ?? (Array.isArray(resp) && eObj(resp[0]) ? resp[0] : null);
+function bodyBattery(resp: unknown, dia: string, estrito: boolean): { max: number | null; acordar: number | null } {
+  const item = doDia(resp, dia, estrito) ?? (!estrito && Array.isArray(resp) && eObj(resp[0]) ? resp[0] : null);
   const pares = g(item, "bodyBatteryValuesArray");
   let max: number | null = null;
   let acordar: number | null = null;
@@ -174,10 +180,12 @@ function bodyBattery(resp: unknown, dia: string): { max: number | null; acordar:
 }
 
 export function converterDia(dia: string, r: RespostasDia): LinhaDiario | null {
-  const bb = bodyBattery(r.bodyBattery, dia);
+  const estrito = r.intervalo === true;
+  const bb = bodyBattery(r.bodyBattery, dia, estrito);
   // Formato real do resumo v2 (visto em produção): data[].heartRate.restingValue, data[].stress.avgLevel,
   // data[].bodyBattery.maxValue. Os nomes antigos do sync do PC ficam de reserva.
-  const resumo = doDia(r.resumo, dia);
+  const resumo = doDia(r.resumo, dia, estrito);
+  const itemPassos = estrito ? doDia(r.passos, dia, true) : r.passos;
 
   const segSono = num(g(r.sono, "dailySleepDTO", "sleepTimeSeconds") ?? g(r.sono, "sleepTimeSeconds"));
   const statusBruto = g(r.hrv, "hrvSummary", "status") ?? g(r.hrv, "status");
@@ -195,7 +203,7 @@ export function converterDia(dia: string, r: RespostasDia): LinhaDiario | null {
     body_battery_acordar: inteiro(achar(resumo, "bodyBatteryAtWakeTime") ?? bb.acordar),
     body_battery_max: inteiro(num(g(resumo, "bodyBattery", "maxValue")) ?? achar(resumo, "bodyBatteryHighestValue") ?? bb.max),
     estresse_medio: estresse !== null && estresse >= 0 ? Math.round(estresse) : null,
-    passos: inteiro(achar(r.passos, "totalSteps", "steps") ?? achar(resumo, "totalSteps")),
+    passos: inteiro(achar(itemPassos, "totalSteps", "steps") ?? achar(resumo, "totalSteps")),
   };
   return Object.entries(linha).some(([k, v]) => k !== "data" && v !== null) ? linha : null;
 }

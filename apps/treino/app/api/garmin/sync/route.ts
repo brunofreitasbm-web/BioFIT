@@ -111,7 +111,7 @@ export async function GET(req: Request) {
       const sono = await tentar("sono", caminhos.sono(dia));
       await pausa();
       const hrv = await tentar("hrv", caminhos.hrv(dia));
-      const respostas: RespostasDia = { sono, hrv, resumo, bodyBattery, passos };
+      const respostas: RespostasDia = { sono, hrv, resumo, bodyBattery, passos, intervalo: true };
       const linha = converterDia(dia, respostas);
       if (linha) diario.push(linha);
     }
