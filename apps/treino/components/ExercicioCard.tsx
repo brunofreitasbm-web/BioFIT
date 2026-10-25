@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useBackLayers } from "@/hooks/useBackHandler";
 import { ArrowRight, ChevronDown, Image as ImageIcon, Layers, Lightbulb, ListOrdered, Check, Link2, Sparkles, TrendingUp, Trophy, Zap } from "lucide-react";
+import { MenuAcoes, type AcaoMenu } from "./MenuAcoes";
 import { ICON, STROKE } from "@/lib/icones";
 import type { ExercicioEfetivo, SerieRegistrada } from "@/lib/tipos";
 import { GrupoBadge } from "./GrupoBadge";
@@ -197,6 +198,19 @@ export function ExercicioCard({
   const palpiteNum = palpite === "" ? null : Number(palpite);
   const erroCalibracao = realCalibracao !== null && palpiteNum !== null ? realCalibracao - palpiteNum : null;
 
+  const acoes: AcaoMenu[] = [
+    ...(exercicio.imagem ? [{ label: "Ver foto", Icon: ImageIcon, onSelect: () => setFotoAberta(true) }] : []),
+    ...(exercicio.notas
+      ? [{ label: dicasAbertas ? "Esconder notas" : "Notas", Icon: Lightbulb, onSelect: () => setDicasAbertas((v) => !v) }]
+      : []),
+    ...(onConsultarCoach ? [{ label: "BioFIT Coach", Icon: Sparkles, onSelect: () => onConsultarCoach(exercicio) }] : []),
+    {
+      label: seriesIndividuais ? "Usar 1 campo para todas" : "Ajustar série por série",
+      Icon: seriesIndividuais ? Layers : ListOrdered,
+      onSelect: () => setSeriesIndividuais((v) => !v),
+    },
+  ];
+
   return (
     <div
       className={cn(
@@ -230,9 +244,8 @@ export function ExercicioCard({
               )}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
-              <GrupoBadge grupo={exercicio.grupoMuscular} />
               <span className="text-[11px] text-ink-muted">
-                {totalSeries}×{exercicio.reps} · desc. {exercicio.descanso}
+                {totalSeries}×{exercicio.reps} · {exercicio.descanso}
               </span>
               {exercicio.bisetCom && (
                 <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-brand">
@@ -253,19 +266,7 @@ export function ExercicioCard({
           />
         </button>
 
-        {expandido && exercicio.imagem && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setFotoAberta(true);
-            }}
-            className="toque flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-line bg-base-700 text-ink-muted hover:border-brand/40 hover:text-brand"
-            aria-label={`Ver foto de ${exercicio.nome}`}
-          >
-            <ImageIcon aria-hidden="true" size={ICON.md} />
-          </button>
-        )}
+        {expandido && <MenuAcoes acoes={acoes} rotulo={`Mais ações de ${exercicio.nome}`} />}
       </div>
 
       {expandido && (
@@ -275,39 +276,30 @@ export function ExercicioCard({
               Não foi possível salvar no dispositivo. Tente novamente.
             </p>
           )}
-          <p className="mb-2 text-[11px] text-ink-faint">
-            RIR alvo: {rirAlvoHoje} · {alvo.label}
-            {ajusteRecuperacao && (
-              <span className="text-brand">
-                {" "}
-                · ajustado pela recuperação{alvo.testeFalha ? " (evite a falha hoje)" : ""}
-              </span>
-            )}
-          </p>
+          <div className="mb-2 flex flex-wrap items-center gap-1.5">
+            <GrupoBadge grupo={exercicio.grupoMuscular} />
+            <span className="text-[11px] text-ink-faint">
+              RIR alvo {rirAlvoHoje} · {alvo.label}
+              {ajusteRecuperacao && (
+                <span className="text-brand">
+                  {" "}
+                  · ajustado pela recuperação{alvo.testeFalha ? " (evite a falha hoje)" : ""}
+                </span>
+              )}
+            </span>
+          </div>
+          <p className="mb-2 text-[11px] text-ink-muted">{ultimaResumo ?? partidaTexto}</p>
           {ajusteRecuperacao && ajusteRecuperacao.reduzirSeries > 0 && totalSeries > 2 && (
             <p className="mb-2 text-[11px] text-brand">
               Recuperação baixa: se precisar, {totalSeries - ajusteRecuperacao.reduzirSeries} séries bastam hoje.
             </p>
           )}
-          {exercicio.notas && (
-            <div className="mb-3">
-              <button
-                type="button"
-                onClick={() => setDicasAbertas((v) => !v)}
-                className="flex min-h-11 items-center gap-1 text-[11px] text-ink-faint"
-                aria-expanded={dicasAbertas}
-              >
-                <ChevronDown
-                  aria-hidden="true"
-                  size={ICON.sm}
-                  className={cn("transition-transform duration-200", dicasAbertas && "rotate-180")}
-                />
-                <Lightbulb aria-hidden="true" size={ICON.sm} /> Notas
-              </button>
-              {dicasAbertas && <p className="mt-1.5 text-sm text-ink-muted">{exercicio.notas}</p>}
-            </div>
+          {exercicio.notas && dicasAbertas && (
+            <p className="mb-3 flex gap-2 rounded-lg bg-base-700 px-3 py-2 text-sm text-ink-muted">
+              <Lightbulb aria-hidden="true" size={ICON.sm} className="mt-0.5 shrink-0 text-ink-faint" />
+              {exercicio.notas}
+            </p>
           )}
-          <p className="mb-2 text-[11px] text-brand">{ultimaResumo ?? partidaTexto}</p>
           {sugestao && (
             <button
               type="button"
@@ -322,24 +314,11 @@ export function ExercicioCard({
                 <span className="block text-xs font-semibold text-brand">
                   Hoje: {String(sugestao.cargaKg).replace(".", ",")} kg × {sugestao.repsAlvo}
                 </span>
-                <span className="block text-[11px] text-ink-muted">{sugestao.motivo}</span>
+                <span className="block truncate text-[11px] text-ink-muted">{sugestao.motivo}</span>
               </span>
               <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-brand">
                 usar <ArrowRight aria-hidden="true" size={ICON.xs} />
               </span>
-            </button>
-          )}
-          {onConsultarCoach && (
-            <button
-              type="button"
-              onClick={() => onConsultarCoach(exercicio)}
-              className="mb-2 flex min-h-11 w-full items-center justify-between gap-2 rounded-lg border border-brand/25 bg-brand-soft px-3 py-2 text-left"
-            >
-              <span className="flex items-center gap-2 text-xs font-semibold text-brand">
-                <Sparkles aria-hidden="true" size={ICON.sm} className="shrink-0" />
-                BioFIT Coach
-              </span>
-              <span className="text-[11px] text-ink-muted">Ajuste de carga ou máquina ocupada</span>
             </button>
           )}
 
@@ -369,23 +348,9 @@ export function ExercicioCard({
             </div>
           )}
 
-          <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-[11px] text-ink-faint">
-              {feitas}/{totalSeries} séries{e1rmHoje ? ` · e1RM hoje ${e1rmHoje}` : ""}
-            </span>
-            <button
-              type="button"
-              onClick={() => setSeriesIndividuais((v) => !v)}
-              className="toque flex min-h-11 items-center gap-1 text-[11px] font-medium text-ink-muted hover:text-ink"
-            >
-              {seriesIndividuais ? (
-                <Layers aria-hidden="true" size={ICON.xs} />
-              ) : (
-                <ListOrdered aria-hidden="true" size={ICON.xs} />
-              )}
-              {seriesIndividuais ? "Usar 1 campo para todas" : "Ajustar série por série"}
-            </button>
-          </div>
+          <p className="mb-1.5 text-[11px] text-ink-faint">
+            {feitas}/{totalSeries} séries{e1rmHoje ? ` · e1RM hoje ${e1rmHoje}` : ""}
+          </p>
 
           {seriesIndividuais ? (
             <div className="grid grid-cols-[1.25rem_1fr_1fr_auto] items-center gap-x-2.5 gap-y-2 text-xs">
