@@ -28,7 +28,12 @@ export async function obterToken(chave: string): Promise<string> {
     cache: "no-store",
   });
   if (!res.ok) {
-    const dica = res.status === 401 || res.status === 403 ? " (chave inválida ou expirada: gere outra no Garmin Connect)" : "";
+    const dica =
+      res.status === 401 || res.status === 403
+        ? " (chave inválida ou expirada: gere outra no Garmin Connect)"
+        : res.status === 429
+          ? " (limite de requisições da Garmin: aguarde alguns minutos)"
+          : "";
     throw new ErroGarmin(res.status, `Troca de token falhou: HTTP ${res.status}${dica}`);
   }
   const corpo = (await res.text()).trim();
@@ -45,14 +50,30 @@ export async function obterToken(chave: string): Promise<string> {
   return corpo;
 }
 
+const dormir = (ms: number) => (ms > 0 ? new Promise<void>((r) => setTimeout(r, ms)) : Promise.resolve());
+
+// 429 = limite de requisições da chave. Espera (Retry-After, senão 2 s, 4 s) e tenta de novo até
+// 3 vezes; persistindo, falha com status 429 para quem chama parar de insistir.
+function esperaRetry(res: Response, tentativa: number): number {
+  const ra = Number(res.headers.get("retry-after"));
+  if (Number.isFinite(ra) && ra > 0) return Math.min(ra * 1000, 8000);
+  return Number(process.env.GARMIN_RETRY_MS ?? 2000) * tentativa;
+}
+
 export async function buscar(caminho: string, token: string): Promise<unknown> {
-  const res = await fetch(`${base()}${caminho}`, {
-    headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-    cache: "no-store",
-  });
-  if (!res.ok) throw new ErroGarmin(res.status, `HTTP ${res.status} em ${caminho.split("?")[0]}`);
-  const texto = await res.text();
-  return texto ? JSON.parse(texto) : null;
+  for (let tentativa = 1; ; tentativa++) {
+    const res = await fetch(`${base()}${caminho}`, {
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (res.status === 429 && tentativa < 3) {
+      await dormir(esperaRetry(res, tentativa));
+      continue;
+    }
+    if (!res.ok) throw new ErroGarmin(res.status, `HTTP ${res.status} em ${caminho.split("?")[0]}`);
+    const texto = await res.text();
+    return texto ? JSON.parse(texto) : null;
+  }
 }
 
 export const caminhos = {
@@ -60,6 +81,10 @@ export const caminhos = {
   hrv: (d: string) => `/hrv-service/hrv/${d}`,
   resumo: (d: string) => `/usersummary-service/v2/dailysummaries?startDate=${d}&endDate=${d}`,
   bodyBattery: (d: string) => `/wellness-service/wellness/bodyBattery/reports/daily?startDate=${d}&endDate=${d}`,
+  // Intervalo: 1 chamada para vários dias (recuperação de histórico respeitando o limite da chave).
+  resumoIntervalo: (ini: string, fim: string) => `/usersummary-service/v2/dailysummaries?startDate=${ini}&endDate=${fim}`,
+  passosIntervalo: (ini: string, fim: string) => `/usersummary-service/stats/steps/daily/${ini}/${fim}`,
+  bodyBatteryIntervalo: (ini: string, fim: string) => `/wellness-service/wellness/bodyBattery/reports/daily?startDate=${ini}&endDate=${fim}`,
   // Opcional: o resumo diário v2 não traz passos. Se a chave não tiver acesso, vira "falha" no log.
   passos: (d: string) => `/usersummary-service/stats/steps/daily/${d}/${d}`,
   atividades: (ini: string, fim: string, limite = 30) => `/activitylist-service/activities/search/activities?start=0&limit=${limite}&startDate=${ini}&endDate=${fim}`,

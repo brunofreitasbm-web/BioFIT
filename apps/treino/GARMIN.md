@@ -25,11 +25,19 @@ Fluxo: Vercel Cron (07:00 em Belém) → `GET /api/garmin/sync` → troca a chav
 
 ### Recuperar o histórico
 
-`GET /api/garmin/sync?dias=N` (N de 1 a 35; o cron usa 2) busca os últimos N dias e grava pelo mesmo merge: repetir é seguro, não apaga nem duplica. Exige `Authorization: Bearer <CRON_SECRET>`. Útil para preencher dias gravados antes de uma correção do conversor. Exemplo (no terminal; a senha não vai na URL):
+`GET /api/garmin/sync?dias=N&ate=AAAA-MM-DD` (N de 1 a 35, padrão 2; `ate` padrão hoje) busca N dias terminando em `ate`. Exige `Authorization: Bearer <CRON_SECRET>`; repetir é seguro (o merge não apaga nem duplica).
+
+**A chave tem limite de requisições (HTTP 429).** Com mais de 3 dias a rota busca resumo, passos e Body Battery em UMA chamada de intervalo cada, e só sono e VFC por dia, com pausa. Se o 429 persistir, ela para, grava o que já tem e responde `parcial: true` (e `semSonoEVfcAPartirDe`). Depois do bloqueio, espere ~3 minutos.
+
+Para 35 dias, em pedaços e com intervalo de ~2 minutos entre eles:
 
 ```
-curl -H "Authorization: Bearer $CRON_SECRET" "https://biofit-treino.vercel.app/api/garmin/sync?dias=35"
+curl -H "Authorization: Bearer $CRON_SECRET" "https://biofit-treino.vercel.app/api/garmin/sync?dias=12"
+curl -H "Authorization: Bearer $CRON_SECRET" "https://biofit-treino.vercel.app/api/garmin/sync?dias=12&ate=AAAA-MM-DD"   # 12 dias antes de hoje
+curl -H "Authorization: Bearer $CRON_SECRET" "https://biofit-treino.vercel.app/api/garmin/sync?dias=11&ate=AAAA-MM-DD"   # 24 dias antes de hoje
 ```
+
+Nunca rode isso em laço curto (por exemplo, a cada 20 segundos): foi assim que o limite foi estourado.
 
 ### Limites e cuidados
 

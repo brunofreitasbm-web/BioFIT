@@ -110,6 +110,8 @@ describe("GET /api/garmin/sync", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(`${DIA}T10:00:00Z`)); // 07:00 em Belém
     vi.stubEnv("CRON_SECRET", CRON);
+    vi.stubEnv("GARMIN_SYNC_PAUSA_MS", "0");
+    vi.stubEnv("GARMIN_RETRY_MS", "0");
     vi.stubEnv("GARMIN_PERSONAL_API_KEY", "CHAVE-SECRETA");
     vi.stubEnv("SUPABASE_URL", "https://fake.supabase.co");
     vi.stubEnv("SUPABASE_ANON_KEY", "anon");
@@ -118,9 +120,12 @@ describe("GET /api/garmin/sync", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
-  function garminFalso(falhaEm?: string) {
+  // `limite429`: depois de tantas chamadas de sono, a Garmin passa a responder 429 para sempre.
+  function garminFalso(falhaEm?: string, limite429?: { sonoAte: number }) {
+    let sonos = 0;
     const f = vi.fn(async (url: string, init?: { body?: string }) => {
       const u = String(url);
+      if (limite429 && u.includes("dailySleep") && ++sonos > limite429.sonoAte) return new Response("x", { status: 429 });
       if (u.includes("/token")) return new Response("tok.en.jwt");
       if (u.includes("biofit_garmin_put")) return new Response(JSON.stringify({ diario: 2, treinos: 1 }));
       if (falhaEm && u.includes(falhaEm)) return new Response("x", { status: 500 });
@@ -177,6 +182,61 @@ describe("GET /api/garmin/sync", () => {
     expect(ativ).toContain("limit=30");
     const put = f.mock.calls.find((c) => String(c[0]).includes("biofit_garmin_put"))!;
     expect(JSON.parse(put[1]!.body!).p_diario.map((d: { data: string }) => d.data)).toEqual(["2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23", "2026-10-24"]);
+  });
+
+  it("com mais de 3 dias usa UMA chamada de intervalo para resumo, passos e Body Battery", async () => {
+    const f = garminFalso();
+    await GET(new Request("http://x/api/garmin/sync?dias=6", { headers: { authorization: `Bearer ${CRON}` } }));
+    const urls = f.mock.calls.map((c) => String(c[0]));
+    expect(urls.filter((u) => u.includes("dailysummaries"))).toEqual([expect.stringContaining("startDate=2026-10-19&endDate=2026-10-24")]);
+    expect(urls.filter((u) => u.includes("stats/steps"))).toHaveLength(1);
+    expect(urls.filter((u) => u.includes("bodyBattery/reports"))).toHaveLength(1);
+    expect(urls.filter((u) => u.includes("dailySleep"))).toHaveLength(6); // sono e VFC continuam por dia
+    expect(urls.filter((u) => u.includes("/hrv-service/"))).toHaveLength(6);
+    // até 3 dias continua por dia (é o que o cron faz)
+    f.mockClear();
+    await GET(req(`Bearer ${CRON}`));
+    expect(f.mock.calls.map((c) => String(c[0])).filter((u) => u.includes("dailysummaries"))).toHaveLength(2);
+  });
+
+  it("?ate= recupera uma janela anterior e rejeita data inválida ou futura", async () => {
+    const f = garminFalso();
+    const r = await GET(new Request("http://x/api/garmin/sync?dias=4&ate=2026-10-20", { headers: { authorization: `Bearer ${CRON}` } }));
+    expect(await r.json()).toMatchObject({ ok: true, dias: 4, ate: "2026-10-20" });
+    const put = f.mock.calls.find((c) => String(c[0]).includes("biofit_garmin_put"))!;
+    expect(JSON.parse(put[1]!.body!).p_diario.map((d: { data: string }) => d.data)).toEqual(["2026-10-17", "2026-10-18", "2026-10-19", "2026-10-20"]);
+    f.mockClear();
+    for (const v of ["2026-10-25", "2026-13-01", "ontem", "2026-10-2"]) {
+      const bad = await GET(new Request(`http://x/api/garmin/sync?dias=4&ate=${v}`, { headers: { authorization: `Bearer ${CRON}` } }));
+      expect(bad.status).toBe(400);
+    }
+    expect(f).not.toHaveBeenCalled();
+  });
+
+  it("429 persistente: para de buscar sono/VFC, grava o que já tem e avisa que foi parcial", async () => {
+    const f = garminFalso(undefined, { sonoAte: 2 });
+    const r = await GET(new Request("http://x/api/garmin/sync?dias=6", { headers: { authorization: `Bearer ${CRON}` } }));
+    const j = await r.json();
+    expect(r.status).toBe(200);
+    expect(j).toMatchObject({ ok: true, parcial: true, semSonoEVfcAPartirDe: "2026-10-22" });
+    expect(j.falhas.join()).toContain("429");
+    // 2 sonos ok + 3 tentativas do 3º (1 + 2 retries) e nenhuma chamada de sono depois
+    const sonos = f.mock.calls.map((c) => String(c[0])).filter((u) => u.includes("dailySleep"));
+    expect(sonos.length).toBe(5);
+    // as linhas dos 6 dias saem mesmo assim (resumo/passos/Body Battery vieram dos intervalos)
+    const put = f.mock.calls.find((c) => String(c[0]).includes("biofit_garmin_put"))!;
+    expect(JSON.parse(put[1]!.body!).p_diario).toHaveLength(6);
+  });
+
+  it("um 429 isolado é tentado de novo e não vira falha", async () => {
+    let n = 0;
+    const base = garminFalso();
+    const original = globalThis.fetch as unknown as (u: string, i?: { body?: string }) => Promise<Response>;
+    vi.stubGlobal("fetch", vi.fn(async (u: string, i?: { body?: string }) => (String(u).includes("dailySleep") && ++n === 1 ? new Response("x", { status: 429 }) : original(u, i))));
+    const j = await (await GET(req(`Bearer ${CRON}`))).json();
+    expect(j).toMatchObject({ ok: true, parcial: false });
+    expect(j.falhas).toEqual([]);
+    expect(base).toBeDefined();
   });
 
   it("dias inválidos viram 400 sem chamar a Garmin", async () => {
