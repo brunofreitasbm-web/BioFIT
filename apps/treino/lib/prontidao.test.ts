@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { avaliarProntidao, deslocarRir, type DiaGarmin } from "./prontidao";
+import { avaliarProntidao, deslocarRir, diasDaJanela, nivelBodyBattery, nivelSono, nivelTendencia, type DiaGarmin } from "./prontidao";
 
 const HOJE = "2026-10-24";
 const dia = (o: Partial<DiaGarmin> = {}): DiaGarmin => ({ data: HOJE, sonoHoras: 7.5, sonoScore: 80, bodyBatteryAcordar: 85, ...o });
@@ -54,5 +54,36 @@ describe("deslocarRir", () => {
     expect(deslocarRir("1-2", 1)).toBe("2-3");
     expect(deslocarRir("0-1", 1)).toBe("1-2");
     expect(deslocarRir("0 na última", 1)).toBe("0 na última");
+  });
+});
+
+describe("status por métrica", () => {
+  it("sono e Body Battery usam os mesmos limiares da prontidão", () => {
+    expect(nivelSono(4.5, null)).toBe("alerta");
+    expect(nivelSono(5.5, 80)).toBe("atencao");
+    expect(nivelSono(7.5, 45)).toBe("alerta");
+    expect(nivelSono(6, 60)).toBe("bom");
+    expect(nivelSono(null, null)).toBe("sem_dado");
+    expect(nivelBodyBattery(25)).toBe("alerta");
+    expect(nivelBodyBattery(45)).toBe("atencao");
+    expect(nivelBodyBattery(50)).toBe("bom");
+    expect(nivelBodyBattery(null)).toBe("sem_dado");
+  });
+
+  const semana = (hrv: number[], fc: number[]): DiaGarmin[] =>
+    hrv.map((h, i) => ({ data: `2026-10-${String(17 + i).padStart(2, "0")}`, sonoHoras: 7, sonoScore: 80, bodyBatteryAcordar: 80, hrvMs: h, fcRepouso: fc[i] }));
+
+  it("VFC baixa e FC alta contra a própria média; sem histórico não opina", () => {
+    const base = semana([50, 50, 50, 50, 50, 50, 50, 36], [50, 50, 50, 50, 50, 50, 50, 59]); // hoje = 24
+    expect(nivelTendencia(base, "2026-10-24", "hrvMs")).toBe("alerta");
+    expect(nivelTendencia(base, "2026-10-24", "fcRepouso")).toBe("alerta");
+    const ok = semana([50, 50, 50, 50, 50, 50, 50, 49], [50, 50, 50, 50, 50, 50, 50, 51]);
+    expect(nivelTendencia(ok, "2026-10-24", "hrvMs")).toBe("bom");
+    expect(nivelTendencia(ok.slice(-3), "2026-10-24", "hrvMs")).toBe("sem_dado");
+    expect(nivelTendencia([], "2026-10-24", "hrvMs")).toBe("sem_dado");
+  });
+
+  it("diasDaJanela renomeia bodyBattery para bodyBatteryAcordar", () => {
+    expect(diasDaJanela([{ data: "d", sonoHoras: 1, sonoScore: 2, bodyBattery: 3, hrvMs: 4, fcRepouso: 5 }])[0]).toMatchObject({ bodyBatteryAcordar: 3, hrvMs: 4, fcRepouso: 5 });
   });
 });
