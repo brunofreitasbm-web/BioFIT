@@ -1,0 +1,290 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tokens de cor como triplas RGB (consumidas em tailwind.config.ts com <alpha-value>).
+   O tema escuro segue o sistema (prefers-color-scheme). Pares texto/fundo validados a
+   >= 4,5:1 (texto) e >= 3:1 (ícones/UI) em cada tema separadamente. */
+:root {
+  color-scheme: light dark;
+
+  --c-base-950: 20 22 26;
+  --c-base-900: 244 245 247;
+  --c-base-800: 255 255 255;
+  --c-base-700: 241 242 245;
+  --c-base-600: 230 232 236;
+  --c-base-500: 216 219 225;
+  --c-line: 226 228 233;
+  --c-ink: 26 29 35;
+  --c-ink-muted: 91 96 108;
+  --c-ink-faint: 101 107 120;
+  --c-brand: 61 99 224;
+  --c-brand-soft: 233 240 255;
+  --c-brand-hover: 47 79 192;
+  --c-accent: 18 121 58;
+  --c-accent-soft: 231 246 236;
+  --c-warn: 163 90 0;
+  --c-danger: 194 45 63;
+  --c-danger-soft: 252 234 236;
+  --c-on-solid: 255 255 255;
+
+  --shadow-panel: 0 1px 2px 0 rgba(20, 22, 26, 0.04), 0 8px 24px -12px rgba(20, 22, 26, 0.12);
+  --shadow-nav: 0 -1px 8px rgba(20, 22, 26, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Superfícies sobem de luminosidade com a elevação: página < card < campo < trilho. */
+    --c-base-950: 20 22 26;
+    --c-base-900: 13 15 20;
+    --c-base-800: 22 25 32;
+    --c-base-700: 30 34 43;
+    --c-base-600: 41 46 58;
+    --c-base-500: 55 61 76;
+    --c-line: 44 49 61;
+    --c-ink: 235 237 241;
+    --c-ink-muted: 164 170 183;
+    --c-ink-faint: 136 143 158;
+    /* Preenchimentos ficam mais claros no escuro; o texto sobre eles inverte (on-solid). */
+    --c-brand: 122 150 255;
+    --c-brand-soft: 27 36 66;
+    --c-brand-hover: 160 181 255;
+    --c-accent: 61 204 117;
+    --c-accent-soft: 18 40 28;
+    --c-warn: 240 162 58;
+    --c-danger: 255 107 122;
+    --c-danger-soft: 52 24 30;
+    --c-on-solid: 10 12 18;
+
+    /* Sombra some sobre fundo escuro: ganha um fio de luz no topo para separar o card. */
+    --shadow-panel: inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 8px 24px -12px rgba(0, 0, 0, 0.7);
+    --shadow-nav: 0 -1px 0 rgba(255, 255, 255, 0.04), 0 -8px 24px -12px rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* Tema preto e laranja (era o visual da branch Garmin/Coach IA). Só sobrescreve os tokens acima,
+   então nenhum componente muda de classe. Ativado por data-tema="laranja" no <html> (layout.tsx);
+   sem o atributo, o app volta ao azul claro/escuro do sistema. Sempre escuro, em qualquer aparelho.
+   Contrastes medidos contra o card (base-800): ink 15,5:1 · muted 7,8:1 · faint 5,5:1 ·
+   brand 6,6:1 · accent 8,7:1 · danger 6,2:1; texto sobre brand (on-solid) 7,3:1. */
+:root[data-tema="laranja"] {
+  color-scheme: dark;
+
+  --c-base-950: 10 12 15;
+  --c-base-900: 15 18 22;
+  --c-base-800: 24 28 34;
+  --c-base-700: 34 39 48;
+  --c-base-600: 44 50 59;
+  --c-base-500: 58 65 76;
+  --c-line: 51 58 68;
+  --c-ink: 242 244 247;
+  --c-ink-muted: 168 176 188;
+  --c-ink-faint: 139 147 160;
+  --c-brand: 255 122 26;
+  --c-brand-soft: 51 33 15;
+  --c-brand-hover: 255 143 61;
+  --c-accent: 52 210 122;
+  --c-accent-soft: 17 41 27;
+  --c-warn: 240 162 58;
+  --c-danger: 255 107 122;
+  --c-danger-soft: 51 22 27;
+  --c-on-solid: 20 16 12;
+
+  --shadow-panel: inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 8px 24px -12px rgba(0, 0, 0, 0.7);
+  --shadow-nav: 0 -1px 0 rgba(255, 255, 255, 0.04), 0 -8px 24px -12px rgba(0, 0, 0, 0.7);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: theme("colors.base.900");
+  color: theme("colors.ink.DEFAULT");
+  font-feature-settings: "tnum" 1;
+  overscroll-behavior-y: none;
+}
+
+/* Títulos e números de destaque usam a versão condensada. */
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+}
+
+::selection {
+  background: theme("colors.brand.soft");
+  color: theme("colors.brand.hover");
+}
+
+input,
+select,
+textarea {
+  outline: none;
+  caret-color: theme("colors.brand.DEFAULT");
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  box-shadow: 0 0 0 2px theme("colors.brand.DEFAULT");
+}
+
+/* Anel de foco temático — substitui o outline azul de sistema em todo controle
+   interativo (botões, links, cards clicáveis), mantendo o padrão de acessibilidade. */
+:focus-visible {
+  outline: 2px solid theme("colors.brand.DEFAULT");
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: theme("colors.base.600");
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: theme("colors.line");
+}
+
+/* ---------- Feedback e movimento ---------- */
+
+/* Easing exponencial de saída: começa rápido e assenta suave, sem "quicar". */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Campo numérico do registro de série: grande o bastante para o polegar, 16px+ (iOS não
+   dá zoom ao focar) e números tabulares em destaque, já que carga e reps são o dado central. */
+.campo-serie {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 12px;
+  border: 1px solid theme("colors.line");
+  background: theme("colors.base.700");
+  padding: 0 10px;
+  text-align: center;
+  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: theme("colors.ink.DEFAULT");
+  transition: border-color 150ms var(--ease-out), background-color 150ms var(--ease-out),
+    box-shadow 150ms var(--ease-out);
+}
+.campo-serie::placeholder {
+  color: theme("colors.ink.faint");
+  font-weight: 500;
+}
+.campo-serie:focus {
+  background: theme("colors.base.800");
+  border-color: theme("colors.brand.DEFAULT");
+}
+
+/* Série confirmada: o check "estoura" uma vez, rápido, e assenta. */
+@keyframes confirmar-pop {
+  0% {
+    transform: scale(0.82);
+  }
+  55% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.anim-confirmar {
+  animation: confirmar-pop 320ms var(--ease-out);
+}
+
+/* Entrada do conteúdo expandido do card: sobe poucos px com fade. */
+@keyframes revelar {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.anim-revelar {
+  animation: revelar 220ms var(--ease-out);
+}
+
+/* PR: o selo entra com um leve brilho que se dissipa — o único momento "festivo" do app. */
+@keyframes pr-brilho {
+  0% {
+    transform: scale(0.7);
+    box-shadow: 0 0 0 0 rgb(var(--c-accent) / 0.45);
+  }
+  60% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgb(var(--c-accent) / 0);
+  }
+}
+.anim-pr {
+  animation: pr-brilho 700ms var(--ease-out);
+}
+
+/* ImagemExercicio: a foto da posição final aparece e some por cima da inicial. */
+@keyframes alternar-foto {
+  0%,
+  42% {
+    opacity: 0;
+  }
+  50%,
+  92% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.anim-alternar-foto {
+  animation: alternar-foto 2.4s ease-in-out infinite;
+}
+
+/* Feedback de toque: todo controle pressionável afunda levemente. */
+.toque {
+  transition: transform 120ms var(--ease-out), background-color 150ms var(--ease-out),
+    border-color 150ms var(--ease-out), color 150ms var(--ease-out), opacity 150ms var(--ease-out);
+}
+.toque:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* Barra do timer de descanso (TimerDescanso) fica fixa acima da navegação. */
+body[data-descanso] main {
+  padding-bottom: 11rem;
+}
