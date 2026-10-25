@@ -60,6 +60,8 @@ export const caminhos = {
   hrv: (d: string) => `/hrv-service/hrv/${d}`,
   resumo: (d: string) => `/usersummary-service/v2/dailysummaries?startDate=${d}&endDate=${d}`,
   bodyBattery: (d: string) => `/wellness-service/wellness/bodyBattery/reports/daily?startDate=${d}&endDate=${d}`,
+  // Opcional: o resumo diário v2 não traz passos. Se a chave não tiver acesso, vira "falha" no log.
+  passos: (d: string) => `/usersummary-service/stats/steps/daily/${d}/${d}`,
   atividades: (ini: string, fim: string) => `/activitylist-service/activities/search/activities?start=0&limit=30&startDate=${ini}&endDate=${fim}`,
 };
 
@@ -121,6 +123,7 @@ export interface RespostasDia {
   hrv: unknown;
   resumo: unknown;
   bodyBattery: unknown;
+  passos?: unknown;
 }
 
 // Body Battery vem como pares [epoch_ms, valor]. "Acordar" = maior valor antes do meio-dia
@@ -147,10 +150,13 @@ function bodyBattery(resp: unknown, dia: string): { max: number | null; acordar:
 
 export function converterDia(dia: string, r: RespostasDia): LinhaDiario | null {
   const bb = bodyBattery(r.bodyBattery, dia);
+  // Formato real do resumo v2 (visto em produção): data[].heartRate.restingValue, data[].stress.avgLevel,
+  // data[].bodyBattery.maxValue. Os nomes antigos do sync do PC ficam de reserva.
+  const resumo = doDia(r.resumo, dia);
 
   const segSono = num(g(r.sono, "dailySleepDTO", "sleepTimeSeconds") ?? g(r.sono, "sleepTimeSeconds"));
   const statusBruto = g(r.hrv, "hrvSummary", "status") ?? g(r.hrv, "status");
-  const estresse = achar(r.resumo, "averageStressLevel", "avgStressLevel", "overallStressLevel");
+  const estresse = num(g(resumo, "stress", "avgLevel")) ?? achar(resumo, "averageStressLevel", "avgStressLevel");
 
   const linha: LinhaDiario = {
     data: dia,
@@ -158,13 +164,13 @@ export function converterDia(dia: string, r: RespostasDia): LinhaDiario | null {
     // "NONE" é a Garmin dizendo "sem classificação": vira nulo para o cartão mostrar os ms.
     vfc_status: typeof statusBruto === "string" && statusBruto !== "NONE" ? statusBruto.slice(0, 60) : null,
     vfc_media_semanal_ms: num(g(r.hrv, "hrvSummary", "weeklyAvg") ?? g(r.hrv, "weeklyAvg")),
-    fc_repouso_bpm: inteiro(achar(r.resumo, "restingHeartRate", "restingHeartRateInBeatsPerMinute", "lastSevenDaysAvgRestingHeartRate")),
+    fc_repouso_bpm: inteiro(num(g(resumo, "heartRate", "restingValue")) ?? achar(resumo, "restingHeartRate", "restingHeartRateInBeatsPerMinute")),
     sono_minutos: segSono === null ? null : Math.round(segSono / 60),
     sono_score: inteiro(g(r.sono, "dailySleepDTO", "sleepScores", "overall", "value") ?? g(r.sono, "sleepScores", "overall", "value")),
-    body_battery_acordar: inteiro(achar(r.resumo, "bodyBatteryAtWakeTime") ?? bb.acordar),
-    body_battery_max: inteiro(achar(r.resumo, "bodyBatteryHighestValue") ?? bb.max),
+    body_battery_acordar: inteiro(achar(resumo, "bodyBatteryAtWakeTime") ?? bb.acordar),
+    body_battery_max: inteiro(num(g(resumo, "bodyBattery", "maxValue")) ?? achar(resumo, "bodyBatteryHighestValue") ?? bb.max),
     estresse_medio: estresse !== null && estresse >= 0 ? Math.round(estresse) : null,
-    passos: inteiro(achar(r.resumo, "totalSteps", "steps")),
+    passos: inteiro(achar(r.passos, "totalSteps", "steps") ?? achar(resumo, "totalSteps")),
   };
   return Object.entries(linha).some(([k, v]) => k !== "data" && v !== null) ? linha : null;
 }
