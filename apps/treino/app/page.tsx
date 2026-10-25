@@ -17,7 +17,7 @@ import { AlertTriangle, CalendarClock, Coffee, CheckCircle2 } from "lucide-react
 import { ICON } from "@/lib/icones";
 import { useDadosAtualizados } from "@/hooks/useDadosAtualizados";
 import { AiCoachModal } from "@/components/ai/AiCoachModal";
-import { AiCoachFloatingButton } from "@/components/ai/AiCoachFloatingButton";
+import { DetalhesDoDia } from "@/components/DetalhesDoDia";
 import { GarminCard, type GarminBiometria } from "@/components/GarminCard";
 import { ProntidaoBanner } from "@/components/ProntidaoBanner";
 import { avaliarProntidao, diasDaJanela } from "@/lib/prontidao";
@@ -104,6 +104,8 @@ export default function HojePage() {
     [sessaoEfetiva, mesoAtual],
   );
 
+  const aderenciaVisivel = aderencia && hojeISO <= addDiasISO(aderencia.fim, 7) ? aderencia : null;
+  const alertaAderencia = aderenciaVisivel?.decisao === "CAIR_UPPER_LOWER";
   const insightHoje = status ? gerarInsightHoje(status, hojeISO, sessaoEfetiva) : null;
   const insightProximo = status ? gerarInsightProximo(sessaoEfetiva, sessaoSugerida, status.meso) : null;
 
@@ -250,79 +252,69 @@ export default function HojePage() {
         </div>
       )}
 
-      <SeletorSessao hojeISO={hojeISO} sessaoSugerida={sessaoSugerida} valorAtual={escolha} onEscolher={escolher} />
-
-      {!sessaoEfetiva && (
-        <div className="mb-4 flex flex-col items-center justify-center rounded-xl border border-line bg-base-800 p-5 text-center shadow-panel">
-          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
-            <Coffee size={ICON.lg} />
-          </div>
-          <h2 className="text-base font-semibold text-ink">Recuperação Muscular Ativa</h2>
-          <p className="mt-1 text-xs text-ink-muted">
-            O descanso planejado é fundamental para a hipertrofia e reconstrução tecidual. Mantenha a hidratação e priorize boas horas de sono!
-          </p>
-        </div>
-      )}
-
-      <GarminCard biometria={garminBiometria} carregando={garminCarregando} prontidao={prontidao} dias={diasGarmin} hojeISO={hojeISO} />
-
       {sessaoEfetiva && status && <TreinoTimer key={`timer:${versaoDados}`} hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} />}
 
-      {status && (
-        <ResumoPrograma
-          status={status}
-          aderencia={aderencia && hojeISO <= addDiasISO(aderencia.fim, 7) ? aderencia : null}
-          insight={insightHoje}
-        />
-      )}
       {status?.isDeload && sessaoEfetiva && (
-        <div className="mb-4 flex items-start gap-2 rounded-xl border border-danger/30 bg-danger-soft px-3 py-2.5">
-          <AlertTriangle aria-hidden="true" size={ICON.sm} className="mt-0.5 shrink-0 text-danger" />
-          <p className="text-xs font-medium text-danger">
-            Rodada de deload — metade das séries, mesmas reps, carga −10%, longe da falha. Depois dela, todos os
-            exercícios trocam.
-          </p>
-        </div>
+        <p className="mb-3 flex items-center gap-2 rounded-xl border border-danger/30 bg-danger-soft px-3 py-2.5 text-xs font-semibold text-danger">
+          <AlertTriangle aria-hidden="true" size={ICON.sm} className="shrink-0" />
+          Deload: metade das séries, carga −10%, longe da falha
+        </p>
       )}
 
       {sessaoEfetiva && status && <ProntidaoBanner prontidao={prontidao} ignorado={ignorarProntidao} onAlternar={alternarProntidao} />}
 
-      {sessaoEfetiva && status && (
-        <>
-          <section className="mb-4">
-            <h2 className="mb-2.5 text-base font-bold tracking-tight text-ink">{SESSAO_LABEL[sessaoEfetiva]}</h2>
-            <div className="space-y-2">
-              {exercicios.map((ex) => (
-                <ExercicioCard
-                  key={`${ex.id}:${versaoDados}`}
-                  exercicio={ex}
-                  status={status}
-                  data={hojeISO}
-                  expandido={exercicioAbertoId === ex.id}
-                  onToggleExpandido={() => handleToggleExercicio(ex.id)}
-                  onProgresso={handleProgresso}
-                  onConsultarCoach={handleAbrirCoach}
-                  ajusteRecuperacao={ajusteRecuperacao}
-                />
-              ))}
-            </div>
-          </section>
-        </>
-      )}
-
-      <BikeIndoorCard key={`bike:${versaoDados}`} hojeISO={hojeISO} />
-
-      {insightProximo && (
-        <div className="mt-2 flex gap-3 rounded-xl border border-line bg-base-800 p-3 shadow-panel">
-          <CalendarClock aria-hidden="true" size={ICON.md} className="mt-0.5 shrink-0 text-ink-muted" />
+      {!sessaoEfetiva && (
+        <div className="mb-4 flex items-center gap-3 rounded-xl border border-line bg-base-800 p-4 shadow-panel">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand">
+            <Coffee aria-hidden="true" size={ICON.md} />
+          </div>
           <div>
-            <p className="text-sm font-semibold text-ink">{insightProximo.titulo}</p>
-            <p className="mt-1 text-sm text-ink-muted">{insightProximo.mensagem}</p>
+            <h2 className="text-base font-semibold text-ink">Dia de recuperação</h2>
+            <p className="text-xs text-ink-muted">Hidratação e sono contam como treino hoje.</p>
           </div>
         </div>
       )}
 
-      <AiCoachFloatingButton onClick={() => handleAbrirCoach()} />
+      {sessaoEfetiva && status && (
+        <section className="mb-4">
+          <h2 className="mb-2.5 text-base font-bold tracking-tight text-ink">{SESSAO_LABEL[sessaoEfetiva]}</h2>
+          <div className="space-y-2">
+            {exercicios.map((ex) => (
+              <ExercicioCard
+                key={`${ex.id}:${versaoDados}`}
+                exercicio={ex}
+                status={status}
+                data={hojeISO}
+                expandido={exercicioAbertoId === ex.id}
+                onToggleExpandido={() => handleToggleExercicio(ex.id)}
+                onProgresso={handleProgresso}
+                onConsultarCoach={handleAbrirCoach}
+                ajusteRecuperacao={ajusteRecuperacao}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <DetalhesDoDia forcarAberto={!sessaoEfetiva || alertaAderencia}>
+        <SeletorSessao hojeISO={hojeISO} sessaoSugerida={sessaoSugerida} valorAtual={escolha} onEscolher={escolher} />
+
+        <GarminCard biometria={garminBiometria} carregando={garminCarregando} prontidao={prontidao} dias={diasGarmin} hojeISO={hojeISO} />
+
+        {status && <ResumoPrograma status={status} aderencia={aderenciaVisivel} insight={insightHoje} />}
+
+        <BikeIndoorCard key={`bike:${versaoDados}`} hojeISO={hojeISO} />
+
+        {insightProximo && (
+          <div className="mt-2 flex gap-3 rounded-xl border border-line bg-base-800 p-3 shadow-panel">
+            <CalendarClock aria-hidden="true" size={ICON.md} className="mt-0.5 shrink-0 text-ink-muted" />
+            <div>
+              <p className="text-sm font-semibold text-ink">{insightProximo.titulo}</p>
+              <p className="mt-1 text-sm text-ink-muted">{insightProximo.mensagem}</p>
+            </div>
+          </div>
+        )}
+      </DetalhesDoDia>
 
       <AiCoachModal
         aberto={coachAberto}
