@@ -49,13 +49,14 @@ export async function GET(req: Request) {
 
   const diario: LinhaDiario[] = [];
   for (const dia of dias) {
-    const [sono, hrv, resumo, bodyBattery] = await Promise.all([
+    const [sono, hrv, resumo, bodyBattery, passos] = await Promise.all([
       tentar("sono", caminhos.sono(dia)),
       tentar("hrv", caminhos.hrv(dia)),
       tentar("resumo", caminhos.resumo(dia)),
       tentar("bodyBattery", caminhos.bodyBattery(dia)),
+      tentar("passos", caminhos.passos(dia)),
     ]);
-    const respostas: RespostasDia = { sono, hrv, resumo, bodyBattery };
+    const respostas: RespostasDia = { sono, hrv, resumo, bodyBattery, passos };
     const linha = converterDia(dia, respostas);
     if (linha) diario.push(linha);
   }

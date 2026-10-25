@@ -41,6 +41,18 @@ describe("converterDia", () => {
     expect(l.estresse_medio).toBeNull();
   });
 
+  it("lê o formato real do resumo v2 (heartRate.restingValue, stress.avgLevel, bodyBattery.maxValue)", () => {
+    const real = { data: [{ calendarDate: DIA, heartRate: { minValue: 40, maxValue: 150, restingValue: 52 }, stress: { avgLevel: 27, maxLevel: 90 }, bodyBattery: { minValue: 10, maxValue: 93, latestValue: 40 }, respiration: { maxValue: 22 } }] };
+    const l = converterDia(DIA, { sono: null, hrv: null, resumo: real, bodyBattery: null })!;
+    // maxValue de heartRate (150) e de respiration não podem contaminar o Body Battery
+    expect(l).toMatchObject({ fc_repouso_bpm: 52, estresse_medio: 27, body_battery_max: 93 });
+  });
+
+  it("passos vêm do endpoint de passos quando existir", () => {
+    const l = converterDia(DIA, { sono: SONO, hrv: null, resumo: null, bodyBattery: null, passos: [{ calendarDate: DIA, totalSteps: 8123 }] })!;
+    expect(l.passos).toBe(8123);
+  });
+
   it("acha os campos do resumo em qualquer nível de aninhamento", () => {
     const aninhado = { allMetrics: { dias: [{ calendarDate: DIA, resumo: { restingHeartRate: 51, totalSteps: 4321, averageStressLevel: 30 } }] } };
     const l = converterDia(DIA, { sono: null, hrv: null, resumo: aninhado, bodyBattery: null })!;
@@ -115,6 +127,7 @@ describe("GET /api/garmin/sync", () => {
       if (u.includes("dailySleep")) return new Response(JSON.stringify(SONO));
       if (u.includes("/hrv-service/")) return new Response(JSON.stringify(HRV));
       if (u.includes("dailysummaries")) return new Response(JSON.stringify(RESUMO));
+      if (u.includes("stats/steps")) return new Response(JSON.stringify([{ calendarDate: DIA, totalSteps: 5000 }]));
       if (u.includes("bodyBattery")) return new Response(JSON.stringify(BB));
       if (u.includes("activities/search")) return new Response(JSON.stringify(ATIV));
       return new Response("", { status: 404 });
