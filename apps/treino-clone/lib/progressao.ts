@@ -1,12 +1,11 @@
 import type { SerieRegistrada } from "./tipos";
 
-// Dupla progressão (aba "Guia"): dentro da faixa de reps, primeiro sobe reps com a mesma
+// Dupla progressão: dentro da faixa de reps, primeiro sobe reps com a mesma
 // carga; quando TODAS as séries batem o topo da faixa, sobe a carga na próxima exposição —
 // menor incremento disponível no superior, +5% no inferior — e volta para o piso da faixa.
 export const INCREMENTO_SUPERIOR_KG = 2.5;
 const INCREMENTO_INFERIOR = 0.05;
 const REDUCAO_FALHA = 0.05; // falhou o piso 2 exposições seguidas → -5%
-const REDUCAO_DELOAD = 0.1; // deload: carga -10%
 
 export interface FaixaReps {
   min: number;
@@ -22,7 +21,7 @@ export interface SugestaoCarga {
 
 export interface OpcoesProgressao {
   inferior: boolean; // membros inferiores: +5% em vez do incremento fixo
-  assistencia: boolean; // Graviton: o número é a ASSISTÊNCIA, progredir = descer
+  assistencia: boolean; // máquina assistida: o número é a ASSISTÊNCIA, progredir = descer
 }
 
 // "6-9" → {6, 9}; "12" → {12, 12}. Faixas em segundos ("30-45 s/lado") não têm
@@ -54,13 +53,12 @@ function faixaTexto(f: FaixaReps): string {
   return f.min === f.max ? `${f.min}` : `${f.min}-${f.max}`;
 }
 
-// Sem histórico do exercício não há sugestão: vale a "Partida (kg)" da planilha.
+// Sem histórico do exercício não há sugestão: ela escolhe a carga na primeira vez.
 export function sugerirProximaCarga(
   repsSlot: string,
   ultima: SerieRegistrada[],
   anterior: SerieRegistrada[],
   opcoes: OpcoesProgressao,
-  isDeload: boolean,
 ): SugestaoCarga | null {
   const faixa = parseFaixaReps(repsSlot);
   if (!faixa) return null;
@@ -70,15 +68,6 @@ export function sugerirProximaCarga(
   const { carga, reps } = trabalho;
   // Para o Graviton, "mais carga" = menos assistência: os ajustes mudam de sinal.
   const sinal = opcoes.assistencia ? -1 : 1;
-
-  if (isDeload) {
-    return {
-      cargaKg: arredondar(carga * (1 - sinal * REDUCAO_DELOAD)),
-      repsAlvo: faixaTexto(faixa),
-      repsPreencher: faixa.min,
-      motivo: "deload: −10% e metade das séries, longe da falha",
-    };
-  }
 
   const falhouPiso = reps.some((r) => r < faixa.min);
   const bateuTopo = reps.every((r) => r >= faixa.max);

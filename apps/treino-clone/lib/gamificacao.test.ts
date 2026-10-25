@@ -2,22 +2,22 @@ import { describe, expect, it } from "vitest";
 import {
   atividadePorDia,
   calcularGamificacao,
-  calcularSequencia,
+  calcularSemanas,
+  contarCargasNovas,
   inicioDaSemana,
-  multiplicadorDaSequencia,
+  multiplicadorDasSemanas,
   nivelDoXp,
-  semanasNaMeta,
   statusSemana,
   xpParaAlcancar,
 } from "./gamificacao";
 import { addDiasISO } from "./program";
-import type { RegistroDiaLeve, SerieRegistrada } from "./tipos";
+import type { SerieRegistrada } from "./tipos";
 
 // 2026-10-26 é segunda-feira.
 const SEG = "2026-10-26";
 const dia = (n: number) => addDiasISO(SEG, n);
 
-function serie(data: string, n = 1): SerieRegistrada[] {
+function serie(data: string, n = 1, extra: Partial<SerieRegistrada> = {}): SerieRegistrada[] {
   return Array.from({ length: n }, (_, i) => ({
     exercicioId: "x",
     data,
@@ -26,142 +26,138 @@ function serie(data: string, n = 1): SerieRegistrada[] {
     reps: 10,
     sessao: "A" as const,
     registradoEm: `${data}T10:00:00.000Z`,
+    ...extra,
   }));
 }
 
-function hist(treinos: Record<string, number>, leves: string[] = []) {
-  const log = Object.entries(treinos).flatMap(([d, n]) => serie(d, n));
-  const diasLeves: Record<string, RegistroDiaLeve> = {};
-  for (const d of leves) diasLeves[d] = { data: d, atividade: "Caminhada", registradoEm: `${d}T08:00:00.000Z` };
-  return { log, sessoes: {}, diasLeves };
+// treinos: dia → nº de séries. Semana s (0 = 26/10) tem os dias s*7 + [0..6].
+function hist(treinos: Record<string, number>) {
+  return { log: Object.entries(treinos).flatMap(([d, n]) => serie(d, n)), sessoes: {} };
 }
 
-const seq = (h: ReturnType<typeof hist>, hoje: string) => calcularSequencia(atividadePorDia(h), hoje);
+// Semana `s` com `n` treinos (seg, ter, qui, sex...).
+const DIAS_DE_TREINO = [0, 1, 3, 4, 2, 5, 6];
+function semanas(plano: number[], extra: Record<string, number> = {}) {
+  const t: Record<string, number> = { ...extra };
+  plano.forEach((n, s) => {
+    for (let i = 0; i < n; i++) t[dia(s * 7 + DIAS_DE_TREINO[i])] = 3;
+  });
+  return hist(t);
+}
 
-describe("sequência", () => {
-  it("conta dias seguidos e hoje ainda aberto não quebra", () => {
-    const h = hist({ [dia(0)]: 3, [dia(1)]: 3 });
-    expect(seq(h, dia(2)).atual).toBe(2); // hoje (dia 2) ainda não treinou
-    expect(seq(h, dia(2)).hojeFeito).toBe(false);
-    expect(seq(h, dia(1)).hojeFeito).toBe(true);
+const sem = (h: ReturnType<typeof hist>, hoje: string) => calcularSemanas(atividadePorDia(h), hoje);
+
+describe("semana atual", () => {
+  it("semana começa na segunda", () => {
+    expect(inicioDaSemana(SEG)).toBe(SEG);
+    expect(inicioDaSemana(dia(6))).toBe(SEG);
+    expect(inicioDaSemana(dia(7))).toBe(dia(7));
   });
 
-  it("zera após uma falta sem escudo", () => {
-    const h = hist({ [dia(0)]: 3, [dia(1)]: 3 });
-    const s = seq(h, dia(3)); // faltou o dia 2
-    expect(s.atual).toBe(0);
+  it("conta dias com treino, faltam e dias restantes", () => {
+    const s = statusSemana(atividadePorDia(hist({ [dia(0)]: 3, [dia(2)]: 3 })), dia(3));
+    expect(s.feitos).toBe(2);
+    expect(s.faltam).toBe(2);
+    expect(s.diasRestantes).toBe(4); // qui (hoje), sex, sáb, dom
+    expect(s.dias.map((d) => d.estado)).toEqual(["treinou", "passado", "treinou", "hoje", "futuro", "futuro", "futuro"]);
+    expect(s.possivel).toBe(true);
+    expect(s.tudoOuNada).toBe(false);
+  });
+
+  it("dois treinos no mesmo dia contam como 1 dia", () => {
+    const h = { log: [...serie(dia(0), 2, { sessao: "A" }), ...serie(dia(0), 2, { sessao: "B", exercicioId: "y" })], sessoes: {} };
+    expect(statusSemana(atividadePorDia(h), dia(0)).feitos).toBe(1);
+  });
+
+  it("avisa quando só fecha treinando todos os dias que restam", () => {
+    const s = statusSemana(atividadePorDia(hist({ [dia(0)]: 3, [dia(1)]: 3 })), dia(5)); // sáb: faltam 2, restam sáb+dom
+    expect(s.tudoOuNada).toBe(true);
+    expect(s.possivel).toBe(true);
+    const impossivel = statusSemana(atividadePorDia(hist({ [dia(0)]: 3 })), dia(5));
+    expect(impossivel.possivel).toBe(false);
+  });
+
+  it("hoje já treinado não conta como dia restante", () => {
+    const s = statusSemana(atividadePorDia(hist({ [dia(5)]: 3 })), dia(5));
+    expect(s.diasRestantes).toBe(1); // só domingo
+  });
+});
+
+describe("semanas seguidas na meta", () => {
+  it("avança com 4 treinos e quebra com menos", () => {
+    const h = semanas([4, 4, 3]);
+    expect(sem(h, dia(21)).atual).toBe(0); // semana 2 (3 treinos) quebrou
+    expect(sem(h, dia(21)).recorde).toBe(2);
+    expect(sem(semanas([4, 4]), dia(13)).atual).toBe(2);
+  });
+
+  it("a semana em curso conta se já bateu a meta, e não quebra se ainda não", () => {
+    const h = semanas([4, 4, 2]); // semana 2 ainda em curso com 2 treinos
+    expect(sem(h, dia(15)).atual).toBe(2);
+    const bateu = semanas([4, 4, 4]);
+    expect(sem(bateu, dia(20)).atual).toBe(3);
+  });
+
+  it("a primeira semana é neutra: quem recomeça na quinta não é punida", () => {
+    const h = hist({ [dia(3)]: 3, [dia(4)]: 3, ...Object.fromEntries([0, 1, 3, 4].map((i) => [dia(7 + i), 3])) });
+    const s = sem(h, dia(13));
+    expect(s.atual).toBe(1); // semana 1 fechou 4; semana 0 foi neutra
+    expect(s.recorde).toBe(1);
+  });
+
+  it("ganha semana livre a cada 4 semanas e ela cobre uma semana ruim", () => {
+    const h = semanas([4, 4, 4, 4, 2, 4]);
+    const s = sem(h, dia(5 * 7 + 6));
+    expect(s.semanasProtegidas).toEqual([dia(4 * 7)]);
+    expect(s.atual).toBe(5); // 4 + (protegida não soma) + 1
+    expect(s.escudos).toBe(0);
+  });
+
+  it("sem semana livre, a semana ruim zera", () => {
+    const s = sem(semanas([4, 4, 2, 4]), dia(3 * 7 + 6));
+    expect(s.atual).toBe(1);
     expect(s.recorde).toBe(2);
   });
 
-  it("ganha escudo a cada 7 dias e ele cobre uma falta", () => {
-    const treinos: Record<string, number> = {};
-    for (let i = 0; i < 7; i++) treinos[dia(i)] = 2;
-    treinos[dia(9)] = 2; // faltou o dia 7 e o 8? não: dia 7 coberto, dia 8 quebra
-    const h = hist(treinos);
-    const s7 = seq(h, dia(6));
-    expect(s7.atual).toBe(7);
-    expect(s7.escudos).toBe(1);
-    // dia 7 faltou: escudo cobre, sequência segue em 7 (não soma)
-    const s8 = seq(h, dia(8));
-    expect(s8.atual).toBe(7);
-    expect(s8.escudos).toBe(0);
-    expect(s8.diasProtegidos).toEqual([dia(7)]);
-    // dia 8 também faltou, sem escudo: quebra
-    const s10 = seq(h, dia(9));
-    expect(s10.atual).toBe(1);
-    expect(s10.recorde).toBe(7);
+  it("semana livre tem teto de 1", () => {
+    const s = sem(semanas([4, 4, 4, 4, 4, 4, 4, 4]), dia(7 * 7 + 6));
+    expect(s.escudos).toBe(1);
+    expect(s.atual).toBe(8);
   });
 
-  it("escudos têm teto de 2", () => {
-    const treinos: Record<string, number> = {};
-    for (let i = 0; i < 21; i++) treinos[dia(i)] = 1;
-    expect(seq(hist(treinos), dia(20)).escudos).toBe(2);
-  });
-
-  it("dia leve mantém a sequência", () => {
-    const h = hist({ [dia(0)]: 3, [dia(2)]: 3 }, [dia(1)]);
-    expect(seq(h, dia(2)).atual).toBe(3);
-  });
-
-  it("conta volta por cima após 3+ dias parada", () => {
-    const h = hist({ [dia(0)]: 3, [dia(6)]: 3 }); // 5 dias parada
-    const s = seq(h, dia(6));
-    expect(s.recomecos).toBe(1);
-    expect(s.atual).toBe(1);
-  });
-
-  it("1 ou 2 dias de pausa não contam como recomeço", () => {
-    const h = hist({ [dia(0)]: 3, [dia(3)]: 3 }); // 2 dias parada
-    expect(seq(h, dia(3)).recomecos).toBe(0);
+  it("conta volta por cima após 7+ dias parada, não antes", () => {
+    const longe = hist({ [dia(0)]: 3, [dia(9)]: 3 }); // 8 dias sem treinar
+    expect(sem(longe, dia(9)).recomecos).toBe(1);
+    const curto = hist({ [dia(0)]: 3, [dia(7)]: 3 }); // 6 dias sem treinar
+    expect(sem(curto, dia(7)).recomecos).toBe(0);
   });
 
   it("série sem carga nem reps não conta", () => {
     const h = hist({});
     h.log.push({ exercicioId: "x", data: dia(0), serieNumero: 1, cargaKg: null, reps: null, registradoEm: "" });
-    expect(seq(h, dia(0)).atual).toBe(0);
-  });
-
-  it("sem histórico", () => {
-    const s = seq(hist({}), dia(0));
-    expect(s).toMatchObject({ atual: 0, recorde: 0, escudos: 0, hojeFeito: false, ultimoDiaAtivo: null });
-  });
-});
-
-describe("semana", () => {
-  it("semana começa na segunda", () => {
-    expect(inicioDaSemana(SEG)).toBe(SEG);
-    expect(inicioDaSemana(dia(6))).toBe(SEG); // domingo
-    expect(inicioDaSemana(dia(7))).toBe(dia(7));
-  });
-
-  it("conta dias de musculação (leve não conta) e a meta", () => {
-    const h = hist({ [dia(0)]: 3, [dia(2)]: 3 }, [dia(1)]);
-    const a = atividadePorDia(h);
-    const sem = statusSemana(a, [], dia(3), 3);
-    expect(sem.diasDeForca).toBe(2);
-    expect(sem.faltam).toBe(1);
-    expect(sem.batida).toBe(false);
-    expect(sem.dias.map((d) => d.estado)).toEqual(["forca", "leve", "forca", "hoje", "futuro", "futuro", "futuro"]);
-  });
-
-  it("detecta meta impossível de fechar", () => {
-    const a = atividadePorDia(hist({ [dia(0)]: 3 }));
-    // sábado, 1 treino, meta 5 → restam sáb+dom = 2 dias
-    expect(statusSemana(a, [], dia(5), 5).possivel).toBe(false);
-    expect(statusSemana(a, [], dia(5), 3).possivel).toBe(true);
-  });
-
-  it("semanas na meta e seguidas", () => {
-    const treinos: Record<string, number> = {};
-    // semana 0: 3 dias; semana 1: 1 dia (falha); semana 2: 3 dias; semana 3: 3 dias
-    for (const d of [0, 1, 2, 8, 14, 15, 16, 21, 22, 23]) treinos[dia(d)] = 1;
-    const a = atividadePorDia(hist(treinos));
-    expect(semanasNaMeta(a, dia(28), 3)).toEqual({ total: 3, seguidas: 2 });
+    expect(sem(h, dia(0)).totalNaMeta).toBe(0);
+    expect(sem(h, dia(0)).ultimoTreino).toBeNull();
   });
 });
 
 describe("XP e nível", () => {
-  it("multiplicador por sequência", () => {
-    expect(multiplicadorDaSequencia(1)).toBe(1);
-    expect(multiplicadorDaSequencia(7)).toBe(1.25);
-    expect(multiplicadorDaSequencia(14)).toBe(1.5);
-    expect(multiplicadorDaSequencia(30)).toBe(2);
+  it("série vale 10 e treino 100", () => {
+    const g = calcularGamificacao(hist({ [dia(0)]: 4 }), dia(0));
+    expect(g.xp.total).toBe(140);
+    expect(g.xp.hoje).toBe(140);
   });
 
-  it("série vale 10 e dia leve 40", () => {
-    const g = calcularGamificacao(hist({ [dia(0)]: 4 }, [dia(1)]), dia(1), 3);
-    // dia 0: 4 séries × 10 + 1 sessão × 100 = 140 ; dia 1: dia leve = 40
-    expect(g.xp.total).toBe(180);
-    expect(g.xp.hoje).toBe(40);
+  it("multiplicador por semanas seguidas", () => {
+    expect(multiplicadorDasSemanas(0)).toBe(1);
+    expect(multiplicadorDasSemanas(2)).toBe(1.25);
+    expect(multiplicadorDasSemanas(4)).toBe(1.5);
+    expect(multiplicadorDasSemanas(8)).toBe(2);
   });
 
-  it("multiplicador entra a partir do 7º dia seguido", () => {
-    const treinos: Record<string, number> = {};
-    for (let i = 0; i < 7; i++) treinos[dia(i)] = 1;
-    const g = calcularGamificacao(hist(treinos), dia(6), 3);
-    // por dia: 10 + 100 = 110 ; 6 dias × 110 + 1 dia × round(110 × 1.25)=138
-    expect(g.xp.total).toBe(6 * 110 + 138);
-    expect(g.xp.hoje).toBe(138);
+  it("o bônus vale na semana seguinte a 2 semanas na meta", () => {
+    const h = semanas([4, 4], { [dia(14)]: 4 }); // terça da 3ª semana
+    const g = calcularGamificacao(h, dia(14));
+    expect(g.xp.hoje).toBe(Math.round((4 * 10 + 100) * 1.25));
   });
 
   it("níveis crescem e a fração fica entre 0 e 1", () => {
@@ -175,37 +171,57 @@ describe("XP e nível", () => {
   });
 
   it("apagar uma série reduz o XP (nada guardado)", () => {
-    const cheio = calcularGamificacao(hist({ [dia(0)]: 5 }), dia(0), 3).xp.total;
-    const menor = calcularGamificacao(hist({ [dia(0)]: 4 }), dia(0), 3).xp.total;
-    expect(cheio - menor).toBe(10);
+    const a = calcularGamificacao(hist({ [dia(0)]: 5 }), dia(0)).xp.total;
+    const b = calcularGamificacao(hist({ [dia(0)]: 4 }), dia(0)).xp.total;
+    expect(a - b).toBe(10);
+  });
+});
+
+describe("cargas novas", () => {
+  const s = (exercicioId: string, data: string, cargaKg: number) => serie(data, 1, { exercicioId, cargaKg });
+  it("conta só quando supera o melhor anterior; a 1ª vez não conta", () => {
+    const log = [...s("a", dia(0), 20), ...s("a", dia(2), 20), ...s("a", dia(4), 25), ...s("a", dia(6), 22), ...s("a", dia(8), 27.5)];
+    expect(contarCargasNovas(log)).toBe(2);
+  });
+  it("exercícios independentes", () => {
+    expect(contarCargasNovas([...s("a", dia(0), 10), ...s("b", dia(1), 50), ...s("a", dia(2), 12.5)])).toBe(1);
   });
 });
 
 describe("conquistas e mensagens", () => {
-  it("desbloqueia por sequência recorde, mesmo depois de quebrar", () => {
-    const treinos: Record<string, number> = {};
-    for (let i = 0; i < 3; i++) treinos[dia(i)] = 1;
-    const g = calcularGamificacao(hist(treinos), dia(10), 3);
-    expect(g.conquistas.find((c) => c.id === "sequencia-3")?.desbloqueada).toBe(true);
-    expect(g.conquistas.find((c) => c.id === "sequencia-7")?.desbloqueada).toBe(false);
+  it("desbloqueia por recorde de semanas, mesmo depois de quebrar", () => {
+    const g = calcularGamificacao(semanas([4, 4, 0, 0]), dia(3 * 7 + 6));
+    expect(g.conquistas.find((c) => c.id === "semanas-2")?.desbloqueada).toBe(true);
+    expect(g.conquistas.find((c) => c.id === "semanas-4")?.desbloqueada).toBe(false);
   });
 
-  it("próxima conquista é a mais adiantada", () => {
-    const treinos: Record<string, number> = {};
-    for (let i = 0; i < 6; i++) treinos[dia(i)] = 1;
-    const g = calcularGamificacao(hist(treinos), dia(5), 3);
-    expect(g.proxima?.id).toBe("sequencia-7");
+  it("primeiro treino e primeiro ciclo", () => {
+    const um = calcularGamificacao(hist({ [dia(0)]: 3 }), dia(0));
+    expect(um.conquistas.find((c) => c.id === "primeiro-treino")?.desbloqueada).toBe(true);
+    expect(um.conquistas.find((c) => c.id === "sessoes-4")?.desbloqueada).toBe(false);
   });
 
-  it("mensagem acolhe quem voltou de uma pausa longa em vez de cobrar", () => {
-    const g = calcularGamificacao(hist({ [dia(0)]: 3 }), dia(8), 3);
+  it("sem histórico, a mensagem explica a retomada em vez de cobrar", () => {
+    const g = calcularGamificacao(hist({}), dia(0));
+    expect(g.mensagem.titulo).toMatch(/volta/i);
+    expect(g.mensagem.texto).toMatch(/2 séries/);
+  });
+
+  it("mensagem acolhe quem passou 7+ dias parada", () => {
+    const g = calcularGamificacao(hist({ [dia(0)]: 3 }), dia(9));
     expect(g.mensagem.tom).toBe("acolher");
     expect(g.mensagem.texto).not.toMatch(/perdeu|falhou/i);
   });
 
-  it("mensagem avisa que a sequência está em jogo", () => {
-    const g = calcularGamificacao(hist({ [dia(0)]: 3, [dia(1)]: 3 }), dia(2), 3);
-    expect(g.mensagem.titulo).toMatch(/2 dias/);
-    expect(g.mensagem.tom).toBe("empurrar");
+  it("mensagem diz quando não dá para pular nenhum dia", () => {
+    const g = calcularGamificacao(hist({ [dia(0)]: 3, [dia(1)]: 3 }), dia(5));
+    expect(g.mensagem.titulo).toMatch(/dia de treino/i);
+    expect(g.mensagem.texto).toMatch(/não dá para pular/);
+  });
+
+  it("depois de treinar hoje, mostra quanto falta", () => {
+    const g = calcularGamificacao(hist({ [dia(0)]: 3 }), dia(0));
+    expect(g.treinouHoje).toBe(true);
+    expect(g.mensagem.texto).toMatch(/Faltam 3/);
   });
 });

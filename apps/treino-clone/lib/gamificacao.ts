@@ -1,46 +1,46 @@
-import { addDiasISO } from "./program";
+import { addDiasISO, TREINOS_POR_SEMANA } from "./program";
 import { sessoesConcluidasEm, type DadosTreino } from "./dados";
+import type { SerieRegistrada } from "./tipos";
 
-// Gamificação feita para uma coisa só: aderência. Tudo aqui é CALCULADO a partir do histórico
-// (séries, sessões, dias leves) — nada de contador guardado que possa dessincronizar. Apagou
-// uma série por engano? O XP e a sequência se ajustam sozinhos.
+// Gamificação feita para uma coisa só: aderência a 4 treinos por semana. Tudo aqui é CALCULADO
+// a partir do histórico (séries e sessões) — nada de contador guardado que possa dessincronizar.
+// Apagou uma série por engano? XP, semanas e conquistas se ajustam sozinhos.
 //
 // Princípios (e por que):
-//  - Recompensa por aparecer, não por desempenho: XP vem de séries registradas e sessões
-//    terminadas, nunca de carga. Carga alta não deve ser o jeito de "ganhar" o jogo.
-//  - Sequência com ESCUDOS: sequência que zera por um dia ruim é o que faz as pessoas
-//    abandonarem o app. O escudo cobre 1 falta; ganha-se 1 a cada 7 dias seguidos (máx. 2).
-//  - Meta SEMANAL ao lado da diária: errar uma terça não anula a semana.
-//  - Volta por cima vale conquista: o ponto crítico da aderência é o dia seguinte à falha.
-//  - Dia leve (caminhada, mobilidade) mantém a sequência: dá para "estar presente todo dia"
-//    sem empilhar musculação pesada em dias seguidos.
+//  - A unidade é a SEMANA, não o dia: com 4 treinos por semana, uma sequência diária quebraria
+//    3 vezes por semana por desenho. Semana batida (4 treinos) = a sequência avança.
+//  - Recompensa por aparecer, não por desempenho: XP vem de séries registradas e treinos
+//    concluídos, nunca de carga. (O avanço de carga tem a própria conquista, "Mais forte".)
+//  - Uma semana ruim não zera tudo: a "semana livre" (escudo) cobre 1 semana abaixo da meta;
+//    ganha-se 1 a cada 4 semanas seguidas na meta.
+//  - A primeira semana é neutra: quem recomeça numa quinta não é punida por não ter 4 dias.
+//  - Voltar depois de uma pausa vale conquista: o ponto crítico da aderência é o retorno.
 
+export const META_SEMANAL = TREINOS_POR_SEMANA;
 export const XP_SERIE = 10;
 export const XP_SESSAO = 100;
-export const XP_DIA_LEVE = 40;
+export const SEMANAS_PARA_ESCUDO = 4;
+export const ESCUDOS_MAX = 1;
+export const DIAS_PARADA_PARA_RECOMECO = 7;
 
-export const ESCUDOS_MAX = 2;
-export const DIAS_PARA_ESCUDO = 7;
-
-// Multiplicador de XP pela sequência vigente naquele dia.
+// Multiplicador de XP pelas semanas seguidas na meta (antes da semana em curso).
 export const MULTIPLICADORES: { aPartirDe: number; fator: number }[] = [
-  { aPartirDe: 30, fator: 2 },
-  { aPartirDe: 14, fator: 1.5 },
-  { aPartirDe: 7, fator: 1.25 },
+  { aPartirDe: 8, fator: 2 },
+  { aPartirDe: 4, fator: 1.5 },
+  { aPartirDe: 2, fator: 1.25 },
 ];
 
-export function multiplicadorDaSequencia(sequencia: number): number {
-  return MULTIPLICADORES.find((m) => sequencia >= m.aPartirDe)?.fator ?? 1;
+export function multiplicadorDasSemanas(semanasSeguidas: number): number {
+  return MULTIPLICADORES.find((m) => semanasSeguidas >= m.aPartirDe)?.fator ?? 1;
 }
 
-type Historico = Pick<DadosTreino, "log" | "sessoes" | "diasLeves">;
+type Historico = Pick<DadosTreino, "log" | "sessoes">;
 
 // ===== Dias =====
 
 export interface AtividadeDoDia {
   series: number;
   sessoes: number;
-  leve: boolean;
 }
 
 export function atividadePorDia(h: Historico): Map<string, AtividadeDoDia> {
@@ -48,7 +48,7 @@ export function atividadePorDia(h: Historico): Map<string, AtividadeDoDia> {
   const dia = (data: string) => {
     let a = mapa.get(data);
     if (!a) {
-      a = { series: 0, sessoes: 0, leve: false };
+      a = { series: 0, sessoes: 0 };
       mapa.set(data, a);
     }
     return a;
@@ -57,74 +57,12 @@ export function atividadePorDia(h: Historico): Map<string, AtividadeDoDia> {
     if (s.cargaKg === null && s.reps === null) continue;
     dia(s.data).series++;
   }
-  // Sessões do programa terminadas (ou com série registrada) — mesma regra do resto do app.
-  for (const c of sessoesConcluidasEm(h, "0000-00-00")) dia(c.data).sessoes++;
-  for (const data of Object.keys(h.diasLeves)) dia(data).leve = true;
+  // Treino terminado (ou com série registrada) — mesma regra do resto do app.
+  for (const c of sessoesConcluidasEm(h)) dia(c.data).sessoes++;
   return mapa;
 }
 
-const treinouForca = (a: AtividadeDoDia) => a.series > 0 || a.sessoes > 0;
-const ativo = (a: AtividadeDoDia | undefined) => !!a && (treinouForca(a) || a.leve);
-
-// ===== Sequência com escudos =====
-
-export interface EstadoSequencia {
-  atual: number; // dias seguidos vigentes (incluindo hoje se já treinou)
-  recorde: number;
-  escudos: number;
-  hojeFeito: boolean;
-  // Dias que o escudo cobriu (não somaram, mas não quebraram).
-  diasProtegidos: string[];
-  // Quantas vezes voltou depois de parar 3+ dias (cada "volta por cima").
-  recomecos: number;
-  ultimoDiaAtivo: string | null;
-  diasParada: number; // dias sem atividade até ontem/hoje (0 = ativo hoje)
-  // Sequência vigente em cada dia ativo (já contando o próprio dia). Base do multiplicador de XP.
-  noDia: Map<string, number>;
-}
-
-export const DIAS_PARADA_PARA_RECOMECO = 3;
-
-// Reproduz o histórico dia a dia. Hoje nunca quebra a sequência: o dia ainda não acabou.
-export function calcularSequencia(atividade: Map<string, AtividadeDoDia>, hojeISO: string): EstadoSequencia {
-  const datas = Array.from(atividade.keys()).filter((d) => ativo(atividade.get(d)) && d <= hojeISO).sort();
-  const estado: EstadoSequencia = {
-    atual: 0,
-    recorde: 0,
-    escudos: 0,
-    hojeFeito: ativo(atividade.get(hojeISO)),
-    diasProtegidos: [],
-    recomecos: 0,
-    ultimoDiaAtivo: datas[datas.length - 1] ?? null,
-    diasParada: 0,
-    noDia: new Map(),
-  };
-  if (datas.length === 0) return estado;
-
-  let cursor = datas[0];
-  let parados = 0; // dias consecutivos sem atividade (nem escudo) antes do cursor
-  while (cursor <= hojeISO) {
-    if (ativo(atividade.get(cursor))) {
-      if (parados >= DIAS_PARADA_PARA_RECOMECO) estado.recomecos++;
-      parados = 0;
-      estado.atual++;
-      if (estado.atual % DIAS_PARA_ESCUDO === 0) estado.escudos = Math.min(ESCUDOS_MAX, estado.escudos + 1);
-      estado.recorde = Math.max(estado.recorde, estado.atual);
-      estado.noDia.set(cursor, estado.atual);
-    } else if (cursor !== hojeISO) {
-      if (estado.escudos > 0 && estado.atual > 0) {
-        estado.escudos--;
-        estado.diasProtegidos.push(cursor);
-      } else {
-        estado.atual = 0;
-        parados++;
-      }
-    }
-    cursor = addDiasISO(cursor, 1);
-  }
-  estado.diasParada = estado.hojeFeito ? 0 : diasEntre(estado.ultimoDiaAtivo as string, hojeISO);
-  return estado;
-}
+const treinou = (a: AtividadeDoDia | undefined) => !!a && (a.series > 0 || a.sessoes > 0);
 
 function diasEntre(deISO: string, ateISO: string): number {
   return Math.round((new Date(ateISO + "T00:00:00").getTime() - new Date(deISO + "T00:00:00").getTime()) / 86400000);
@@ -140,65 +78,113 @@ export function inicioDaSemana(iso: string): string {
 export interface DiaDaSemana {
   data: string;
   rotulo: string;
-  estado: "forca" | "leve" | "protegido" | "perdido" | "futuro" | "hoje";
+  estado: "treinou" | "hoje" | "futuro" | "passado";
 }
 
 export interface StatusSemana {
   inicio: string;
   dias: DiaDaSemana[];
-  diasDeForca: number; // dias com musculação (o que conta para a meta)
+  feitos: number; // dias com treino na semana
   meta: number;
   batida: boolean;
   faltam: number;
-  // Dá para fechar a meta mesmo treinando todos os dias que restam?
-  possivel: boolean;
+  diasRestantes: number; // dias que ainda dá para treinar (hoje incluso se ainda não treinou)
+  possivel: boolean; // dá para fechar a meta com os dias que restam?
+  tudoOuNada: boolean; // só fecha a meta se treinar em todos os dias que restam
 }
 
 const ROTULOS = ["S", "T", "Q", "Q", "S", "S", "D"];
 
-export function statusSemana(atividade: Map<string, AtividadeDoDia>, protegidos: string[], hojeISO: string, meta: number): StatusSemana {
+export function statusSemana(atividade: Map<string, AtividadeDoDia>, hojeISO: string, meta = META_SEMANAL): StatusSemana {
   const inicio = inicioDaSemana(hojeISO);
   const dias: DiaDaSemana[] = [];
-  let diasDeForca = 0;
+  let feitos = 0;
   for (let i = 0; i < 7; i++) {
     const data = addDiasISO(inicio, i);
-    const a = atividade.get(data);
     let estado: DiaDaSemana["estado"];
-    if (a && treinouForca(a)) {
-      estado = "forca";
-      diasDeForca++;
-    } else if (a?.leve) estado = "leve";
-    else if (protegidos.includes(data)) estado = "protegido";
-    else if (data === hojeISO) estado = "hoje";
+    if (treinou(atividade.get(data))) {
+      estado = "treinou";
+      feitos++;
+    } else if (data === hojeISO) estado = "hoje";
     else if (data > hojeISO) estado = "futuro";
-    else estado = "perdido";
+    else estado = "passado";
     dias.push({ data, rotulo: ROTULOS[i], estado });
   }
-  const hojeAtividade = atividade.get(hojeISO);
-  const restantes = dias.filter((d) => d.data > hojeISO).length + (hojeAtividade && treinouForca(hojeAtividade) ? 0 : 1);
-  const faltam = Math.max(0, meta - diasDeForca);
-  return { inicio, dias, diasDeForca, meta, batida: diasDeForca >= meta, faltam, possivel: faltam <= restantes };
+  const diasRestantes = dias.filter((d) => d.estado === "hoje" || d.estado === "futuro").length;
+  const faltam = Math.max(0, meta - feitos);
+  return {
+    inicio,
+    dias,
+    feitos,
+    meta,
+    batida: feitos >= meta,
+    faltam,
+    diasRestantes,
+    possivel: faltam <= diasRestantes,
+    tudoOuNada: faltam > 0 && faltam === diasRestantes,
+  };
 }
 
-// Semanas fechadas (anteriores à atual) em que a meta foi batida, e quantas seguidas até agora.
-export function semanasNaMeta(atividade: Map<string, AtividadeDoDia>, hojeISO: string, meta: number): { total: number; seguidas: number } {
-  const primeiro = Array.from(atividade.keys()).filter((d) => treinouForca(atividade.get(d) as AtividadeDoDia)).sort()[0];
-  if (!primeiro) return { total: 0, seguidas: 0 };
-  const semanaAtual = inicioDaSemana(hojeISO);
-  let total = 0;
-  let seguidas = 0;
-  for (let inicio = inicioDaSemana(primeiro); inicio < semanaAtual; inicio = addDiasISO(inicio, 7)) {
-    let n = 0;
-    for (let i = 0; i < 7; i++) {
-      const a = atividade.get(addDiasISO(inicio, i));
-      if (a && treinouForca(a)) n++;
-    }
-    if (n >= meta) {
-      total++;
-      seguidas++;
-    } else seguidas = 0;
+// ===== Semanas seguidas na meta, com semana livre =====
+
+export interface EstadoSemanas {
+  atual: number; // semanas seguidas na meta (conta a semana em curso se já bateu)
+  recorde: number;
+  escudos: number;
+  totalNaMeta: number;
+  semanasProtegidas: string[]; // início das semanas cobertas pela semana livre
+  recomecos: number; // voltas depois de 7+ dias sem treinar
+  ultimoTreino: string | null;
+  diasParada: number; // dias desde o último treino (0 = treinou hoje)
+  // Semanas seguidas ANTES de cada semana (início → n): base do multiplicador de XP.
+  seguidasAntes: Map<string, number>;
+}
+
+export function calcularSemanas(atividade: Map<string, AtividadeDoDia>, hojeISO: string, meta = META_SEMANAL): EstadoSemanas {
+  const dias = Array.from(atividade.keys())
+    .filter((d) => treinou(atividade.get(d)) && d <= hojeISO)
+    .sort();
+  const estado: EstadoSemanas = {
+    atual: 0,
+    recorde: 0,
+    escudos: 0,
+    totalNaMeta: 0,
+    semanasProtegidas: [],
+    recomecos: 0,
+    ultimoTreino: dias[dias.length - 1] ?? null,
+    diasParada: 0,
+    seguidasAntes: new Map(),
+  };
+  if (dias.length === 0) return estado;
+
+  for (let i = 1; i < dias.length; i++) {
+    if (diasEntre(dias[i - 1], dias[i]) - 1 >= DIAS_PARADA_PARA_RECOMECO) estado.recomecos++;
   }
-  return { total, seguidas };
+  estado.diasParada = diasEntre(estado.ultimoTreino as string, hojeISO);
+
+  const porSemana = new Map<string, number>();
+  for (const d of dias) porSemana.set(inicioDaSemana(d), (porSemana.get(inicioDaSemana(d)) ?? 0) + 1);
+
+  const primeira = inicioDaSemana(dias[0]);
+  const corrente = inicioDaSemana(hojeISO);
+  let seguidas = 0;
+  for (let inicio = primeira; inicio <= corrente; inicio = addDiasISO(inicio, 7)) {
+    estado.seguidasAntes.set(inicio, seguidas);
+    if ((porSemana.get(inicio) ?? 0) >= meta) {
+      seguidas++;
+      estado.totalNaMeta++;
+      estado.recorde = Math.max(estado.recorde, seguidas);
+      if (seguidas % SEMANAS_PARA_ESCUDO === 0) estado.escudos = Math.min(ESCUDOS_MAX, estado.escudos + 1);
+    } else if (inicio < corrente && inicio !== primeira) {
+      // A semana em curso ainda não acabou e a primeira é neutra: só as demais quebram.
+      if (estado.escudos > 0 && seguidas > 0) {
+        estado.escudos--;
+        estado.semanasProtegidas.push(inicio);
+      } else seguidas = 0;
+    }
+  }
+  estado.atual = seguidas;
+  return estado;
 }
 
 // ===== XP e nível =====
@@ -206,7 +192,7 @@ export function semanasNaMeta(atividade: Map<string, AtividadeDoDia>, hojeISO: s
 export interface Nivel {
   nivel: number;
   titulo: string;
-  xpNoNivel: number; // XP acumulado dentro do nível atual
+  xpNoNivel: number;
   xpParaProximo: number; // tamanho do nível atual
   fracao: number; // 0–1
 }
@@ -245,21 +231,42 @@ export interface ResumoXp {
   multiplicadorHoje: number;
 }
 
-// XP de cada dia = (séries × 10 + sessões × 100 + dia leve × 40) × multiplicador da sequência
-// vigente naquele dia. Arredondado por dia.
-export function calcularXp(atividade: Map<string, AtividadeDoDia>, sequencia: EstadoSequencia, hojeISO: string): ResumoXp {
+// XP de cada dia = (séries × 10 + treinos × 100) × multiplicador das semanas seguidas na meta
+// (as que vieram antes da semana do dia). Arredondado por dia.
+export function calcularXp(atividade: Map<string, AtividadeDoDia>, semanas: EstadoSemanas, hojeISO: string): ResumoXp {
   let total = 0;
   let hoje = 0;
-  for (const [data, seq] of sequencia.noDia) {
-    const a = atividade.get(data) as AtividadeDoDia;
-    const base = a.series * XP_SERIE + a.sessoes * XP_SESSAO + (a.leve && !treinouForca(a) ? XP_DIA_LEVE : 0);
-    const ganho = Math.round(base * multiplicadorDaSequencia(seq));
+  for (const [data, a] of atividade) {
+    if (data > hojeISO || !treinou(a)) continue;
+    const ganho = Math.round((a.series * XP_SERIE + a.sessoes * XP_SESSAO) * multiplicadorDasSemanas(semanas.seguidasAntes.get(inicioDaSemana(data)) ?? 0));
     total += ganho;
     if (data === hojeISO) hoje = ganho;
   }
-  // Se hoje ainda não é dia ativo, o multiplicador que vale é o do dia que ela vai fechar.
-  const multiplicadorHoje = multiplicadorDaSequencia(sequencia.noDia.get(hojeISO) ?? sequencia.atual + 1);
-  return { total, hoje, multiplicadorHoje };
+  return { total, hoje, multiplicadorHoje: multiplicadorDasSemanas(semanas.seguidasAntes.get(inicioDaSemana(hojeISO)) ?? semanas.atual) };
+}
+
+// ===== Cargas novas =====
+
+// Quantas vezes ela levantou mais que em qualquer treino anterior do mesmo exercício
+// (a primeira vez de um exercício não conta: ainda não há o que superar).
+export function contarCargasNovas(log: SerieRegistrada[]): number {
+  const porExercicio = new Map<string, Map<string, number>>(); // exercício → data → maior carga
+  for (const s of log) {
+    if (s.cargaKg == null || s.cargaKg <= 0 || s.reps == null || s.reps <= 0) continue;
+    const dias = porExercicio.get(s.exercicioId) ?? new Map<string, number>();
+    dias.set(s.data, Math.max(dias.get(s.data) ?? 0, s.cargaKg));
+    porExercicio.set(s.exercicioId, dias);
+  }
+  let novas = 0;
+  for (const dias of porExercicio.values()) {
+    let melhor = 0;
+    for (const data of Array.from(dias.keys()).sort()) {
+      const carga = dias.get(data) as number;
+      if (melhor > 0 && carga > melhor) novas++;
+      melhor = Math.max(melhor, carga);
+    }
+  }
+  return novas;
 }
 
 // ===== Conquistas =====
@@ -268,7 +275,7 @@ export interface Conquista {
   id: string;
   nome: string;
   descricao: string;
-  icone: "flame" | "dumbbell" | "calendar" | "shield" | "undo" | "footprints" | "trophy" | "star";
+  icone: "flame" | "dumbbell" | "calendar" | "shield" | "undo" | "trending" | "trophy" | "star";
   atual: number;
   alvo: number;
   desbloqueada: boolean;
@@ -276,39 +283,34 @@ export interface Conquista {
 
 export interface MetricasConquista {
   sessoes: number;
-  recordeSequencia: number;
-  semanasNaMeta: number;
-  semanasSeguidasNaMeta: number;
+  semanasSeguidas: number; // recorde
   recomecos: number;
-  diasLeves: number;
+  cargasNovas: number;
 }
 
 const DEF: Omit<Conquista, "atual" | "desbloqueada">[] = [
-  { id: "primeiro-treino", nome: "Primeiro passo", descricao: "Termine seu primeiro treino", icone: "dumbbell", alvo: 1 },
-  { id: "sessoes-10", nome: "10 treinos", descricao: "Termine 10 treinos", icone: "dumbbell", alvo: 10 },
-  { id: "sessoes-25", nome: "25 treinos", descricao: "Termine 25 treinos", icone: "dumbbell", alvo: 25 },
-  { id: "sessoes-50", nome: "50 treinos", descricao: "Termine 50 treinos", icone: "trophy", alvo: 50 },
-  { id: "sessoes-100", nome: "100 treinos", descricao: "Termine 100 treinos", icone: "trophy", alvo: 100 },
-  { id: "sequencia-3", nome: "Pegando ritmo", descricao: "3 dias seguidos", icone: "flame", alvo: 3 },
-  { id: "sequencia-7", nome: "Semana inteira", descricao: "7 dias seguidos", icone: "flame", alvo: 7 },
-  { id: "sequencia-14", nome: "Duas semanas", descricao: "14 dias seguidos", icone: "flame", alvo: 14 },
-  { id: "sequencia-30", nome: "Mês de ferro", descricao: "30 dias seguidos", icone: "flame", alvo: 30 },
-  { id: "sequencia-60", nome: "Hábito formado", descricao: "60 dias seguidos", icone: "flame", alvo: 60 },
-  { id: "sequencia-100", nome: "Centena", descricao: "100 dias seguidos", icone: "star", alvo: 100 },
-  { id: "semana-na-meta", nome: "Meta da semana", descricao: "Bata a meta semanal de treinos", icone: "calendar", alvo: 1 },
-  { id: "semanas-4", nome: "4 semanas na meta", descricao: "Bata a meta 4 semanas seguidas", icone: "calendar", alvo: 4 },
-  { id: "semanas-12", nome: "12 semanas na meta", descricao: "Bata a meta 12 semanas seguidas", icone: "calendar", alvo: 12 },
-  { id: "volta-por-cima", nome: "Volta por cima", descricao: "Volte a treinar depois de 3+ dias parada", icone: "undo", alvo: 1 },
-  { id: "dias-leves-5", nome: "Corpo em movimento", descricao: "Registre 5 dias leves", icone: "footprints", alvo: 5 },
+  { id: "primeiro-treino", nome: "Primeiro passo", descricao: "Faça seu primeiro treino de volta", icone: "dumbbell", alvo: 1 },
+  { id: "sessoes-4", nome: "Primeiro ciclo", descricao: "Complete os 4 treinos (A, B, C, D)", icone: "dumbbell", alvo: 4 },
+  { id: "sessoes-12", nome: "12 treinos", descricao: "Complete 12 treinos", icone: "dumbbell", alvo: 12 },
+  { id: "sessoes-24", nome: "24 treinos", descricao: "Complete 24 treinos", icone: "trophy", alvo: 24 },
+  { id: "sessoes-48", nome: "48 treinos", descricao: "Complete 48 treinos", icone: "trophy", alvo: 48 },
+  { id: "sessoes-100", nome: "100 treinos", descricao: "Complete 100 treinos", icone: "star", alvo: 100 },
+  { id: "semanas-1", nome: "Semana completa", descricao: "Faça os 4 treinos de uma semana", icone: "calendar", alvo: 1 },
+  { id: "semanas-2", nome: "2 semanas seguidas", descricao: "Feche a semana 2 vezes seguidas", icone: "flame", alvo: 2 },
+  { id: "semanas-4", nome: "Mês inteiro", descricao: "4 semanas seguidas na meta", icone: "flame", alvo: 4 },
+  { id: "semanas-8", nome: "2 meses", descricao: "8 semanas seguidas na meta", icone: "flame", alvo: 8 },
+  { id: "semanas-12", nome: "3 meses", descricao: "12 semanas seguidas na meta", icone: "star", alvo: 12 },
+  { id: "volta-por-cima", nome: "Volta por cima", descricao: "Volte a treinar depois de 7+ dias parada", icone: "undo", alvo: 1 },
+  { id: "carga-1", nome: "Mais forte", descricao: "Use mais carga que da última vez em um exercício", icone: "trending", alvo: 1 },
+  { id: "carga-10", nome: "10 cargas novas", descricao: "Aumente a carga 10 vezes", icone: "trending", alvo: 10 },
+  { id: "carga-25", nome: "25 cargas novas", descricao: "Aumente a carga 25 vezes", icone: "trending", alvo: 25 },
 ];
 
 function valorDaConquista(id: string, m: MetricasConquista): number {
   if (id === "primeiro-treino" || id.startsWith("sessoes-")) return m.sessoes;
-  if (id.startsWith("sequencia-")) return m.recordeSequencia;
-  if (id === "semana-na-meta") return m.semanasNaMeta;
-  if (id.startsWith("semanas-")) return m.semanasSeguidasNaMeta;
+  if (id.startsWith("semanas-")) return m.semanasSeguidas;
   if (id === "volta-por-cima") return m.recomecos;
-  if (id === "dias-leves-5") return m.diasLeves;
+  if (id.startsWith("carga-")) return m.cargasNovas;
   return 0;
 }
 
@@ -322,92 +324,98 @@ export function avaliarConquistas(m: MetricasConquista): Conquista[] {
 // ===== Tudo junto =====
 
 export interface Gamificacao {
-  sequencia: EstadoSequencia;
   semana: StatusSemana;
-  semanasNaMeta: { total: number; seguidas: number };
+  semanas: EstadoSemanas;
   xp: ResumoXp;
   nivel: Nivel;
   conquistas: Conquista[];
   proxima: Conquista | null; // a conquista pendente mais perto de sair
   mensagem: MensagemMotivacional;
   totalSessoes: number;
+  treinouHoje: boolean;
 }
 
-export function calcularGamificacao(h: Historico, hojeISO: string, metaSemanal: number): Gamificacao {
+export function calcularGamificacao(h: Historico, hojeISO: string): Gamificacao {
   const atividade = atividadePorDia(h);
-  const sequencia = calcularSequencia(atividade, hojeISO);
-  const semana = statusSemana(atividade, sequencia.diasProtegidos, hojeISO, metaSemanal);
-  const semanas = semanasNaMeta(atividade, hojeISO, metaSemanal);
-  const xp = calcularXp(atividade, sequencia, hojeISO);
-  const sessoes = sessoesConcluidasEm(h, "0000-00-00").length;
+  const semana = statusSemana(atividade, hojeISO);
+  const semanas = calcularSemanas(atividade, hojeISO);
+  const xp = calcularXp(atividade, semanas, hojeISO);
+  const totalSessoes = sessoesConcluidasEm(h).length;
   const conquistas = avaliarConquistas({
-    sessoes,
-    recordeSequencia: sequencia.recorde,
-    // a semana corrente que já bateu a meta também vale
-    semanasNaMeta: semanas.total + (semana.batida ? 1 : 0),
-    semanasSeguidasNaMeta: semanas.seguidas + (semana.batida ? 1 : 0),
-    recomecos: sequencia.recomecos,
-    diasLeves: Object.keys(h.diasLeves).length,
+    sessoes: totalSessoes,
+    semanasSeguidas: semanas.recorde,
+    recomecos: semanas.recomecos,
+    cargasNovas: contarCargasNovas(h.log),
   });
   const proxima =
     conquistas
       .filter((c) => !c.desbloqueada)
       .sort((a, b) => b.atual / b.alvo - a.atual / a.alvo || a.alvo - b.alvo)[0] ?? null;
+  const treinouHoje = treinou(atividade.get(hojeISO));
   return {
-    sequencia,
     semana,
-    semanasNaMeta: semanas,
+    semanas,
     xp,
     nivel: nivelDoXp(xp.total),
     conquistas,
     proxima,
-    mensagem: mensagemMotivacional({ sequencia, semana, sessoes }),
-    totalSessoes: sessoes,
+    mensagem: mensagemMotivacional({ semana, semanas, totalSessoes, treinouHoje }),
+    totalSessoes,
+    treinouHoje,
   };
 }
 
 // ===== Mensagens =====
 
 export interface MensagemMotivacional {
-  tom: "celebrar" | "empurrar" | "acolher" | "neutro";
+  tom: "celebrar" | "empurrar" | "acolher";
   titulo: string;
   texto: string;
 }
 
-export function mensagemMotivacional({ sequencia, semana, sessoes }: { sequencia: EstadoSequencia; semana: StatusSemana; sessoes: number }): MensagemMotivacional {
-  if (sessoes === 0 && !sequencia.hojeFeito) {
-    return { tom: "empurrar", titulo: "Hoje começa a sequência", texto: "O primeiro treino é o mais importante. Faça nem que seja metade — aparecer já conta." };
-  }
-  if (sequencia.hojeFeito) {
-    if (semana.batida) return { tom: "celebrar", titulo: "Meta da semana batida", texto: `${semana.diasDeForca} treinos esta semana. O que vier daqui é bônus.` };
-    const n = sequencia.atual;
+export function mensagemMotivacional({
+  semana,
+  semanas,
+  totalSessoes,
+  treinouHoje,
+}: {
+  semana: StatusSemana;
+  semanas: EstadoSemanas;
+  totalSessoes: number;
+  treinouHoje: boolean;
+}): MensagemMotivacional {
+  if (totalSessoes === 0) {
     return {
-      tom: "celebrar",
-      titulo: n >= 2 ? `${n} dias seguidos` : "Hoje está feito",
-      texto: semana.faltam > 0 ? `Faltam ${semana.faltam} treino(s) para a meta da semana.` : "Descanse bem e volte amanhã.",
+      tom: "empurrar",
+      titulo: "Hoje você volta",
+      texto: "Primeiro treino da volta: só 2 séries por exercício e carga leve. Terminar sem forçar vale mais que treinar pesado.",
     };
   }
-  // ainda não treinou hoje
-  if (sequencia.diasParada >= DIAS_PARADA_PARA_RECOMECO) {
+  if (treinouHoje) {
+    if (semana.batida) {
+      return { tom: "celebrar", titulo: "Meta da semana batida", texto: `${semana.feitos} de ${semana.meta} treinos. ${semanas.atual >= 2 ? `${semanas.atual} semanas seguidas na meta.` : "Descanse bem."}` };
+    }
+    return { tom: "celebrar", titulo: "Treino de hoje feito", texto: `Faltam ${semana.faltam} para fechar a semana (${semana.feitos}/${semana.meta}).` };
+  }
+  if (semanas.diasParada >= DIAS_PARADA_PARA_RECOMECO) {
     return {
       tom: "acolher",
       titulo: "Bora recomeçar",
-      texto: `Faz ${sequencia.diasParada} dias. Não precisa compensar nada: faça o treino de hoje, mesmo curto, e ganhe a conquista "Volta por cima".`,
+      texto: `Faz ${semanas.diasParada} dias. Sem compensar nada: faça o treino de hoje, mesmo curto, e ganhe a conquista "Volta por cima".`,
     };
   }
-  if (sequencia.atual > 0) {
-    const proxEscudo = DIAS_PARA_ESCUDO - (sequencia.atual % DIAS_PARA_ESCUDO);
-    return {
-      tom: "empurrar",
-      titulo: `Salve sua sequência de ${sequencia.atual} dias`,
-      texto:
-        sequencia.escudos > 0
-          ? `Você tem ${sequencia.escudos} escudo(s) de reserva, mas o melhor escudo é treinar hoje. Faltam ${proxEscudo} dia(s) para ganhar mais um.`
-          : `Treine hoje (ou registre um dia leve). Faltam ${proxEscudo} dia(s) para ganhar um escudo.`,
-    };
+  if (semana.batida) {
+    return { tom: "celebrar", titulo: "Meta da semana já batida", texto: "Treinar hoje é bônus: ganha XP, mas descansar também é parte do plano." };
   }
   if (!semana.possivel) {
-    return { tom: "acolher", titulo: "Semana corrida? Tudo bem", texto: "A meta desta semana ficou difícil, mas cada treino conta. Foque em não zerar." };
+    return {
+      tom: "acolher",
+      titulo: "Semana apertada, tudo bem",
+      texto: semanas.escudos > 0 ? "A semana livre cobre esta semana. Treine o que der e mantenha o ritmo." : "A meta desta semana ficou difícil. Cada treino conta: foque em não zerar.",
+    };
   }
-  return { tom: "empurrar", titulo: "Hoje é dia de treino", texto: `Faltam ${semana.faltam} para a meta da semana.` };
+  if (semana.tudoOuNada) {
+    return { tom: "empurrar", titulo: "Hoje é dia de treino", texto: `Faltam ${semana.faltam} treinos e ${semana.diasRestantes} dias: não dá para pular nenhum para fechar a semana.` };
+  }
+  return { tom: "empurrar", titulo: "Hora do treino", texto: `Faltam ${semana.faltam} treino(s) para fechar a semana (${semana.feitos}/${semana.meta}).` };
 }

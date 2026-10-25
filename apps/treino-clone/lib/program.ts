@@ -3,18 +3,19 @@ import { SESSOES } from "./exercicios";
 import { getLog, getTodasSessoes } from "./storage";
 import { sessoesConcluidasEm, type DadosTreino } from "./dados";
 
-// Log + sessões; por padrão lidos do storage do navegador, no servidor vêm do backup.
+// Log + sessões; por padrão lidos do storage do navegador.
 type Historico = Pick<DadosTreino, "log" | "sessoes">;
 const historicoLocal = (): Historico => ({ log: getLog(), sessoes: getTodasSessoes() });
 
-// Programa sequencial: 1 rodada = A+B+C+D+E (5 sessões). Rodadas 1–4 = treino, rodada 5 =
-// deload, depois troca de mesociclo (todos os exercícios mudam). A contagem é por sessões
-// concluídas, não por calendário: semana fraca alonga o meso, mas cada exercício recebe as
-// mesmas 4 exposições.
-export const SESSOES_POR_RODADA = 5;
-export const RODADAS_TREINO = 4;
-export const RODADA_DELOAD = 5;
-export const SESSOES_POR_MESO = SESSOES_POR_RODADA * RODADA_DELOAD; // 25
+// Programa sequencial A → B → C → D → A. A contagem é por treinos concluídos, não por
+// calendário: faltou um dia, o próximo da fila continua sendo o próximo.
+export const SESSOES_POR_CICLO = SESSOES.length;
+export const TREINOS_POR_SEMANA = 4;
+
+// Retomada: nos primeiros treinos (a pessoa vem de uma pausa) o volume é reduzido para o corpo
+// reaprender o movimento sem dor muscular que derrube a aderência na 2ª semana.
+export const TREINOS_DE_RETOMADA = SESSOES_POR_CICLO;
+export const SERIES_NA_RETOMADA = 2;
 
 export function toISODate(d: Date): string {
   const y = d.getFullYear();
@@ -33,46 +34,34 @@ export function proximaDaFila(sessao: SessaoTreino): SessaoTreino {
   return SESSOES[(SESSOES.indexOf(sessao) + 1) % SESSOES.length];
 }
 
-// Sessão sugerida para hoje: se hoje já começou/terminou alguma sessão do programa, é ela
-// (o app não pula para a próxima no meio do dia). Senão, a seguinte à última concluída.
-export function sessaoSugerida(dataInicioISO: string, hojeISO: string, h: Historico = historicoLocal()): SessaoTreino {
-  const deHoje = (h.sessoes[hojeISO] ?? []).filter((r) => (SESSOES as string[]).includes(r.sessaoTipo));
-  if (deHoje.length > 0) return deHoje[deHoje.length - 1].sessaoTipo as SessaoTreino;
-  const concluidas = sessoesConcluidasEm(h, dataInicioISO);
+// Sessão de hoje: se hoje já começou/terminou alguma (timer ou séries registradas), é ela (o app não pula para a próxima no
+// meio do dia). Senão, a seguinte à última concluída.
+export function sessaoSugerida(hojeISO: string, h: Historico = historicoLocal()): SessaoTreino {
+  const deHoje = h.sessoes[hojeISO] ?? [];
+  if (deHoje.length > 0) return deHoje[deHoje.length - 1].sessaoTipo;
+  // Quem registra séries sem apertar "Iniciar treino" continua na sessão que começou.
+  const seriesDeHoje = h.log
+    .filter((s) => s.data === hojeISO && s.sessao && (s.cargaKg !== null || s.reps !== null))
+    .sort((a, b) => (a.registradoEm < b.registradoEm ? -1 : 1));
+  const ultimaSerie = seriesDeHoje[seriesDeHoje.length - 1];
+  if (ultimaSerie?.sessao) return ultimaSerie.sessao;
+  const concluidas = sessoesConcluidasEm(h);
   const ultima = concluidas[concluidas.length - 1];
   return ultima ? proximaDaFila(ultima.tipo) : "A";
 }
 
 export interface StatusPrograma {
-  totalConcluidas: number;
-  meso: number; // 1, 2, 3...
-  rodada: number; // 1–5 (5 = deload)
-  isDeload: boolean;
-  concluidasNaRodada: number; // 0–4, sem contar a sessão de hoje
+  totalConcluidas: number; // sem contar a sessão de hoje
+  retomada: boolean; // ainda nos primeiros treinos: volume reduzido
 }
 
-// Status da sessão que está sendo feita hoje. A própria sessão de hoje não entra na conta —
-// senão, ao terminar a 5ª sessão da rodada, a tela pularia para a rodada seguinte.
-export function getStatusPrograma(
-  dataInicioISO: string,
-  hojeISO: string,
-  sessaoHoje: SessaoTreino | null,
-  h: Historico = historicoLocal(),
-): StatusPrograma {
-  const anteriores = sessoesConcluidasEm(h, dataInicioISO).filter((s) => !(s.data === hojeISO && s.tipo === sessaoHoje));
-  const total = anteriores.length;
-  const posNoMeso = total % SESSOES_POR_MESO;
-  const rodada = Math.floor(posNoMeso / SESSOES_POR_RODADA) + 1;
-  return {
-    totalConcluidas: total,
-    meso: Math.floor(total / SESSOES_POR_MESO) + 1,
-    rodada,
-    isDeload: rodada === RODADA_DELOAD,
-    concluidasNaRodada: posNoMeso % SESSOES_POR_RODADA,
-  };
+// A própria sessão de hoje não entra na conta — senão, ao fechar o 4º treino da retomada, a
+// tela de hoje trocaria o volume no meio da sessão.
+export function getStatusPrograma(hojeISO: string, sessaoHoje: SessaoTreino | null, h: Historico = historicoLocal()): StatusPrograma {
+  const total = sessoesConcluidasEm(h).filter((s) => !(s.data === hojeISO && s.tipo === sessaoHoje)).length;
+  return { totalConcluidas: total, retomada: total < TREINOS_DE_RETOMADA };
 }
 
-// Deload: metade das séries (arredondando para cima, mínimo 1).
-export function seriesDaRodada(series: number, isDeload: boolean): number {
-  return isDeload ? Math.max(1, Math.ceil(series / 2)) : series;
+export function seriesDoDia(series: number, retomada: boolean): number {
+  return retomada ? Math.min(series, SERIES_NA_RETOMADA) : series;
 }

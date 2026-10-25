@@ -1,112 +1,91 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { garantirDataInicio, getCelebrado, getDataInicio, getSessaoEscolhida, setCelebrado, setSessaoEscolhida } from "@/lib/storage";
-import { getStatusPrograma, sessaoSugerida as calcularSessaoSugerida, toISODate } from "@/lib/program";
+import { getCelebrado, getTrocas, setCelebrado, setTroca } from "@/lib/storage";
+import { getStatusPrograma, proximaDaFila, seriesDoDia, sessaoSugerida as calcularSessaoSugerida, toISODate, SERIES_NA_RETOMADA } from "@/lib/program";
 import { getSessaoCompleta, SESSAO_LABEL, SESSAO_NOME } from "@/lib/exercicios";
-import { gerarInsightHoje, gerarInsightProximo } from "@/lib/motivacao";
 import { ExercicioCard } from "@/components/ExercicioCard";
-import { GuiaModal } from "@/components/GuiaModal";
-import { SeletorSessao } from "@/components/SeletorSessao";
 import { TreinoTimer } from "@/components/TreinoTimer";
-import { ResumoPrograma } from "@/components/ResumoPrograma";
 import { PainelGamificacao } from "@/components/PainelGamificacao";
-import { DiaLeveCard } from "@/components/DiaLeveCard";
 import { CelebracaoModal, type DadosCelebracao } from "@/components/CelebracaoModal";
 import { useGamificacao } from "@/hooks/useGamificacao";
-import type { EscolhaDoDia } from "@/lib/tipos";
-import { AlertTriangle, CalendarClock, Coffee, CheckCircle2 } from "lucide-react";
+import { CalendarClock, CheckCircle2, Sprout } from "lucide-react";
 import { ICON } from "@/lib/icones";
 
 const DIAS_SEMANA_LABEL = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 export default function HojePage() {
   const [pronto, setPronto] = useState(false);
-  const [dataInicio, setDataInicioState] = useState<string>("");
   const [hoje] = useState(() => new Date());
-  const [escolha, setEscolha] = useState<EscolhaDoDia | null>(null);
-  const [exercicioAbertoId, setExercicioAbertoId] = useState<string | null>(null);
-  const [progressoPorExercicio, setProgressoPorExercicio] = useState<Record<string, { feitas: number; total: number }>>({});
+  const [trocas, setTrocas] = useState<Record<string, string>>({});
+  const [exercicioAbertoKey, setExercicioAbertoKey] = useState<string | null>(null);
+  const [progresso, setProgresso] = useState<Record<string, { feitas: number; total: number }>>({});
   const [celebracao, setCelebracao] = useState<DadosCelebracao | null>(null);
   const [sessaoParaCelebrar, setSessaoParaCelebrar] = useState(false);
-  // Sobe quando algo muda fora das séries (timer do treino, dia leve) e a gamificação precisa reler.
+  // Sobe quando algo muda fora das séries (timer do treino) e a gamificação precisa reler.
   const [versao, setVersao] = useState(0);
   const concluidoAntes = useRef(false);
 
   const hojeISO = toISODate(hoje);
 
   useEffect(() => {
-    setDataInicioState(garantirDataInicio(hojeISO));
-    setEscolha(getSessaoEscolhida(hojeISO));
+    setTrocas(getTrocas());
     setPronto(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const sessaoSugerida = pronto ? calcularSessaoSugerida(dataInicio, hojeISO) : "A";
-  const sessaoEfetiva = escolha === "DESCANSO" ? null : (escolha ?? sessaoSugerida);
-  const status = pronto ? getStatusPrograma(dataInicio, hojeISO, sessaoEfetiva) : null;
-  const mesoAtual = status?.meso;
-  const exercicios = useMemo(
-    () => (sessaoEfetiva && mesoAtual !== undefined ? getSessaoCompleta(sessaoEfetiva, mesoAtual) : []),
-    [sessaoEfetiva, mesoAtual],
-  );
+  const sessao = pronto ? calcularSessaoSugerida(hojeISO) : "A";
+  const status = pronto ? getStatusPrograma(hojeISO, sessao) : null;
+  const retomada = status?.retomada ?? false;
+  const exercicios = useMemo(() => getSessaoCompleta(sessao, trocas), [sessao, trocas]);
 
-  const insightHoje = status ? gerarInsightHoje(status, sessaoEfetiva) : null;
-  const insightProximo = status ? gerarInsightProximo(sessaoEfetiva, sessaoSugerida, status.meso) : null;
-
-  // Fluxo guiado: mantém só um exercício da sessão principal aberto por vez. Ao completar
-  // todas as séries do exercício aberto, avança sozinho para o próximo pendente da lista.
+  // Fluxo guiado: só um exercício aberto por vez; ao completar as séries do aberto, avança
+  // sozinho para o próximo pendente.
   useEffect(() => {
-    if (exercicios.length === 0) {
-      setExercicioAbertoId(null);
-      return;
-    }
-    setExercicioAbertoId((atual) => {
+    setExercicioAbertoKey((atual) => {
       if (atual) {
-        const aindaNaLista = exercicios.some((e) => e.id === atual);
-        const p = progressoPorExercicio[atual];
+        const aindaNaLista = exercicios.some((e) => e.slotKey === atual);
+        const p = progresso[atual];
         if (aindaNaLista && (!p || p.feitas < p.total)) return atual;
       }
       const proximo = exercicios.find((e) => {
-        const p = progressoPorExercicio[e.id];
+        const p = progresso[e.slotKey];
         return !p || p.feitas < p.total;
       });
-      return proximo ? proximo.id : null;
+      return proximo ? proximo.slotKey : null;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessaoEfetiva, progressoPorExercicio]);
+  }, [sessao, exercicios, progresso]);
 
-  const handleToggleExercicio = useCallback((id: string) => {
-    setExercicioAbertoId((atual) => (atual === id ? null : id));
-  }, []);
-
-  function escolher(valor: EscolhaDoDia) {
-    setSessaoEscolhida(hojeISO, valor);
-    setEscolha(valor);
-  }
-
-  const handleProgresso = useCallback((exercicioId: string, feitas: number, total: number) => {
-    setProgressoPorExercicio((prev) => {
-      const atual = prev[exercicioId];
+  const handleProgresso = useCallback((slotKey: string, feitas: number, total: number) => {
+    setProgresso((prev) => {
+      const atual = prev[slotKey];
       if (atual && atual.feitas === feitas && atual.total === total) return prev;
-      return { ...prev, [exercicioId]: { feitas, total } };
+      return { ...prev, [slotKey]: { feitas, total } };
     });
   }, []);
+
+  function trocar(slotKey: string, exercicioId: string) {
+    const padrao = exercicios.find((e) => e.slotKey === slotKey)?.opcoes[0].id;
+    setTroca(slotKey, exercicioId === padrao ? null : exercicioId);
+    setTrocas(getTrocas());
+    setProgresso((prev) => {
+      const { [slotKey]: _removido, ...resto } = prev;
+      return resto;
+    });
+  }
 
   const progressoSessao = exercicios.reduce(
     (acc, ex) => {
-      const p = progressoPorExercicio[ex.id];
-      const total = p?.total ?? ex.series;
+      const p = progresso[ex.slotKey];
+      const total = p?.total ?? seriesDoDia(ex.series, retomada);
       const feitas = p ? Math.min(p.feitas, total) : 0;
       return { feitas: acc.feitas + feitas, total: acc.total + total };
     },
     { feitas: 0, total: 0 },
   );
-  const progressoSessaoPct = progressoSessao.total > 0 ? Math.min(100, (progressoSessao.feitas / progressoSessao.total) * 100) : 0;
+  const progressoPct = progressoSessao.total > 0 ? Math.min(100, (progressoSessao.feitas / progressoSessao.total) * 100) : 0;
   const treinoConcluido = progressoSessao.total > 0 && progressoSessao.feitas >= progressoSessao.total;
 
-
-  const { g, recalcular } = useGamificacao(hojeISO, `${progressoSessao.feitas}:${versao}`);
+  const { g } = useGamificacao(hojeISO, `${progressoSessao.feitas}:${versao}`);
 
   // Treino concluído (todas as séries feitas) → comemora uma vez. Quem já comemorou este treino
   // não vê de novo ao reabrir o app.
@@ -115,16 +94,16 @@ export default function HojePage() {
     concluidoAntes.current = treinoConcluido;
   }, [treinoConcluido]);
 
-  const chaveSessao = sessaoEfetiva ? `${hojeISO}:${sessaoEfetiva}` : null;
+  const chaveSessao = `${hojeISO}:${sessao}`;
   // Treino no meio (séries feitas, ainda não concluído): segura as comemorações para não
   // interromper entre uma série e outra. Elas aparecem ao concluir.
-  const emTreino = sessaoEfetiva !== null && progressoSessao.feitas > 0 && !sessaoParaCelebrar;
+  const emTreino = progressoSessao.feitas > 0 && !sessaoParaCelebrar;
   useEffect(() => {
     if (!g || celebracao || emTreino) return;
     const visto = getCelebrado();
     const conquistasNovas = g.conquistas.filter((c) => c.desbloqueada && !visto.conquistas.includes(c.id));
     const novoNivel = g.nivel.nivel > visto.nivel;
-    const sessaoConcluida = sessaoParaCelebrar && chaveSessao !== null && !visto.treinos.includes(chaveSessao);
+    const sessaoConcluida = sessaoParaCelebrar && !visto.treinos.includes(chaveSessao);
     if (conquistasNovas.length > 0 || novoNivel || sessaoConcluida) setCelebracao({ sessaoConcluida, conquistasNovas, novoNivel });
   }, [g, sessaoParaCelebrar, chaveSessao, celebracao, emTreino]);
 
@@ -134,7 +113,7 @@ export default function HojePage() {
       setCelebrado({
         conquistas: g.conquistas.filter((c) => c.desbloqueada).map((c) => c.id),
         nivel: Math.max(visto.nivel, g.nivel.nivel),
-        treinos: chaveSessao && celebracao?.sessaoConcluida ? [...visto.treinos, chaveSessao].slice(-60) : visto.treinos,
+        treinos: celebracao?.sessaoConcluida ? [...visto.treinos, chaveSessao].slice(-60) : visto.treinos,
       });
     }
     setSessaoParaCelebrar(false);
@@ -150,7 +129,7 @@ export default function HojePage() {
   if (!pronto) {
     return (
       <div className="p-4" aria-busy="true" aria-live="polite">
-        <span className="sr-only">Carregando dados do treino do dia...</span>
+        <span className="sr-only">Carregando o treino de hoje...</span>
         <div className="mb-4 animate-pulse space-y-2">
           <div className="h-3 w-20 rounded bg-base-600" />
           <div className="h-6 w-48 rounded bg-base-600" />
@@ -164,108 +143,87 @@ export default function HojePage() {
     );
   }
 
+  const proxima = proximaDaFila(sessao);
+
   return (
     <div className="p-4">
-      <header className="mb-4 flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-ink-muted">{DIAS_SEMANA_LABEL[hoje.getDay()]}</p>
-          <h1 className="text-3xl font-extrabold uppercase leading-none text-ink">
-            {sessaoEfetiva ? `Treino ${sessaoEfetiva} · ${SESSAO_NOME[sessaoEfetiva]}` : "Hoje é dia de descanso"}
-          </h1>
-        </div>
-        <GuiaModal dataInicio={dataInicio} onDataInicioChange={setDataInicioState} />
+      <header className="mb-4">
+        <p className="text-sm font-medium text-ink-muted">{DIAS_SEMANA_LABEL[hoje.getDay()]}</p>
+        <h1 className="text-3xl font-extrabold uppercase leading-none text-ink">
+          Treino {sessao} · {SESSAO_NOME[sessao]}
+        </h1>
+        <p className="mt-1 text-xs text-ink-muted">
+          {exercicios.length} exercícios · {progressoSessao.total} séries
+        </p>
       </header>
 
-      {sessaoEfetiva && exercicios.length > 0 && (
-        <div className="sticky top-0 z-10 -mx-4 mb-3 border-b border-line bg-base-800/95 px-4 py-2 shadow-panel backdrop-blur">
-          <div className="mb-1.5 flex items-center justify-between text-xs">
-            <span className="flex items-center gap-1.5 font-semibold text-ink">
-              {treinoConcluido ? (
-                <>
-                  <CheckCircle2 size={ICON.md} className="anim-confirmar text-accent" />
-                  <span>Treino Concluído!</span>
-                </>
-              ) : (
-                <span>Progresso da Sessão</span>
-              )}
-            </span>
-            <span className="font-medium text-ink-muted">
-              {progressoSessao.feitas} de {progressoSessao.total} séries ({Math.round(progressoSessaoPct)}%)
-            </span>
-          </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-base-600">
-            <div
-              className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out"
-              style={{ width: `${progressoSessaoPct}%` }}
-            />
-          </div>
+      <div className="sticky top-0 z-10 -mx-4 mb-3 border-b border-line bg-base-800/95 px-4 py-2 shadow-panel backdrop-blur">
+        <div className="mb-1.5 flex items-center justify-between text-xs">
+          <span className="flex items-center gap-1.5 font-semibold text-ink">
+            {treinoConcluido ? (
+              <>
+                <CheckCircle2 size={ICON.md} className="anim-confirmar text-accent" />
+                <span>Treino concluído!</span>
+              </>
+            ) : (
+              <span>Séries de hoje</span>
+            )}
+          </span>
+          <span className="font-medium tabular-nums text-ink-muted">
+            {progressoSessao.feitas} de {progressoSessao.total} ({Math.round(progressoPct)}%)
+          </span>
         </div>
-      )}
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-base-600">
+          <div className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out" style={{ width: `${progressoPct}%` }} />
+        </div>
+      </div>
 
       {g && <PainelGamificacao g={g} />}
 
-      <SeletorSessao hojeISO={hojeISO} sessaoSugerida={sessaoSugerida} valorAtual={escolha} onEscolher={escolher} />
-
-      {!sessaoEfetiva && (
-        <div className="mb-4 flex flex-col items-center justify-center rounded-xl border border-line bg-base-800 p-5 text-center shadow-panel">
-          <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-brand-soft text-brand">
-            <Coffee size={ICON.lg} />
-          </div>
-          <h2 className="text-base font-semibold text-ink">Recuperação Muscular Ativa</h2>
-          <p className="mt-1 text-xs text-ink-muted">
-            O descanso planejado é fundamental para a hipertrofia e reconstrução tecidual. Mantenha a hidratação e priorize boas horas de sono!
+      {retomada && (
+        <div className="mb-4 flex items-start gap-2 rounded-xl border border-accent/30 bg-accent-soft px-3 py-2.5">
+          <Sprout aria-hidden="true" size={ICON.sm} className="mt-0.5 shrink-0 text-accent" />
+          <p className="text-xs font-medium text-ink">
+            Volta aos treinos: nos primeiros {status ? Math.max(0, 4 - status.totalConcluidas) : 4} treinos são só {SERIES_NA_RETOMADA} séries por exercício, com carga leve. É de propósito: o corpo
+            reaprende o movimento sem a dor do dia seguinte que faz desistir.
           </p>
         </div>
       )}
 
-      {!sessaoEfetiva && <DiaLeveCard key={`leve:${versao}`} hojeISO={hojeISO} onMudou={recalcular} />}
+      <TreinoTimer hojeISO={hojeISO} sessaoTipo={sessao} onMudou={aoMudarTimer} />
 
-      {sessaoEfetiva && status && <TreinoTimer hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} onMudou={aoMudarTimer} />}
+      <section className="mb-4">
+        <h2 className="mb-2.5 text-base font-bold tracking-tight text-ink">{SESSAO_LABEL[sessao]}</h2>
+        <div className="space-y-2">
+          {exercicios.map((ex) => (
+            <ExercicioCard
+              key={`${ex.slotKey}:${ex.id}`}
+              exercicio={ex}
+              retomada={retomada}
+              data={hojeISO}
+              expandido={exercicioAbertoKey === ex.slotKey}
+              onToggleExpandido={() => setExercicioAbertoKey((atual) => (atual === ex.slotKey ? null : ex.slotKey))}
+              onProgresso={handleProgresso}
+              onTrocar={trocar}
+            />
+          ))}
+        </div>
+        <p className="mt-2 text-[11px] text-ink-faint">
+          Dor na lombar (ou em qualquer lugar) durante um exercício? Pare e use &ldquo;Trocar exercício&rdquo; por outra opção. Se a dor continuar, fale com quem acompanha você.
+        </p>
+      </section>
 
-      {status && <ResumoPrograma status={status} insight={insightHoje} />}
-      {status?.isDeload && sessaoEfetiva && (
-        <div className="mb-4 flex items-start gap-2 rounded-xl border border-danger/30 bg-danger-soft px-3 py-2.5">
-          <AlertTriangle aria-hidden="true" size={ICON.sm} className="mt-0.5 shrink-0 text-danger" />
-          <p className="text-xs font-medium text-danger">
-            Rodada de deload — metade das séries, mesmas reps, carga −10%, longe da falha. Depois dela, todos os
-            exercícios trocam.
+      <div className="mt-2 flex gap-3 rounded-xl border border-line bg-base-800 p-3 shadow-panel">
+        <CalendarClock aria-hidden="true" size={ICON.md} className="mt-0.5 shrink-0 text-ink-muted" />
+        <div>
+          <p className="text-sm font-semibold text-ink">Próximo treino: {proxima}</p>
+          <p className="mt-0.5 text-sm text-ink-muted">
+            {SESSAO_LABEL[proxima]}. Faltou um dia? Sem problema: o próximo da fila continua sendo o próximo.
           </p>
         </div>
-      )}
-
-      {sessaoEfetiva && status && (
-        <>
-          <section className="mb-4">
-            <h2 className="mb-2.5 text-base font-bold tracking-tight text-ink">{SESSAO_LABEL[sessaoEfetiva]}</h2>
-            <div className="space-y-2">
-              {exercicios.map((ex) => (
-                <ExercicioCard
-                  key={ex.id}
-                  exercicio={ex}
-                  status={status}
-                  data={hojeISO}
-                  expandido={exercicioAbertoId === ex.id}
-                  onToggleExpandido={() => handleToggleExercicio(ex.id)}
-                  onProgresso={handleProgresso}
-                />
-              ))}
-            </div>
-          </section>
-        </>
-      )}
-
-      {insightProximo && (
-        <div className="mt-2 flex gap-3 rounded-xl border border-line bg-base-800 p-3 shadow-panel">
-          <CalendarClock aria-hidden="true" size={ICON.md} className="mt-0.5 shrink-0 text-ink-muted" />
-          <div>
-            <p className="text-sm font-semibold text-ink">{insightProximo.titulo}</p>
-            <p className="mt-1 text-sm text-ink-muted">{insightProximo.mensagem}</p>
-          </div>
-        </div>
-      )}
+      </div>
 
       {g && <CelebracaoModal g={g} dados={celebracao} onFechar={fecharCelebracao} />}
     </div>
   );
 }
-

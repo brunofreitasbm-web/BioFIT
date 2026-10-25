@@ -1,16 +1,11 @@
-import type { EscolhaDoDia, PalpiteCalibracao, RegistroDiaLeve, RegistroSessao, SerieRegistrada, SessaoTreino } from "./tipos";
+import type { RegistroSessao, SerieRegistrada, SessaoTreino } from "./tipos";
 import {
   dadosDoBackup,
   diasTreinadosUnicosEm,
-  erroMedioCalibracaoEm,
-  KEY_CALIBRACAO,
   KEY_CELEBRADO,
-  KEY_DIAS_LEVES,
-  KEY_ESCOLHAS,
-  KEY_INICIO,
   KEY_LOG,
-  KEY_META_SEMANAL,
   KEY_SESSOES,
+  KEY_TROCAS,
   sessoesConcluidasEm,
   ultimaExecucaoEm,
   type DadosTreino,
@@ -21,28 +16,6 @@ export type { SessaoConcluida };
 
 function gravarLocal(chave: string, valor: string): void {
   window.localStorage.setItem(chave, valor);
-}
-
-// Primeira abertura: o programa começa hoje. Fica gravado para a contagem não "andar" depois.
-export function garantirDataInicio(hojeISO: string): string {
-  const atual = getDataInicio();
-  if (atual) return atual;
-  setDataInicio(hojeISO);
-  return hojeISO;
-}
-
-export function getDataInicio(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(KEY_INICIO);
-}
-
-export function setDataInicio(iso: string): boolean {
-  try {
-    gravarLocal(KEY_INICIO, iso);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export function getLog(): SerieRegistrada[] {
@@ -87,6 +60,13 @@ export function seriesDoExercicioNaData(exercicioId: string, data: string): Seri
 
 export function ultimaExecucao(exercicioId: string, antesDe?: string): SerieRegistrada[] {
   return ultimaExecucaoEm(getLog(), exercicioId, antesDe);
+}
+
+// Maior carga já usada num exercício antes de `antesDe` (base do selo "carga nova").
+export function maiorCargaAntes(exercicioId: string, antesDe: string): number {
+  return getLog()
+    .filter((s) => s.exercicioId === exercicioId && s.data < antesDe && s.cargaKg != null && s.reps != null && s.reps > 0)
+    .reduce((max, s) => Math.max(max, s.cargaKg as number), 0);
 }
 
 // ===== Sessões (iniciar/terminar treino) =====
@@ -158,38 +138,25 @@ export function reabrirSessao(data: string, sessaoTipo: SessaoTreino): boolean {
   return saveSessoesPorDia(map);
 }
 
-// ===== Escolha manual da sessão do dia (sobrepõe a sugestão de calendário) =====
+// ===== Troca de exercício por posição (A1, B3...) =====
 
-function getEscolhas(): Record<string, EscolhaDoDia> {
+export function getTrocas(): Record<string, string> {
   if (typeof window === "undefined") return {};
   try {
-    const raw = window.localStorage.getItem(KEY_ESCOLHAS);
-    return raw ? (JSON.parse(raw) as Record<string, EscolhaDoDia>) : {};
+    const raw = window.localStorage.getItem(KEY_TROCAS);
+    return raw ? (JSON.parse(raw) as Record<string, string>) : {};
   } catch {
     return {};
   }
 }
 
-export function getSessaoEscolhida(data: string): EscolhaDoDia | null {
-  return getEscolhas()[data] ?? null;
-}
-
-export function setSessaoEscolhida(data: string, valor: EscolhaDoDia): boolean {
-  const map = getEscolhas();
-  map[data] = valor;
+// `exercicioId` null volta ao exercício padrão da posição.
+export function setTroca(slotKey: string, exercicioId: string | null): boolean {
+  const trocas = getTrocas();
+  if (exercicioId === null) delete trocas[slotKey];
+  else trocas[slotKey] = exercicioId;
   try {
-    gravarLocal(KEY_ESCOLHAS, JSON.stringify(map));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function limparSessaoEscolhida(data: string): boolean {
-  const map = getEscolhas();
-  delete map[data];
-  try {
-    gravarLocal(KEY_ESCOLHAS, JSON.stringify(map));
+    gravarLocal(KEY_TROCAS, JSON.stringify(trocas));
     return true;
   } catch {
     return false;
@@ -198,96 +165,12 @@ export function limparSessaoEscolhida(data: string): boolean {
 
 // ===== Sessões concluídas do programa (fila A → E) =====
 
-export function sessoesConcluidas(dataInicioISO: string): SessaoConcluida[] {
-  return sessoesConcluidasEm({ log: getLog(), sessoes: getTodasSessoes() }, dataInicioISO);
+export function sessoesConcluidas(): SessaoConcluida[] {
+  return sessoesConcluidasEm({ log: getLog(), sessoes: getTodasSessoes() });
 }
 
 export function diasTreinadosUnicos(): string[] {
   return diasTreinadosUnicosEm({ log: getLog(), sessoes: getTodasSessoes() });
-}
-
-// ===== Calibração RIR (rodada 1) =====
-
-export function getPalpites(): PalpiteCalibracao[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(KEY_CALIBRACAO);
-    return raw ? (JSON.parse(raw) as PalpiteCalibracao[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-export function getPalpite(exercicioId: string, data: string): number | null {
-  return getPalpites().find((p) => p.exercicioId === exercicioId && p.data === data)?.palpite ?? null;
-}
-
-export function salvarPalpite(entry: PalpiteCalibracao): boolean {
-  const lista = getPalpites().filter((p) => !(p.exercicioId === entry.exercicioId && p.data === entry.data));
-  lista.push(entry);
-  try {
-    gravarLocal(KEY_CALIBRACAO, JSON.stringify(lista));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// Erro médio (real − palpite) da calibração. O "real" é a última série registrada do
-// exercício naquele dia. Erro médio > 2 = você para cedo demais.
-export function erroMedioCalibracao(): { amostras: number; erroMedio: number | null } {
-  return erroMedioCalibracaoEm({ log: getLog(), palpites: getPalpites() });
-}
-
-// ===== Dias leves (caminhada, mobilidade...) =====
-
-export function getDiasLeves(): Record<string, RegistroDiaLeve> {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = window.localStorage.getItem(KEY_DIAS_LEVES);
-    return raw ? (JSON.parse(raw) as Record<string, RegistroDiaLeve>) : {};
-  } catch {
-    return {};
-  }
-}
-
-export function registrarDiaLeve(data: string, atividade: string): boolean {
-  try {
-    gravarLocal(KEY_DIAS_LEVES, JSON.stringify({ ...getDiasLeves(), [data]: { data, atividade, registradoEm: new Date().toISOString() } }));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function removerDiaLeve(data: string): boolean {
-  const todos = getDiasLeves();
-  delete todos[data];
-  try {
-    gravarLocal(KEY_DIAS_LEVES, JSON.stringify(todos));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// ===== Meta semanal (quantos dias de treino por semana) =====
-
-export const META_SEMANAL_PADRAO = 5;
-
-export function getMetaSemanal(): number {
-  if (typeof window === "undefined") return META_SEMANAL_PADRAO;
-  const n = Number(window.localStorage.getItem(KEY_META_SEMANAL));
-  return Number.isInteger(n) && n >= 1 && n <= 7 ? n : META_SEMANAL_PADRAO;
-}
-
-export function setMetaSemanal(dias: number): boolean {
-  try {
-    gravarLocal(KEY_META_SEMANAL, String(Math.min(7, Math.max(1, Math.round(dias)))));
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 // ===== Marcos já comemorados =====
@@ -329,10 +212,7 @@ export function lerDadosLocais(): DadosTreino {
   return dadosDoBackup({
     [KEY_LOG]: ls.getItem(KEY_LOG),
     [KEY_SESSOES]: ls.getItem(KEY_SESSOES),
-    [KEY_DIAS_LEVES]: ls.getItem(KEY_DIAS_LEVES),
-    [KEY_CALIBRACAO]: ls.getItem(KEY_CALIBRACAO),
-    [KEY_ESCOLHAS]: ls.getItem(KEY_ESCOLHAS),
-    [KEY_INICIO]: ls.getItem(KEY_INICIO),
+    [KEY_TROCAS]: ls.getItem(KEY_TROCAS),
   });
 }
 
@@ -341,9 +221,7 @@ export function lerDadosLocais(): DadosTreino {
 // é um JSON com o valor bruto de cada chave, para restaurar em outro aparelho ou após limpar
 // os dados do site.
 
-const CHAVES_BACKUP = [KEY_LOG, KEY_INICIO, KEY_SESSOES, KEY_ESCOLHAS, KEY_DIAS_LEVES, KEY_CALIBRACAO, KEY_META_SEMANAL, KEY_CELEBRADO];
-// Chaves que guardam texto puro (não JSON).
-const CHAVES_TEXTO = [KEY_INICIO, KEY_META_SEMANAL];
+const CHAVES_BACKUP = [KEY_LOG, KEY_SESSOES, KEY_TROCAS, KEY_CELEBRADO];
 const BACKUP_FORMATO = "treino-clone-backup";
 
 export interface BackupTreino {
@@ -381,12 +259,10 @@ export function importarTudo(texto: string): string | null {
   const dados = b.dados as Record<string, unknown>;
   for (const [chave, valor] of Object.entries(dados)) {
     if (!CHAVES_BACKUP.includes(chave) || typeof valor !== "string") return `Chave inválida no backup: ${chave}`;
-    if (!CHAVES_TEXTO.includes(chave)) {
-      try {
-        JSON.parse(valor);
-      } catch {
-        return `Conteúdo corrompido em ${chave}.`;
-      }
+    try {
+      JSON.parse(valor);
+    } catch {
+      return `Conteúdo corrompido em ${chave}.`;
     }
   }
   try {

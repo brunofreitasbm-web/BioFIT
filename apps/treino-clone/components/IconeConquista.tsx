@@ -1,4 +1,4 @@
-import { CalendarCheck, Dumbbell, Flame, Footprints, Shield, Star, Trophy, Undo2, type LucideIcon } from "lucide-react";
+import { CalendarCheck, Dumbbell, Flame, Shield, Star, TrendingUp, Trophy, Undo2, type LucideIcon } from "lucide-react";
 import type { Conquista } from "@/lib/gamificacao";
 
 const ICONES: Record<Conquista["icone"], LucideIcon> = {
@@ -7,7 +7,7 @@ const ICONES: Record<Conquista["icone"], LucideIcon> = {
   calendar: CalendarCheck,
   shield: Shield,
   undo: Undo2,
-  footprints: Footprints,
+  trending: TrendingUp,
   trophy: Trophy,
   star: Star,
 };

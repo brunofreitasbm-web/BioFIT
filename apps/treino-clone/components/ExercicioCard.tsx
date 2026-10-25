@@ -2,115 +2,80 @@
 
 import { useEffect, useState } from "react";
 import { useBackLayers } from "@/hooks/useBackHandler";
-import { ArrowRight, ChevronDown, Image as ImageIcon, Layers, Lightbulb, ListOrdered, Check, Link2, Sparkles, TrendingUp, Trophy, Zap } from "lucide-react";
+import { ArrowRight, ChevronDown, Image as ImageIcon, Check, Repeat, TrendingUp, Trophy } from "lucide-react";
 import { ICON, STROKE } from "@/lib/icones";
 import type { ExercicioEfetivo, SerieRegistrada } from "@/lib/tipos";
 import { GrupoBadge } from "./GrupoBadge";
 import { ImagemExercicio } from "./ImagemExercicio";
+import { TrocaExercicio } from "./TrocaExercicio";
 import { cn } from "@/lib/cn";
-import { alvoDeEsforco, e1rm, parseDescansoSegundos } from "@/lib/descanso";
-import { EXERCICIOS_ASSISTIDOS, GRUPOS_INFERIORES, partidaKg } from "@/lib/exercicios";
+import { parseDescansoSegundos, textoDeEsforco } from "@/lib/descanso";
+import { GRUPOS_INFERIORES } from "@/lib/exercicios";
 import { sugerirProximaCarga } from "@/lib/progressao";
-import { estimar1RM, recordesPessoais } from "@/lib/relatorio";
-import { seriesDaRodada, type StatusPrograma } from "@/lib/program";
-import { getPalpite, salvarPalpite, seriesDoExercicioNaData, ultimaExecucao, upsertSerie } from "@/lib/storage";
+import { seriesDoDia } from "@/lib/program";
+import { maiorCargaAntes, seriesDoExercicioNaData, ultimaExecucao, upsertSerie } from "@/lib/storage";
 import { iniciarDescanso } from "@/lib/timerDescanso";
 
-function melhorE1rm(series: SerieRegistrada[]): number | null {
-  let melhor: number | null = null;
-  for (const s of series) {
-    if (s.cargaKg == null || s.reps == null || s.cargaKg <= 0) continue;
-    const v = e1rm(s.cargaKg, s.reps);
-    if (melhor === null || v > melhor) melhor = v;
-  }
-  return melhor;
-}
-
-function arredondarMeioKg(kg: number): number {
-  return Math.round(kg * 2) / 2;
-}
-
-// `exercicio` é a posição da sessão já resolvida para o mesociclo corrente. Não existe troca
-// manual: os exercícios mudam todos juntos na virada do mesociclo.
+// Uma posição do treino: séries e repetições à vista, uma linha por série, check para registrar.
+// `exercicio` já vem com a troca aplicada; trocar só é possível antes da primeira série do dia
+// (depois, as séries já feitas ficariam no exercício antigo).
 export function ExercicioCard({
   exercicio,
-  status,
+  retomada,
   data,
   expandido,
   onToggleExpandido,
   onProgresso,
+  onTrocar,
 }: {
   exercicio: ExercicioEfetivo;
-  status: StatusPrograma;
+  retomada: boolean;
   data: string;
   expandido: boolean;
   onToggleExpandido: () => void;
-  onProgresso?: (exercicioId: string, feitas: number, total: number) => void;
+  onProgresso?: (slotKey: string, feitas: number, total: number) => void;
+  onTrocar: (slotKey: string, exercicioId: string) => void;
 }) {
   const [series, setSeries] = useState<SerieRegistrada[]>([]);
   const [ultima, setUltima] = useState<SerieRegistrada[]>([]);
   const [anterior, setAnterior] = useState<SerieRegistrada[]>([]);
-  const [recorde1RMAnterior, setRecorde1RMAnterior] = useState<number | null>(null);
-  // Incrementa a cada toque na sugestão para a linha de input repopular os campos.
+  const [maiorAntes, setMaiorAntes] = useState(0);
   const [preenchimento, setPreenchimento] = useState<{ kg: string; reps: string; n: number } | null>(null);
   const [fotoAberta, setFotoAberta] = useState(false);
-  const [dicasAbertas, setDicasAbertas] = useState(false);
+  const [trocando, setTrocando] = useState(false);
+  const [erroSalvar, setErroSalvar] = useState(false);
 
   // Botão/gesto voltar do celular fecha a foto aberta (ver hooks/useBackHandler).
-  useBackLayers([
-    { active: fotoAberta, back: () => setFotoAberta(false) },
-  ]);
-  const [seriesIndividuais, setSeriesIndividuais] = useState(false);
-  const [erroSalvar, setErroSalvar] = useState(false);
-  const [palpite, setPalpite] = useState("");
+  useBackLayers([{ active: fotoAberta, back: () => setFotoAberta(false) }]);
 
   useEffect(() => {
     setSeries(seriesDoExercicioNaData(exercicio.id, data));
     const ult = ultimaExecucao(exercicio.id, data);
     setUltima(ult);
     setAnterior(ult.length > 0 ? ultimaExecucao(exercicio.id, ult[0].data) : []);
-    setRecorde1RMAnterior(recordesPessoais(exercicio.id, data).melhor1RM?.kg ?? null);
+    setMaiorAntes(maiorCargaAntes(exercicio.id, data));
     setPreenchimento(null);
-    setPalpite(getPalpite(exercicio.id, data)?.toString() ?? "");
-    setDicasAbertas(false);
-    setSeriesIndividuais(false);
   }, [exercicio.id, data]);
 
-  const totalSeries = seriesDaRodada(exercicio.series, status.isDeload);
+  const totalSeries = seriesDoDia(exercicio.series, retomada);
   const feitas = series.filter((s) => s.cargaKg !== null || s.reps !== null).length;
   const completo = feitas >= totalSeries;
-  const alvo = alvoDeEsforco(exercicio, status);
-  const ultimaSerieHoje = series.find((s) => s.serieNumero === totalSeries);
   const unidadeReps = exercicio.reps.includes(" s") ? "Seg" : "Reps";
+  const podeTrocar = feitas === 0 && exercicio.opcoes.length > 1;
 
-  // Carga pré-preenchida: última carga usada; no deload, ela −10%; sem histórico, a
-  // "Partida (kg)" da planilha.
   const ultimaCarga = ultima.find((s) => s.serieNumero === 1)?.cargaKg ?? null;
-  const cargaDeload = status.isDeload && ultimaCarga ? arredondarMeioKg(ultimaCarga * 0.9) : null;
-  const cargaInicial = cargaDeload ?? ultimaCarga ?? partidaKg(exercicio.partida);
-
-  const assistencia = EXERCICIOS_ASSISTIDOS.has(exercicio.id);
-  const sugestao = sugerirProximaCarga(
-    exercicio.reps,
-    ultima,
-    anterior,
-    { inferior: GRUPOS_INFERIORES.has(exercicio.grupoMuscular), assistencia },
-    status.isDeload,
-  );
-  // PR de hoje: alguma série confirmada hoje supera o melhor 1RM estimado de antes de hoje.
-  // No Graviton o número é assistência, então "mais kg" não é recorde.
-  const bateuPR =
-    !assistencia &&
-    recorde1RMAnterior !== null &&
-    series.some((s) => s.cargaKg != null && s.reps != null && s.cargaKg > 0 && s.reps > 0 && estimar1RM(s.cargaKg, s.reps) > recorde1RMAnterior + 1e-9);
+  const sugestao = sugerirProximaCarga(exercicio.reps, ultima, anterior, {
+    inferior: GRUPOS_INFERIORES.has(exercicio.grupoMuscular),
+    assistencia: false,
+  });
+  const cargaNova = maiorAntes > 0 && series.some((s) => s.cargaKg != null && s.reps != null && s.reps > 0 && s.cargaKg > maiorAntes);
 
   useEffect(() => {
-    onProgresso?.(exercicio.id, feitas, totalSeries);
+    onProgresso?.(exercicio.slotKey, feitas, totalSeries);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [exercicio.id, feitas, totalSeries]);
+  }, [exercicio.slotKey, feitas, totalSeries]);
 
-  function registrar(serieNumero: number, kgStr: string, repsStr: string, registradoEm: string): boolean {
-    const anterior = series.find((s) => s.serieNumero === serieNumero);
+  function registrar(serieNumero: number, kgStr: string, repsStr: string): boolean {
     return upsertSerie({
       exercicioId: exercicio.id,
       sessao: exercicio.sessao,
@@ -118,133 +83,63 @@ export function ExercicioCard({
       serieNumero,
       cargaKg: kgStr === "" ? null : Number(kgStr),
       reps: repsStr === "" ? null : Number(repsStr),
-      rir: anterior?.rir ?? null,
-      registradoEm,
+      registradoEm: new Date().toISOString(),
     });
   }
 
-  function aposSalvar(salvou: boolean) {
-    setErroSalvar(!salvou);
-    setSeries(seriesDoExercicioNaData(exercicio.id, data));
-    // Biset: o 1º exercício do par emenda direto no 2º, sem descanso entre eles; o timer
-    // só corre depois do 2º.
-    const emendaNoBiset = exercicio.bisetCom !== undefined && exercicio.ordem < exercicio.bisetCom;
-    if (salvou && !emendaNoBiset) {
-      const segundos = parseDescansoSegundos(exercicio.descanso);
-      if (segundos) iniciarDescanso(segundos, `${exercicio.sessao}${exercicio.ordem} · ${exercicio.nome}`);
-    }
-  }
-
   function confirmarSerie(serieNumero: number, kgStr: string, repsStr: string) {
-    aposSalvar(registrar(serieNumero, kgStr, repsStr, new Date().toISOString()));
-  }
-
-  // Replica a mesma carga/reps para todas as séries do exercício de uma vez.
-  function confirmarTodas(kgStr: string, repsStr: string) {
-    const agora = new Date().toISOString();
-    let salvouTudo = true;
-    for (let n = 1; n <= totalSeries; n++) salvouTudo = registrar(n, kgStr, repsStr, agora) && salvouTudo;
-    aposSalvar(salvouTudo);
-  }
-
-  function salvarRir(valor: string) {
-    if (!ultimaSerieHoje) return;
-    const salvou = upsertSerie({ ...ultimaSerieHoje, rir: valor === "" ? null : Number(valor) });
+    const salvou = registrar(serieNumero, kgStr, repsStr);
     setErroSalvar(!salvou);
     setSeries(seriesDoExercicioNaData(exercicio.id, data));
-  }
-
-  function salvarPalpiteAtual(valor: string) {
-    setPalpite(valor);
-    const n = Number(valor);
-    if (valor !== "" && Number.isFinite(n) && n > 0) {
-      setErroSalvar(!salvarPalpite({ data, exercicioId: exercicio.id, palpite: n }));
+    const ultimaDoExercicio = serieNumero >= totalSeries;
+    if (salvou && !ultimaDoExercicio) {
+      const segundos = parseDescansoSegundos(exercicio.descanso);
+      if (segundos) iniciarDescanso(segundos, `${exercicio.slotKey} · ${exercicio.nome}`);
     }
   }
 
-  const e1rmHoje = melhorE1rm(series);
-  const e1rmUltima = melhorE1rm(ultima);
   const ultimaResumo =
     ultima.length > 0
       ? `Última vez: ${ultima
           .map((s) => (s.cargaKg != null ? `${s.cargaKg}kg${s.reps != null ? `×${s.reps}` : ""}` : s.reps != null ? `${s.reps}` : null))
           .filter(Boolean)
-          .join(", ")}${e1rmUltima ? ` · e1RM ${e1rmUltima}` : ""}`
-      : null;
-  const partidaTexto =
-    exercicio.partida === "calibrar"
-      ? "Partida: calibrar — na 1ª exposição, ache a carga que dá o topo da faixa com ~2 reps sobrando"
-      : exercicio.partida === "peso corporal"
-        ? "Partida: peso corporal"
-        : `Partida: ${exercicio.partida} kg`;
-
-  const realCalibracao = ultimaSerieHoje?.reps ?? null;
-  const palpiteNum = palpite === "" ? null : Number(palpite);
-  const erroCalibracao = realCalibracao !== null && palpiteNum !== null ? realCalibracao - palpiteNum : null;
+          .join(", ")}`
+      : "Primeira vez neste exercício: escolha uma carga leve, que permita terminar todas as repetições com folga.";
 
   return (
-    <div
-      className={cn(
-        "rounded-xl border bg-base-800 shadow-panel transition-colors duration-200",
-        completo ? "border-accent/40 bg-accent-soft/40" : "border-line",
-      )}
-    >
+    <div className={cn("rounded-xl border bg-base-800 shadow-panel transition-colors duration-200", completo ? "border-accent/40 bg-accent-soft/40" : "border-line")}>
       <div className="flex w-full items-center gap-2 p-3 text-left">
-        <button
-          type="button"
-          onClick={onToggleExpandido}
-          aria-expanded={expandido}
-          className="flex min-h-12 min-w-0 flex-1 items-center gap-2 text-left"
-        >
+        <button type="button" onClick={onToggleExpandido} aria-expanded={expandido} className="flex min-h-12 min-w-0 flex-1 items-center gap-2 text-left">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="rounded-md bg-base-600 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-ink-muted">
-                {exercicio.sessao}
-                {exercicio.ordem}
-              </span>
+              <span className="rounded-md bg-base-600 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-ink-muted">{exercicio.slotKey}</span>
               <span className="line-clamp-2 min-w-0 text-[15px] font-semibold leading-tight tracking-tight text-ink">{exercicio.nome}</span>
               {completo && (
                 <span className="anim-confirmar flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-on-solid">
                   <Check aria-hidden="true" size={ICON.xs} strokeWidth={STROKE.forte} />
                 </span>
               )}
-              {bateuPR && (
+              {cargaNova && (
                 <span className="anim-pr inline-flex shrink-0 items-center gap-0.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold text-accent">
-                  <Trophy aria-hidden="true" size={ICON.xs} strokeWidth={STROKE.forte} /> PR
+                  <Trophy aria-hidden="true" size={ICON.xs} strokeWidth={STROKE.forte} /> Carga nova
                 </span>
               )}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               <GrupoBadge grupo={exercicio.grupoMuscular} />
-              <span className="text-[11px] text-ink-muted">
-                {totalSeries}×{exercicio.reps} · desc. {exercicio.descanso}
+              <span className="text-sm font-bold tabular-nums text-ink">
+                {totalSeries} × {exercicio.reps}
               </span>
-              {exercicio.bisetCom && (
-                <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-brand">
-                  <Link2 aria-hidden="true" size={ICON.xs} /> biset
-                </span>
-              )}
-              {alvo.testeFalha && (
-                <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-danger">
-                  <Zap aria-hidden="true" size={ICON.xs} /> teste de falha
-                </span>
-              )}
+              <span className="text-[11px] text-ink-muted">· {feitas}/{totalSeries} feitas · desc. {exercicio.descanso}</span>
             </div>
           </div>
-          <ChevronDown
-            aria-hidden="true"
-            size={ICON.md}
-            className={cn("shrink-0 text-ink-faint transition-transform duration-200", expandido && "rotate-180")}
-          />
+          <ChevronDown aria-hidden="true" size={ICON.md} className={cn("shrink-0 text-ink-faint transition-transform duration-200", expandido && "rotate-180")} />
         </button>
 
         {expandido && exercicio.imagem && (
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setFotoAberta(true);
-            }}
+            onClick={() => setFotoAberta(true)}
             className="toque flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-line bg-base-700 text-ink-muted hover:border-brand/40 hover:text-brand"
             aria-label={`Ver foto de ${exercicio.nome}`}
           >
@@ -260,35 +155,14 @@ export function ExercicioCard({
               Não foi possível salvar no dispositivo. Tente novamente.
             </p>
           )}
-          <p className="mb-2 text-[11px] text-ink-faint">
-            RIR alvo: {alvo.rirAlvo} · {alvo.label}
-          </p>
-          {exercicio.notas && (
-            <div className="mb-3">
-              <button
-                type="button"
-                onClick={() => setDicasAbertas((v) => !v)}
-                className="flex min-h-11 items-center gap-1 text-[11px] text-ink-faint"
-                aria-expanded={dicasAbertas}
-              >
-                <ChevronDown
-                  aria-hidden="true"
-                  size={ICON.sm}
-                  className={cn("transition-transform duration-200", dicasAbertas && "rotate-180")}
-                />
-                <Lightbulb aria-hidden="true" size={ICON.sm} /> Notas
-              </button>
-              {dicasAbertas && <p className="mt-1.5 text-sm text-ink-muted">{exercicio.notas}</p>}
-            </div>
-          )}
-          <p className="mb-2 text-[11px] text-brand">{ultimaResumo ?? partidaTexto}</p>
+          {exercicio.notas && <p className="mb-2 text-sm text-ink-muted">{exercicio.notas}</p>}
+          <p className="mb-2 text-[11px] text-ink-faint">{textoDeEsforco(exercicio.composto, retomada)}</p>
+          <p className="mb-2 text-[11px] text-brand">{ultimaResumo}</p>
           {sugestao && (
             <button
               type="button"
-              onClick={() =>
-                setPreenchimento((p) => ({ kg: String(sugestao.cargaKg), reps: String(sugestao.repsPreencher), n: (p?.n ?? 0) + 1 }))
-              }
-              className="mb-2 flex min-h-11 w-full items-center gap-2 rounded-lg border border-brand/30 bg-brand-soft px-3 py-2 text-left"
+              onClick={() => setPreenchimento((p) => ({ kg: String(sugestao.cargaKg), reps: String(sugestao.repsPreencher), n: (p?.n ?? 0) + 1 }))}
+              className="mb-3 flex min-h-11 w-full items-center gap-2 rounded-lg border border-brand/30 bg-brand-soft px-3 py-2 text-left"
               aria-label={`Usar sugestão: ${sugestao.cargaKg} kg por ${sugestao.repsAlvo} repetições`}
             >
               <TrendingUp aria-hidden="true" size={ICON.sm} className="shrink-0 text-brand" />
@@ -303,205 +177,60 @@ export function ExercicioCard({
               </span>
             </button>
           )}
-          {alvo.testeFalha && (
-            <div className="mb-3 rounded-lg border border-danger/30 bg-danger-soft px-3 py-2">
-              <p className="mb-1.5 text-[11px] text-danger">
-                Antes da {totalSeries}ª série: quantas reps você ACHA que faz até a falha? Depois vá até a falha técnica.
-              </p>
-              <div className="flex items-center gap-2 text-xs">
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min="1"
-                  max="99"
-                  placeholder="palpite"
-                  aria-label="Palpite de repetições até a falha"
-                  value={palpite}
-                  onChange={(e) => salvarPalpiteAtual(e.target.value)}
-                  className="w-20 rounded-lg border border-line bg-base-700 px-2 py-2 text-ink focus:border-brand focus:outline-none"
-                />
-                <span className="text-ink-muted">
-                  {realCalibracao === null
-                    ? "O real vem da última série registrada"
-                    : `Real: ${realCalibracao}${erroCalibracao !== null ? ` · erro ${erroCalibracao > 0 ? "+" : ""}${erroCalibracao}` : ""}`}
-                </span>
-              </div>
-            </div>
-          )}
 
-          <div className="mb-1.5 flex items-center justify-between">
-            <span className="text-[11px] text-ink-faint">
-              {feitas}/{totalSeries} séries{e1rmHoje ? ` · e1RM hoje ${e1rmHoje}` : ""}
-            </span>
-            <button
-              type="button"
-              onClick={() => setSeriesIndividuais((v) => !v)}
-              className="toque flex min-h-11 items-center gap-1 text-[11px] font-medium text-ink-muted hover:text-ink"
-            >
-              {seriesIndividuais ? (
-                <Layers aria-hidden="true" size={ICON.xs} />
-              ) : (
-                <ListOrdered aria-hidden="true" size={ICON.xs} />
-              )}
-              {seriesIndividuais ? "Usar 1 campo para todas" : "Ajustar série por série"}
-            </button>
+          <div className="grid grid-cols-[1.25rem_1fr_1fr_auto] items-center gap-x-2.5 gap-y-2 text-xs">
+            <span className="text-ink-faint">Série</span>
+            <span className="text-ink-faint">Carga (kg)</span>
+            <span className="text-ink-faint">{unidadeReps}</span>
+            <span />
+            {Array.from({ length: totalSeries }, (_, i) => i + 1).map((n) => {
+              const s = series.find((x) => x.serieNumero === n);
+              const anteriorHoje = series.find((x) => x.serieNumero === n - 1)?.cargaKg ?? null;
+              return (
+                <FragmentoLinha
+                  key={n}
+                  n={n}
+                  s={s}
+                  ultimaValor={ultima.find((x) => x.serieNumero === n)}
+                  cargaInicial={preenchimento ? Number(preenchimento.kg) : (anteriorHoje ?? ultimaCarga)}
+                  repsSugeridas={preenchimento ? preenchimento.reps : null}
+                  versaoPreenchimento={preenchimento?.n ?? 0}
+                  cargaOpcional={exercicio.pesoCorporal}
+                  onConfirmar={(kg, reps) => confirmarSerie(n, kg, reps)}
+                />
+              );
+            })}
           </div>
 
-          {seriesIndividuais ? (
-            <div className="grid grid-cols-[1.25rem_1fr_1fr_auto] items-center gap-x-2.5 gap-y-2 text-xs">
-              <span className="text-ink-faint">Série</span>
-              <span className="text-ink-faint">Carga (kg)</span>
-              <span className="text-ink-faint">{unidadeReps}</span>
-              <span />
-              {Array.from({ length: totalSeries }, (_, i) => i + 1).map((n) => {
-                const s = series.find((x) => x.serieNumero === n);
-                const ultimaValor = ultima.find((x) => x.serieNumero === n);
-                return (
-                  <FragmentoLinha
-                    key={n}
-                    n={n}
-                    s={s}
-                    ultimaValor={ultimaValor}
-                    cargaInicial={cargaInicial}
-                    cargaOpcional={exercicio.pesoCorporal}
-                    onConfirmar={(kg, reps) => confirmarSerie(n, kg, reps)}
-                  />
-                );
-              })}
-            </div>
-          ) : (
-            <div className="grid grid-cols-[1fr_1fr_auto] items-center gap-x-2.5 text-xs">
-              <span className="mb-1 text-[11px] font-medium text-ink-muted">Carga (kg)</span>
-              <span className="mb-1 text-[11px] font-medium text-ink-muted">{unidadeReps}</span>
-              <span />
-              <LinhaReplicada
-                totalSeries={totalSeries}
-                series={series}
-                ultima={ultima}
-                cargaInicial={cargaInicial}
-                cargaOpcional={exercicio.pesoCorporal}
-                preenchimento={preenchimento}
-                onConfirmarTodas={confirmarTodas}
-              />
-            </div>
-          )}
-
-          {completo && !alvo.testeFalha && !status.isDeload && (
-            <div className="mt-3 flex items-center gap-2 text-xs">
-              <label htmlFor={`rir-${exercicio.id}`} className="text-ink-muted">
-                RIR da última série
-              </label>
-              <input
-                id={`rir-${exercicio.id}`}
-                type="number"
-                inputMode="numeric"
-                min="0"
-                max="10"
-                step="1"
-                placeholder="0-5"
-                value={ultimaSerieHoje?.rir ?? ""}
-                onChange={(e) => salvarRir(e.target.value)}
-                className="w-16 rounded-lg border border-line bg-base-700 px-2 py-2 text-ink focus:border-brand focus:outline-none"
-              />
+          {exercicio.opcoes.length > 1 && (
+            <div className="mt-3 border-t border-line pt-1">
+              <button
+                type="button"
+                onClick={() => setTrocando(true)}
+                disabled={!podeTrocar}
+                className="toque flex min-h-11 items-center gap-1.5 text-xs font-semibold text-brand disabled:text-ink-faint"
+              >
+                <Repeat aria-hidden="true" size={ICON.sm} /> Trocar exercício{exercicio.trocado ? " (você já trocou)" : ""}
+              </button>
+              {!podeTrocar && feitas > 0 && <p className="text-[11px] text-ink-faint">Só dá para trocar antes da primeira série. Vale a partir do próximo treino.</p>}
             </div>
           )}
         </div>
       )}
 
-      {fotoAberta && exercicio.imagem && (
-        <ImagemExercicio pasta={exercicio.imagem} titulo={exercicio.nome} onClose={() => setFotoAberta(false)} />
+      {fotoAberta && exercicio.imagem && <ImagemExercicio pasta={exercicio.imagem} titulo={exercicio.nome} onClose={() => setFotoAberta(false)} />}
+      {trocando && (
+        <TrocaExercicio
+          exercicio={exercicio}
+          series={totalSeries}
+          onFechar={() => setTrocando(false)}
+          onEscolher={(id) => {
+            setTrocando(false);
+            if (id !== exercicio.id) onTrocar(exercicio.slotKey, id);
+          }}
+        />
       )}
     </div>
-  );
-}
-
-// Campo único que confirma as `totalSeries` séries de uma vez, todas com a mesma carga/reps.
-// As séries em si continuam existindo (e ficam acessíveis via "Ajustar série por série");
-// aqui só entra o valor uma vez e o check aplica pra todas.
-function LinhaReplicada({
-  totalSeries,
-  series,
-  ultima,
-  cargaInicial,
-  cargaOpcional,
-  preenchimento,
-  onConfirmarTodas,
-}: {
-  totalSeries: number;
-  series: SerieRegistrada[];
-  ultima: SerieRegistrada[];
-  cargaInicial: number | null;
-  cargaOpcional: boolean;
-  preenchimento: { kg: string; reps: string; n: number } | null;
-  onConfirmarTodas: (kg: string, reps: string) => void;
-}) {
-  const primeira = series.find((s) => s.serieNumero === 1);
-  const ultimaPrimeira = ultima.find((s) => s.serieNumero === 1);
-  const [kg, setKg] = useState(() => (primeira?.cargaKg ?? cargaInicial ?? "").toString());
-  const [reps, setReps] = useState(() => (primeira?.reps ?? ultimaPrimeira?.reps ?? "").toString());
-  const todasFeitas =
-    series.filter((s) => s.cargaKg !== null || s.reps !== null).length >= totalSeries && totalSeries > 0;
-
-  useEffect(() => {
-    setKg((primeira?.cargaKg ?? cargaInicial ?? "").toString());
-    setReps((primeira?.reps ?? ultimaPrimeira?.reps ?? "").toString());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [primeira?.cargaKg, primeira?.reps, cargaInicial, ultimaPrimeira?.reps]);
-
-  // Toque em "usar" na sugestão de progressão: sobrescreve os campos (sem confirmar).
-  useEffect(() => {
-    if (!preenchimento) return;
-    setKg(preenchimento.kg);
-    setReps(preenchimento.reps);
-  }, [preenchimento]);
-
-  const isDisabled = !entradaValida(kg, reps, cargaOpcional);
-  const kgPlaceholder = cargaOpcional ? "opcional" : "kg";
-  const repsPlaceholder = ultimaPrimeira?.reps != null ? `${ultimaPrimeira.reps}` : "reps";
-
-  return (
-    <>
-      <input
-        type="number"
-        inputMode="decimal"
-        min="0"
-        max="999"
-        step="0.5"
-        placeholder={kgPlaceholder}
-        aria-label="Carga em quilos, todas as séries"
-        value={kg}
-        onChange={(e) => setKg(e.target.value)}
-        className="campo-serie"
-      />
-      <input
-        type="number"
-        inputMode="numeric"
-        min="0"
-        max="999"
-        step="1"
-        placeholder={repsPlaceholder}
-        aria-label="Repetições, todas as séries"
-        value={reps}
-        onChange={(e) => setReps(e.target.value)}
-        className="campo-serie"
-      />
-      <button
-        type="button"
-        disabled={isDisabled}
-        onClick={() => !isDisabled && onConfirmarTodas(kg, reps)}
-        className={cn(
-          "toque flex h-12 w-12 shrink-0 items-center justify-center rounded-full border text-base font-semibold",
-          isDisabled
-            ? "cursor-not-allowed border-line bg-base-800 text-ink-faint opacity-40"
-            : todasFeitas
-            ? "anim-confirmar border-accent bg-accent text-on-solid"
-            : "border-brand bg-brand text-on-solid shadow-sm hover:bg-brand-hover",
-        )}
-        aria-label={`Confirmar as ${totalSeries} séries`}
-      >
-        <Check aria-hidden="true" size={ICON.md} strokeWidth={STROKE.forte} />
-      </button>
-    </>
   );
 }
 
@@ -510,6 +239,8 @@ function FragmentoLinha({
   s,
   ultimaValor,
   cargaInicial,
+  repsSugeridas,
+  versaoPreenchimento,
   cargaOpcional,
   onConfirmar,
 }: {
@@ -517,6 +248,8 @@ function FragmentoLinha({
   s: SerieRegistrada | undefined;
   ultimaValor: SerieRegistrada | undefined;
   cargaInicial: number | null;
+  repsSugeridas: string | null;
+  versaoPreenchimento: number;
   cargaOpcional: boolean;
   onConfirmar: (kg: string, reps: string) => void;
 }) {
@@ -527,9 +260,9 @@ function FragmentoLinha({
   // Repopula os campos se o registro salvo mudar por fora (ex.: dado carregado do storage).
   useEffect(() => {
     setKg((s?.cargaKg ?? cargaInicial ?? "").toString());
-    setReps((s?.reps ?? ultimaValor?.reps ?? "").toString());
+    setReps((s?.reps ?? repsSugeridas ?? ultimaValor?.reps ?? "").toString());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [s?.cargaKg, s?.reps, cargaInicial, ultimaValor?.reps]);
+  }, [s?.cargaKg, s?.reps, cargaInicial, ultimaValor?.reps, versaoPreenchimento]);
 
   const isDisabled = !entradaValida(kg, reps, cargaOpcional);
   const kgPlaceholder = cargaOpcional ? "opcional" : "kg";

@@ -25,7 +25,7 @@ export function CelebracaoModal({ g, dados, onFechar }: { g: Gamificacao; dados:
   }, [dados, onFechar]);
 
   if (!dados) return null;
-  const { sequencia, semana, nivel, xp } = g;
+  const { semanas, semana, nivel, xp } = g;
   const titulo = dados.novoNivel
     ? `Nível ${nivel.nivel}: ${nivel.titulo}`
     : dados.conquistasNovas.length > 0 && !dados.sessaoConcluida
@@ -52,14 +52,14 @@ export function CelebracaoModal({ g, dados, onFechar }: { g: Gamificacao; dados:
               </div>
               <div className="rounded-lg bg-base-700 p-2">
                 <dt className="flex items-center justify-center gap-1 text-[11px] font-medium text-ink-muted">
-                  <Flame aria-hidden="true" size={ICON.xs} /> Sequência
+                  <Flame aria-hidden="true" size={ICON.xs} /> Seguidas
                 </dt>
-                <dd className="font-display text-xl font-bold tabular-nums text-ink">{sequencia.atual}</dd>
+                <dd className="font-display text-xl font-bold tabular-nums text-ink">{semanas.atual}</dd>
               </div>
               <div className="rounded-lg bg-base-700 p-2">
                 <dt className="text-[11px] font-medium text-ink-muted">Semana</dt>
                 <dd className="font-display text-xl font-bold tabular-nums text-ink">
-                  {semana.diasDeForca}/{semana.meta}
+                  {semana.feitos}/{semana.meta}
                 </dd>
               </div>
             </dl>
@@ -92,10 +92,10 @@ export function CelebracaoModal({ g, dados, onFechar }: { g: Gamificacao; dados:
   );
 }
 
-// O gancho para amanhã: dizer exatamente o que está em jogo no próximo treino.
+// O gancho para o próximo treino: dizer exatamente o que está em jogo.
 function proximoPasso(g: Gamificacao): string {
-  const { sequencia, semana, proxima } = g;
-  if (!semana.batida && semana.faltam > 0) return `Faltam ${semana.faltam} treino(s) para a meta da semana. Amanhã a sequência chega a ${sequencia.atual + 1}.`;
-  if (proxima) return `Próxima conquista: ${proxima.nome} (${proxima.atual}/${proxima.alvo}). Amanhã a sequência chega a ${sequencia.atual + 1}.`;
-  return `Amanhã a sequência chega a ${sequencia.atual + 1}.`;
+  const { semana, semanas, proxima } = g;
+  if (semana.batida) return `Meta da semana batida. ${semanas.atual >= 2 ? `${semanas.atual} semanas seguidas na meta.` : "Se mantiver o ritmo, a semana que vem soma uma seguida."}`;
+  if (proxima && semana.faltam > 0) return `Faltam ${semana.faltam} treino(s) para fechar a semana. Próxima conquista: ${proxima.nome} (${proxima.atual}/${proxima.alvo}).`;
+  return `Faltam ${semana.faltam} treino(s) para fechar a semana.`;
 }

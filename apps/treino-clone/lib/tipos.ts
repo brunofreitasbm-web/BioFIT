@@ -11,29 +11,27 @@ export type GrupoMuscular =
   | "Postura"
   | "Core";
 
-// Sequência fixa A → B → C → D → E → A. Não existe "treino de quarta": faltou um dia, faz o
+// Sequência fixa A → B → C → D → A. Não existe "treino de quarta": faltou um dia, faz o
 // próximo da fila.
-export type SessaoTreino = "A" | "B" | "C" | "D" | "E";
-export type EscolhaDoDia = SessaoTreino | "DESCANSO";
+export type SessaoTreino = "A" | "B" | "C" | "D";
 
-// Uma variação de exercício para uma posição da sessão. Cada posição tem uma variação para o
-// Mesociclo 1 e outra para o Mesociclo 2 (coluna "Meso 2 (troca)" da planilha).
-// O `id` é do EXERCÍCIO, não da posição: o mesmo exercício em sessões/mesos diferentes
-// (ex.: Hack squat em B no meso 1 e em E no meso 2) compartilha o histórico de carga.
+// Um exercício que pode ocupar uma posição da sessão. O `id` é do EXERCÍCIO, não da posição:
+// o mesmo exercício em posições diferentes compartilha o histórico de carga.
 export interface VariacaoExercicio {
   id: string;
   nome: string;
-  partida: string; // "45", "42,5", "calibrar", "peso corporal"
   notas: string;
-  youtubeId: string | null;
+  // Só quando difere do padrão da posição (ex.: prancha em segundos no lugar de repetições).
+  reps?: string;
   // Grupos trabalhados indiretamente, com peso (0,5 = meia série por série feita). Entram no
   // volume por grupo do relatório, não na frequência.
   secundarios?: Partial<Record<GrupoMuscular, number>>;
-  // Pasta das fotos início/fim em `public/exercicios/` (free-exercise-db). null = sem foto.
+  // Pasta das fotos início/fim em `public/exercicios/`. null = sem foto.
   imagem?: string | null;
 }
 
-// Prescrição de uma posição dentro da sessão — vale para as duas variações (meso 1 e 2).
+// Prescrição de uma posição dentro da sessão. `opcoes[0]` é o exercício padrão; as demais são
+// trocas com a MESMA biomecânica e o mesmo grupo muscular (máquina ocupada, dor, preferência).
 export interface SlotPrograma {
   sessao: SessaoTreino;
   ordem: number;
@@ -41,16 +39,18 @@ export interface SlotPrograma {
   series: number;
   reps: string;
   descanso: string;
-  testeFalha: boolean; // "Teste falha (rod.1)" = SIM
-  composto: boolean; // exercícios 1–2 de cada sessão: alvo de esforço RIR 1–2 (isolados: 0–1)
+  composto: boolean; // exercícios principais da sessão: alvo de esforço um pouco menor
   pesoCorporal: boolean; // carga opcional no registro
-  bisetCom?: number; // ordem do par no biset (A6 rosca + tríceps)
-  meso1: VariacaoExercicio;
-  meso2: VariacaoExercicio;
+  opcoes: VariacaoExercicio[];
 }
 
-// Slot já resolvido para o mesociclo corrente — é o formato que a UI consome.
-export interface ExercicioEfetivo extends Omit<SlotPrograma, "meso1" | "meso2">, VariacaoExercicio {}
+// Slot já resolvido (com a escolha de troca aplicada) — é o formato que a UI consome.
+export interface ExercicioEfetivo extends Omit<SlotPrograma, "opcoes" | "reps">, Omit<VariacaoExercicio, "reps"> {
+  reps: string;
+  slotKey: string; // "A1"
+  opcoes: VariacaoExercicio[];
+  trocado: boolean; // true quando não é o exercício padrão
+}
 
 export interface SerieRegistrada {
   exercicioId: string;
@@ -58,8 +58,8 @@ export interface SerieRegistrada {
   serieNumero: number;
   cargaKg: number | null;
   reps: number | null;
-  rir?: number | null; // só na última série
-  sessao?: SessaoTreino
+  rir?: number | null;
+  sessao?: SessaoTreino;
   observacoes?: string;
   registradoEm: string; // ISO timestamp
 }
@@ -69,21 +69,5 @@ export interface RegistroSessao {
   sessaoTipo: SessaoTreino;
   inicioISO: string;
   fimISO: string | null;
-  atualizadoEm?: string; // ISO — última mudança (iniciar/terminar/reabrir), desempata o sync
-}
-
-// Dia leve: caminhada, mobilidade, alongamento... Mantém a sequência viva num dia sem musculação,
-// para o app incentivar "mexer o corpo todo dia" sem empurrar treino pesado em dias seguidos.
-export interface RegistroDiaLeve {
-  data: string; // YYYY-MM-DD
-  atividade: string; // texto livre curto ("Caminhada 30 min")
-  registradoEm: string; // ISO timestamp
-}
-
-// Aba "Calibração RIR": na rodada 1, antes da última série de um exercício "Teste falha",
-// anota-se o palpite de reps até a falha. O real vem da própria série registrada.
-export interface PalpiteCalibracao {
-  data: string; // YYYY-MM-DD
-  exercicioId: string;
-  palpite: number;
+  atualizadoEm?: string; // ISO — última mudança (iniciar/terminar/reabrir)
 }

@@ -1,18 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Flame, Lock, Minus, Plus, Shield, Zap } from "lucide-react";
+import { ChevronLeft, ChevronRight, Dumbbell, Flame, Lock, Shield, Zap } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ICON } from "@/lib/icones";
 import { addDiasISO, toISODate } from "@/lib/program";
-import { getMetaSemanal, lerDadosLocais, setMetaSemanal } from "@/lib/storage";
+import { lerDadosLocais } from "@/lib/storage";
 import {
   atividadePorDia,
-  DIAS_PARA_ESCUDO,
-  ESCUDOS_MAX,
   inicioDaSemana,
+  META_SEMANAL,
   MULTIPLICADORES,
-  XP_DIA_LEVE,
+  SEMANAS_PARA_ESCUDO,
   XP_SERIE,
   XP_SESSAO,
   type AtividadeDoDia,
@@ -26,17 +25,7 @@ const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julh
 export default function ConquistasPage() {
   const [hoje] = useState(() => new Date());
   const hojeISO = toISODate(hoje);
-  const [meta, setMeta] = useState(5);
-  const { g, recalcular } = useGamificacao(hojeISO, meta);
-
-  useEffect(() => setMeta(getMetaSemanal()), []);
-
-  function mudarMeta(delta: number) {
-    const nova = Math.min(7, Math.max(1, meta + delta));
-    setMetaSemanal(nova);
-    setMeta(nova);
-    recalcular();
-  }
+  const { g } = useGamificacao(hojeISO);
 
   if (!g) return <div className="p-4" aria-busy="true" />;
 
@@ -47,7 +36,7 @@ export default function ConquistasPage() {
     <div className="space-y-4 p-4">
       <header>
         <h1 className="text-xl font-semibold text-ink">Conquistas</h1>
-        <p className="text-sm text-ink-muted">Seu jogo é aparecer. Série registrada, treino terminado e dia leve dão XP.</p>
+        <p className="text-sm text-ink-muted">A meta são {META_SEMANAL} treinos por semana. Série registrada e treino terminado dão XP.</p>
       </header>
 
       <section className="rounded-xl border border-line bg-base-800 p-4 shadow-panel" aria-label="Nível">
@@ -71,28 +60,18 @@ export default function ConquistasPage() {
       </section>
 
       <div className="grid grid-cols-3 gap-2">
-        <Numero icone={<Flame size={ICON.md} />} valor={g.sequencia.atual} rotulo="sequência" />
-        <Numero icone={<Flame size={ICON.md} />} valor={g.sequencia.recorde} rotulo="recorde" />
-        <Numero icone={<Shield size={ICON.md} />} valor={`${g.sequencia.escudos}/${ESCUDOS_MAX}`} rotulo="escudos" />
+        <Numero icone={<Flame size={ICON.md} />} valor={g.semanas.atual} rotulo="semanas seguidas" />
+        <Numero icone={<Flame size={ICON.md} />} valor={g.semanas.recorde} rotulo="recorde" />
+        <Numero icone={<Dumbbell size={ICON.md} />} valor={g.totalSessoes} rotulo="treinos feitos" />
       </div>
 
-      <section className="rounded-xl border border-line bg-base-800 p-4 shadow-panel" aria-label="Meta semanal">
-        <h2 className="text-sm font-semibold text-ink">Meta semanal</h2>
-        <p className="mb-3 text-xs text-ink-muted">Quantos dias de musculação por semana (segunda a domingo). Escolha uma meta que você cumpre em semana ruim.</p>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button type="button" onClick={() => mudarMeta(-1)} disabled={meta <= 1} aria-label="Diminuir meta" className="toque flex h-11 w-11 items-center justify-center rounded-full border border-line bg-base-700 text-ink disabled:opacity-40">
-              <Minus aria-hidden="true" size={ICON.md} />
-            </button>
-            <span className="font-display text-3xl font-extrabold tabular-nums text-ink">{meta}</span>
-            <button type="button" onClick={() => mudarMeta(1)} disabled={meta >= 7} aria-label="Aumentar meta" className="toque flex h-11 w-11 items-center justify-center rounded-full border border-line bg-base-700 text-ink disabled:opacity-40">
-              <Plus aria-hidden="true" size={ICON.md} />
-            </button>
-            <span className="text-xs text-ink-muted">dias/semana</span>
-          </div>
-        </div>
-        <p className="mt-3 text-xs text-ink-muted">
-          Semanas na meta: <strong className="text-ink">{g.semanasNaMeta.total}</strong> · seguidas: <strong className="text-ink">{g.semanasNaMeta.seguidas}</strong>
+      <section className="rounded-xl border border-line bg-base-800 p-4 shadow-panel" aria-label="Semana livre">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
+          <Shield aria-hidden="true" size={ICON.sm} className={g.semanas.escudos > 0 ? "text-brand" : "text-ink-faint"} fill={g.semanas.escudos > 0 ? "currentColor" : "none"} />
+          Semana livre: {g.semanas.escudos > 0 ? "disponível" : "ainda não"}
+        </h2>
+        <p className="mt-1 text-xs text-ink-muted">
+          Cobre 1 semana abaixo de {META_SEMANAL} treinos sem zerar suas semanas seguidas. Você ganha uma a cada {SEMANAS_PARA_ESCUDO} semanas seguidas na meta.
         </p>
       </section>
 
@@ -152,20 +131,23 @@ export default function ConquistasPage() {
         <h2 className="mb-2 text-sm font-semibold text-ink">Como funciona</h2>
         <ul className="list-disc space-y-1.5 pl-4">
           <li>
-            <strong className="text-ink">XP:</strong> {XP_SERIE} por série registrada, {XP_SESSAO} por treino terminado, {XP_DIA_LEVE} por dia leve. Não depende de quanta carga você usa.
+            <strong className="text-ink">Meta:</strong> {META_SEMANAL} treinos de segunda a domingo, nos dias que quiser. Fechou a semana, soma uma semana seguida.
           </li>
           <li>
-            <strong className="text-ink">Sequência:</strong> conta todo dia com treino ou dia leve. A cada {DIAS_PARA_ESCUDO} dias seguidos você ganha um escudo (máx. {ESCUDOS_MAX}); ele cobre 1 dia sem treino sem zerar a sequência.
+            <strong className="text-ink">XP:</strong> {XP_SERIE} por série registrada e {XP_SESSAO} por treino. Não depende de quanta carga você usa.
           </li>
           <li>
-            <strong className="text-ink">Bônus de sequência:</strong>{" "}
-            {[...MULTIPLICADORES].reverse().map((m) => `${m.aPartirDe}+ dias = XP ×${m.fator}`).join(" · ")}.
+            <strong className="text-ink">Bônus:</strong>{" "}
+            {[...MULTIPLICADORES].reverse().map((m) => `${m.aPartirDe}+ semanas seguidas = XP ×${m.fator}`).join(" · ")}.
           </li>
           <li>
-            <strong className="text-ink">Dia leve:</strong> caminhada, mobilidade, alongamento. Mantém a sequência, mas não conta para a meta semanal de musculação.
+            <strong className="text-ink">Primeira semana:</strong> não conta contra você. Se começar na quinta, tudo bem.
           </li>
           <li>
-            <strong className="text-ink">Parou uns dias?</strong> Nada é perdido: XP e conquistas ficam. Voltar depois de 3+ dias parada desbloqueia &ldquo;Volta por cima&rdquo;.
+            <strong className="text-ink">Parou uns dias?</strong> Nada é perdido: XP e conquistas ficam. Voltar depois de 7+ dias parada desbloqueia &ldquo;Volta por cima&rdquo;.
+          </li>
+          <li>
+            <strong className="text-ink">Mais forte:</strong> usar mais carga que da última vez num exercício conta uma &ldquo;carga nova&rdquo;.
           </li>
         </ul>
       </section>
@@ -219,13 +201,12 @@ function Calendario({ g, hoje }: { g: Gamificacao; hoje: Date }) {
         {Array.from({ length: semanas * 7 }, (_, i) => {
           const data = addDiasISO(inicioGrade, i);
           const doMes = data.slice(0, 7) === primeiro.slice(0, 7);
-          return <Celula key={data} data={data} doMes={doMes} hojeISO={hojeISO} a={atividade.get(data)} protegido={g.sequencia.diasProtegidos.includes(data)} />;
+          return <Celula key={data} data={data} doMes={doMes} hojeISO={hojeISO} a={atividade.get(data)} protegido={g.semanas.semanasProtegidas.includes(inicioDaSemana(data)) && data < hojeISO} />;
         })}
       </div>
       <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-ink-muted">
-        <Legenda cor="bg-accent" texto="musculação" />
-        <Legenda cor="bg-accent-soft border border-accent/50" texto="dia leve" />
-        <Legenda cor="bg-brand-soft border border-brand/50" texto="escudo" />
+        <Legenda cor="bg-accent" texto="treinou" />
+        <Legenda cor="bg-brand-soft border border-brand/50" texto="semana livre" />
       </p>
     </section>
   );
@@ -233,16 +214,14 @@ function Calendario({ g, hoje }: { g: Gamificacao; hoje: Date }) {
 
 function Celula({ data, doMes, hojeISO, a, protegido }: { data: string; doMes: boolean; hojeISO: string; a: AtividadeDoDia | undefined; protegido: boolean }) {
   const forca = !!a && (a.series > 0 || a.sessoes > 0);
-  const leve = !!a?.leve && !forca;
   return (
     <span
       className={cn(
         "flex aspect-square items-center justify-center rounded-md text-xs tabular-nums",
         !doMes && "invisible",
         forca && "bg-accent font-bold text-on-solid",
-        leve && "border border-accent/50 bg-accent-soft font-semibold text-accent",
         protegido && "border border-brand/50 bg-brand-soft font-semibold text-brand",
-        !forca && !leve && !protegido && "bg-base-700 text-ink-faint",
+        !forca && !protegido && "bg-base-700 text-ink-faint",
         data === hojeISO && "ring-2 ring-brand",
       )}
     >

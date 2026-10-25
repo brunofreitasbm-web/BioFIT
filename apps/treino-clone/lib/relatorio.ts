@@ -100,7 +100,7 @@ export interface FrequenciaSessao {
   ultimaData: string | null;
 }
 
-const TIPOS_SESSAO: TipoFrequencia[] = ["A", "B", "C", "D", "E"];
+const TIPOS_SESSAO: TipoFrequencia[] = ["A", "B", "C", "D"];
 
 // Frequência de treinos por tipo: quantas sessões concluídas no período e a data mais
 // recente de cada uma, para ver "quais treinos" o usuário fez.
