@@ -23,6 +23,14 @@ Fluxo: Vercel Cron (07:00 em Belém) → `GET /api/garmin/sync` → troca a chav
 3. Teste sem esperar as 7h: Vercel → Settings → **Cron Jobs** → `/api/garmin/sync` → **Run**.
 4. Vercel → **Logs**, linha `[garmin sync]`: mostra quantos dias/atividades foram gravados, falhas por endpoint e a **estrutura** das respostas (só nomes de campos, sem valores).
 
+### Recuperar o histórico
+
+`GET /api/garmin/sync?dias=N` (N de 1 a 35; o cron usa 2) busca os últimos N dias e grava pelo mesmo merge: repetir é seguro, não apaga nem duplica. Exige `Authorization: Bearer <CRON_SECRET>`. Útil para preencher dias gravados antes de uma correção do conversor. Exemplo (no terminal; a senha não vai na URL):
+
+```
+curl -H "Authorization: Bearer $CRON_SECRET" "https://biofit-treino.vercel.app/api/garmin/sync?dias=35"
+```
+
 ### Limites e cuidados
 
 - **Formato não documentado.** A Garmin não publica os campos das respostas; o conversor usa os mesmos do `biofit_garmin_sync.py` (que rodou com dados reais) e aceita variações. Se um campo vier vazio, a `estrutura` no log mostra o nome real; ajuste `lib/servidor/garminPersonal.ts`.
