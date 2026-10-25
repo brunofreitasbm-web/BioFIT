@@ -81,7 +81,7 @@ export default function PosturaPage() {
       </Link>
 
       {regs !== null && regs.length === 0 && (
-        <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+        <section className="rounded-xl border vidro p-4 shadow-sm">
           <EstadoVazio
             Icone={PersonStanding}
             texto="Nenhuma avaliação ainda. Tire a primeira foto de perfil para ter a linha de base da cifose."
@@ -91,7 +91,7 @@ export default function PosturaPage() {
 
       {regs && regs.length > 0 && analise && (
         <>
-          <section className="space-y-2 rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+          <section className="space-y-2 rounded-xl border vidro p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2">
               <h2
                 className={cn(
@@ -117,7 +117,7 @@ export default function PosturaPage() {
             </p>
           </section>
 
-          <section className="space-y-3 rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+          <section className="space-y-3 rounded-xl border vidro p-4 shadow-sm">
             <div className="flex flex-wrap gap-2">
               {([...MEDIDAS_POR_VISTA.perfil, ...MEDIDAS_POR_VISTA.frontal] as Medida[]).map((m) => (
                 <button
@@ -151,7 +151,7 @@ export default function PosturaPage() {
             <p className="text-[11px] text-ink-faint">Cada ponto é a mediana das capturas do dia.</p>
           </section>
 
-          <section className="space-y-3 rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+          <section className="space-y-3 rounded-xl border vidro p-4 shadow-sm">
             <h2 className="text-base font-semibold text-ink">Capturas</h2>
             <ul className="divide-y divide-line text-sm">
               {[...regs].reverse().map((r) => (

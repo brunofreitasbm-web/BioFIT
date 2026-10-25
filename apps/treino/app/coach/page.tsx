@@ -272,7 +272,7 @@ export default function CoachPage() {
         </div>
 
         {mostrarConfigChave && (
-          <div className="mt-3 rounded-xl border border-line bg-base-800 p-3">
+          <div className="mt-3 rounded-xl border vidro p-3">
             <div className="flex justify-between text-xs text-ink-muted mb-1.5">
               <span>Chave da API DeepSeek</span>
               {chaveSalva && <span className="text-accent flex items-center gap-1"><Check size={12}/> Salva!</span>}
@@ -300,7 +300,7 @@ export default function CoachPage() {
       {/* Conteúdo de Mensagens */}
       <div className="flex-1 space-y-3 p-4 overflow-y-auto">
         {contexto?.statusPrograma && (
-          <div className="flex items-center justify-between rounded-xl border border-line bg-base-800/60 px-3 py-2 text-xs text-ink-muted">
+          <div className="flex items-center justify-between rounded-xl border vidro px-3 py-2 text-xs text-ink-muted">
             <span>
               Meso <strong className="text-ink">{contexto.statusPrograma.meso}</strong> · Rodada{" "}
               <strong className="text-ink">{contexto.statusPrograma.rodada}</strong>
@@ -335,7 +335,7 @@ export default function CoachPage() {
                   key={i}
                   type="button"
                   onClick={() => enviar(p)}
-                  className="rounded-xl border border-line bg-base-800 p-3 text-xs text-ink hover:border-brand/50 hover:bg-base-700 transition-all active:scale-[0.99]"
+                  className="rounded-xl border vidro p-3 text-xs text-ink hover:border-brand/50 hover:bg-base-700 transition-all active:scale-[0.99]"
                 >
                   {p}
                 </button>

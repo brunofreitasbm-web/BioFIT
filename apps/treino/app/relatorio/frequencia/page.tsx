@@ -57,7 +57,7 @@ export default function FrequenciaPage() {
       </header>
 
       {/* Últimos 12 meses — independe do seletor de período abaixo */}
-      <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm space-y-3">
+      <section className="rounded-xl border vidro p-4 shadow-sm space-y-3">
         <h2 className="text-base font-semibold text-ink">Últimos 12 meses</h2>
         <HeatmapAnual />
       </section>
@@ -81,7 +81,7 @@ export default function FrequenciaPage() {
       </div>
 
       {/* Frequência por tipo de treino */}
-      <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm space-y-3">
+      <section className="rounded-xl border vidro p-4 shadow-sm space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-ink">Quais Treinos</h2>
           <span className="text-xs text-ink-faint">{totalSessoes} sessão(ões) concluída(s)</span>
@@ -110,7 +110,7 @@ export default function FrequenciaPage() {
       </section>
 
       {/* Frequência por grupo muscular */}
-      <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm space-y-3">
+      <section className="rounded-xl border vidro p-4 shadow-sm space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-ink">Quais Grupos Musculares</h2>
           <span className="text-xs text-ink-faint">Dias distintos no período</span>

@@ -90,7 +90,7 @@ export function BioimpedanciaCard({ onAtualizar }: { onAtualizar?: () => void })
   }
 
   return (
-    <section className="mb-4 rounded-xl border border-line bg-base-800/90 p-3" aria-label="Bioimpedância">
+    <section className="mb-4 rounded-xl border vidro p-3" aria-label="Bioimpedância">
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <Scale size={15} className="text-brand" />

@@ -94,6 +94,38 @@
   --shadow-nav: 0 -1px 0 rgba(255, 255, 255, 0.04), 0 -8px 24px -12px rgba(0, 0, 0, 0.7);
 }
 
+/* Tema "vidro": superfícies de vidro fosco sobre um fundo escuro com brilho ambiente fixo.
+   Violeta-gelo como destaque (o verde fica só para "feito/sucesso" e o vermelho para erro, então
+   a marca nunca se confunde com estado). Sempre escuro. Ativado por data-tema="vidro" no <html>
+   (layout.tsx); a área /isabela volta ao tema laranja por rota, sem mudar nada nela.
+   Contrastes medidos nos pixels reais, no ponto mais claro do brilho: ver o PR. */
+:root[data-tema="vidro"] {
+  color-scheme: dark;
+
+  --c-base-950: 6 7 12;
+  --c-base-900: 9 10 17;
+  --c-base-800: 24 26 40;
+  --c-base-700: 35 38 58;
+  --c-base-600: 49 53 78;
+  --c-base-500: 67 72 102;
+  --c-line: 62 67 96;
+  --c-ink: 243 244 250;
+  --c-ink-muted: 178 183 204;
+  --c-ink-faint: 146 152 176;
+  --c-brand: 148 130 255;
+  --c-brand-soft: 40 34 78;
+  --c-brand-hover: 178 165 255;
+  --c-accent: 52 210 122;
+  --c-accent-soft: 17 41 27;
+  --c-warn: 240 162 58;
+  --c-danger: 255 107 122;
+  --c-danger-soft: 52 24 34;
+  --c-on-solid: 14 10 31;
+
+  --shadow-panel: 0 12px 32px -14px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  --shadow-nav: 0 16px 40px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -272,6 +304,117 @@ textarea:focus-visible {
 }
 .toque:active:not(:disabled) {
   transform: scale(0.97);
+}
+
+/* ---------- Vidro ---------- */
+
+/* Base sólida: vale em qualquer tema e é a alternativa quando o aparelho não tem blur. */
+.vidro {
+  position: relative;
+  background-color: rgb(var(--c-base-800));
+  border-color: rgb(var(--c-line));
+  box-shadow: var(--shadow-panel);
+}
+.vidro-barra {
+  background-color: rgb(var(--c-base-900) / 0.96);
+}
+
+/* Brilho ambiente: fica parado de propósito. Animar o fundo faria cada card de vidro refazer o
+   blur a cada quadro, o que custa bateria e fluidez na rolagem. */
+html[data-tema="vidro"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(70% 38% at 12% -4%, rgb(var(--c-brand) / 0.26), transparent 72%),
+    radial-gradient(55% 34% at 104% 34%, rgb(56 189 248 / 0.11), transparent 72%),
+    radial-gradient(80% 42% at 50% 108%, rgb(var(--c-brand) / 0.16), transparent 72%);
+}
+
+@keyframes entrada {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html[data-tema="vidro"] .vidro {
+    background-color: rgb(var(--c-base-800) / 0.5);
+    background-image: linear-gradient(160deg, rgb(255 255 255 / 0.075), rgb(255 255 255 / 0.012) 58%);
+    border-color: rgb(255 255 255 / 0.06);
+    box-shadow: var(--shadow-panel);
+    animation: entrada 480ms var(--ease-out) backwards;
+  }
+  /* Blur real só onde passa conteúdo por trás (barras, menus, modais). Os cards ficam sobre o
+     fundo parado e suave, então desfocá-lo não muda nada na tela e custa uma camada por card:
+     medido a 4x menos CPU, 7 cards com blur deram 42% dos quadros lentos na rolagem. Para
+     ligar mesmo assim num card, some a classe .vidro-blur. */
+  html[data-tema="vidro"] .vidro-blur {
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    backdrop-filter: blur(14px) saturate(150%);
+  }
+  /* Aro de luz na borda: claro no canto superior esquerdo e no inferior direito, quase nada no
+     meio, como o reflexo na quina de um vidro. É uma máscara de 1px, sem custo de layout. */
+  html[data-tema="vidro"] .vidro::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(155deg, rgb(255 255 255 / 0.3), rgb(255 255 255 / 0.04) 38%, rgb(255 255 255 / 0.02) 62%, rgb(255 255 255 / 0.15));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  }
+  /* Cascata: cada card entra um pouco depois do anterior (só os 7 primeiros). */
+  html[data-tema="vidro"] .vidro:nth-child(2) { animation-delay: 45ms; }
+  html[data-tema="vidro"] .vidro:nth-child(3) { animation-delay: 90ms; }
+  html[data-tema="vidro"] .vidro:nth-child(4) { animation-delay: 135ms; }
+  html[data-tema="vidro"] .vidro:nth-child(5) { animation-delay: 180ms; }
+  html[data-tema="vidro"] .vidro:nth-child(6) { animation-delay: 225ms; }
+  html[data-tema="vidro"] .vidro:nth-child(n + 7) { animation-delay: 270ms; }
+
+  html[data-tema="vidro"] .vidro-ok {
+    background-color: rgb(var(--c-accent) / 0.11);
+    border-color: rgb(var(--c-accent) / 0.3);
+  }
+  html[data-tema="vidro"] .vidro-barra {
+    background-color: rgb(var(--c-base-900) / 0.6);
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.06), transparent);
+    -webkit-backdrop-filter: blur(22px) saturate(170%);
+    backdrop-filter: blur(22px) saturate(170%);
+    border-color: rgb(255 255 255 / 0.09);
+  }
+  /* Menus e modais: mais opacos que o card, para o texto nunca depender do que passa por trás. */
+  html[data-tema="vidro"] .vidro-forte {
+    background-color: rgb(var(--c-base-700) / 0.82);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    backdrop-filter: blur(24px) saturate(160%);
+    border-color: rgb(255 255 255 / 0.1);
+  }
+}
+
+/* Quem pediu menos transparência no sistema recebe superfícies sólidas. */
+@media (prefers-reduced-transparency: reduce) {
+  html[data-tema="vidro"] .vidro,
+  html[data-tema="vidro"] .vidro-blur,
+  html[data-tema="vidro"] .vidro-barra,
+  html[data-tema="vidro"] .vidro-forte {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-image: none;
+    background-color: rgb(var(--c-base-800));
+  }
+  html[data-tema="vidro"] .vidro::before {
+    display: none;
+  }
+}
+.vidro-forte {
+  background-color: rgb(var(--c-base-700));
 }
 
 @media (prefers-reduced-motion: reduce) {

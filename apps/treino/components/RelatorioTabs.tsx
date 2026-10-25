@@ -11,7 +11,7 @@ const ABAS = [
 // Alternador entre as sub-páginas do Relatório.
 export function RelatorioTabs({ ativa }: { ativa: (typeof ABAS)[number]["href"] }) {
   return (
-    <div className="flex gap-1.5 rounded-full border border-line bg-base-800 p-1 text-sm font-medium">
+    <div className="flex gap-1.5 vidro-barra rounded-full border p-1 text-sm font-medium">
       {ABAS.map((aba) =>
         aba.href === ativa ? (
           <span key={aba.href} className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-brand text-center text-on-solid shadow-sm">

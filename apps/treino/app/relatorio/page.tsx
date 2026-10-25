@@ -166,7 +166,7 @@ export default function RelatorioPage() {
 
       {/* Séries por grupo muscular, contra a faixa semanal */}
       {volumes && (
-        <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm space-y-3">
+        <section className="rounded-xl border vidro p-4 shadow-sm space-y-3">
           <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
             <BarChart3 aria-hidden="true" size={ICON.md} className="text-ink-muted" /> Volume por Grupo Muscular
           </h2>
@@ -186,7 +186,7 @@ export default function RelatorioPage() {
 
       {/* Evolução do 1RM estimado */}
       {evolucao.length > 0 && (
-        <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+        <section className="rounded-xl border vidro p-4 shadow-sm">
           <h2 className="mb-1 flex items-center gap-2 text-base font-semibold text-ink">
             <TrendingUp aria-hidden="true" size={ICON.md} className="text-ink-muted" /> 1RM estimado
           </h2>
@@ -196,7 +196,7 @@ export default function RelatorioPage() {
       )}
 
       {/* Histórico Diário de Sessões de Treino */}
-      <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm space-y-3">
+      <section className="rounded-xl border vidro p-4 shadow-sm space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-base font-semibold text-ink">
             <History aria-hidden="true" size={ICON.md} className="text-ink-muted" /> Histórico de Treinos Diários
@@ -268,7 +268,7 @@ export default function RelatorioPage() {
 
 function Kpi({ Icone, valor, rotulo }: { Icone: typeof Dumbbell; valor: string; rotulo: string }) {
   return (
-    <div className="rounded-xl border border-line bg-base-800 p-3 shadow-sm">
+    <div className="rounded-xl border vidro p-3 shadow-sm">
       <Icone aria-hidden="true" size={ICON.sm} className="mb-1 text-ink-faint" />
       <p className="font-display text-3xl font-extrabold leading-none tabular-nums text-ink">{valor}</p>
       <p className="mt-1 text-[11px] text-ink-muted">{rotulo}</p>

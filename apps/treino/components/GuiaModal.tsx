@@ -47,7 +47,7 @@ export function GuiaModal({ dataInicio, onDataInicioChange }: { dataInicio: stri
           }}
         >
           <div
-            className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-t-2xl border-t border-line bg-base-800 p-4 pb-8"
+            className="max-h-[85vh] w-full max-w-xl overflow-y-auto vidro-forte rounded-t-2xl border-t p-4 pb-8"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">

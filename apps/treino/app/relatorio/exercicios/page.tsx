@@ -44,7 +44,7 @@ export default function ExerciciosPage() {
             <li key={ex.exercicioId}>
               <Link
                 href={`/relatorio/exercicios/${ex.exercicioId}`}
-                className="flex items-center gap-3 rounded-xl border border-line bg-base-800 p-3 shadow-sm hover:border-brand/40"
+                className="flex items-center gap-3 rounded-xl border vidro p-3 shadow-sm hover:border-brand/40"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-ink">{ex.nome}</p>

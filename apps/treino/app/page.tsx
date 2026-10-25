@@ -15,6 +15,7 @@ import { ResumoPrograma } from "@/components/ResumoPrograma";
 import type { EscolhaDoDia, ExercicioEfetivo } from "@/lib/tipos";
 import { AlertTriangle, CalendarClock, Coffee, CheckCircle2 } from "lucide-react";
 import { ICON } from "@/lib/icones";
+import { cn } from "@/lib/cn";
 import { useDadosAtualizados } from "@/hooks/useDadosAtualizados";
 import { AiCoachModal } from "@/components/ai/AiCoachModal";
 import { DetalhesDoDia } from "@/components/DetalhesDoDia";
@@ -229,7 +230,7 @@ export default function HojePage() {
       </header>
 
       {sessaoEfetiva && exercicios.length > 0 && (
-        <div className="sticky top-0 z-10 -mx-4 mb-3 border-b border-line bg-base-800/95 px-4 py-2 shadow-panel backdrop-blur">
+        <div className="sticky top-0 z-10 -mx-4 mb-3 vidro-barra border-b px-4 py-2">
           <div className="mb-1.5 flex items-center justify-between text-xs">
             <span className="flex items-center gap-1.5 font-semibold text-ink">
               {treinoConcluido ? (
@@ -245,9 +246,12 @@ export default function HojePage() {
               {progressoSessao.feitas} de {progressoSessao.total} séries ({Math.round(progressoSessaoPct)}%)
             </span>
           </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-base-600">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
             <div
-              className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out"
+              className={cn(
+                "h-full rounded-full transition-[width,background-color] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                treinoConcluido ? "bg-accent" : "bg-gradient-to-r from-brand to-brand-hover shadow-[0_0_10px_rgb(var(--c-brand)/0.5)]",
+              )}
               style={{ width: `${progressoSessaoPct}%` }}
             />
           </div>
@@ -266,7 +270,7 @@ export default function HojePage() {
       {sessaoEfetiva && status && <ProntidaoBanner prontidao={prontidao} ignorado={ignorarProntidao} onAlternar={alternarProntidao} />}
 
       {!sessaoEfetiva && (
-        <div className="mb-4 flex items-center gap-3 rounded-xl border border-line bg-base-800 p-4 shadow-panel">
+        <div className="mb-4 flex items-center gap-3 rounded-xl border vidro p-4 shadow-panel">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand">
             <Coffee aria-hidden="true" size={ICON.md} />
           </div>
@@ -308,7 +312,7 @@ export default function HojePage() {
         <BikeIndoorCard key={`bike:${versaoDados}`} hojeISO={hojeISO} />
 
         {insightProximo && (
-          <div className="mt-2 flex gap-3 rounded-xl border border-line bg-base-800 p-3 shadow-panel">
+          <div className="mt-2 flex gap-3 rounded-xl border vidro p-3 shadow-panel">
             <CalendarClock aria-hidden="true" size={ICON.md} className="mt-0.5 shrink-0 text-ink-muted" />
             <div>
               <p className="text-sm font-semibold text-ink">{insightProximo.titulo}</p>

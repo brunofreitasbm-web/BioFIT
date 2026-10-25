@@ -77,7 +77,7 @@ export function GarminCard({ biometria, carregando, prontidao, dias = [], hojeIS
 
   if (carregando) {
     return (
-      <div className="mb-4 animate-pulse rounded-xl border border-line bg-base-800 p-3">
+      <div className="mb-4 animate-pulse rounded-xl border vidro p-3">
         <div className="mb-2 h-4 w-32 rounded bg-base-700" />
         <div className="grid grid-cols-4 gap-1.5">
           <div className="h-14 rounded bg-base-700" />
@@ -99,7 +99,7 @@ export function GarminCard({ biometria, carregando, prontidao, dias = [], hojeIS
   const hoje = hojeISO ?? biometria?.data ?? "";
 
   return (
-    <div className="mb-4 rounded-xl border border-line bg-base-800/90 p-3 shadow-sm">
+    <div className="mb-4 rounded-xl border vidro p-3 shadow-sm">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <Watch aria-hidden="true" size={ICON.sm} className="text-brand" />

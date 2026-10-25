@@ -238,7 +238,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
       aria-modal="true"
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-base-950/80 p-0 sm:p-4 backdrop-blur-sm anim-revelar"
     >
-      <div className="flex h-[92dvh] sm:h-[85vh] w-full max-w-lg flex-col rounded-t-2xl sm:rounded-2xl border border-line bg-base-900 shadow-2xl overflow-hidden">
+      <div className="flex h-[92dvh] sm:h-[85vh] w-full max-w-lg flex-col rounded-t-2xl sm:rounded-2xl border border-line vidro-forte shadow-2xl overflow-hidden">
         {/* Cabeçalho */}
         <header className="flex items-center justify-between border-b border-line bg-base-800 px-4 py-3">
           <div className="flex items-center gap-2.5">
@@ -377,7 +377,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
                       key={idx}
                       type="button"
                       onClick={() => enviarMensagem(s.prompt)}
-                      className="rounded-xl border border-line bg-base-800/80 p-2.5 text-xs text-ink text-left transition-colors hover:border-brand/60 hover:bg-base-700 active:scale-[0.99]"
+                      className="rounded-xl border vidro p-2.5 text-xs text-ink text-left transition-colors hover:border-brand/60 hover:bg-base-700 active:scale-[0.99]"
                     >
                       {s.label}
                     </button>

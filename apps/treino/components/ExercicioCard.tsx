@@ -214,8 +214,8 @@ export function ExercicioCard({
   return (
     <div
       className={cn(
-        "rounded-xl border bg-base-800 shadow-panel transition-colors duration-200",
-        completo ? "border-accent/40 bg-accent-soft/40" : "border-line",
+        "vidro rounded-xl border transition-colors duration-200",
+        completo && "vidro-ok",
       )}
     >
       <div className="flex w-full items-center gap-2 p-3 text-left">

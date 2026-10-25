@@ -102,10 +102,8 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
   return (
     <div
       className={cn(
-        "mb-4 rounded-xl border p-4 shadow-sm transition-all duration-200",
-        concluido
-          ? "border-accent bg-accent-soft/40 shadow-md"
-          : "border-line bg-base-800"
+        "vidro mb-4 rounded-xl border p-4 transition-all duration-200",
+        concluido && "vidro-ok"
       )}
     >
       <button
