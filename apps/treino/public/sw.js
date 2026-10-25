@@ -5,8 +5,8 @@
 //     que há rede; sem rede, abre a última versão vista)
 //   - /_next/static, ícones, fontes: cache primeiro (arquivos com hash, imutáveis)
 // Trocar VERSAO descarta os caches antigos no próximo activate.
-const VERSAO = "biofit-v4";
-const PAGINAS = ["/", "/relatorio", "/relatorio/frequencia", "/relatorio/exercicios", "/relatorio/corpo", "/relatorio/postura", "/relatorio/postura/nova"];
+const VERSAO = "biofit-v5";
+const PAGINAS = ["/", "/relatorio", "/relatorio/frequencia", "/relatorio/exercicios", "/relatorio/corpo", "/relatorio/postura", "/relatorio/postura/nova", "/isabela", "/isabela/relatorio", "/isabela/relatorio/frequencia", "/isabela/relatorio/exercicios", "/isabela/conquistas"];
 const ARQUIVOS = ["/manifest.webmanifest", "/icon-192.png"];
 
 // Só o HTML não basta offline: a tela é montada pelos scripts da página (client components).
