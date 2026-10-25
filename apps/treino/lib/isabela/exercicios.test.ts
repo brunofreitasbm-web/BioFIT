@@ -49,6 +49,15 @@ describe("plano", () => {
     }
   });
 
+  it("nada de exercício que sobrecarrega a patela (condromalácia)", () => {
+    const proibidos = /extensora|passada|búlgaro|bulgaro|step-up|hack|agachamento|afundo|avanço|salto|pliometr|sissy/i;
+    for (const s of SLOTS) for (const o of s.opcoes) expect(`${o.nome} (${o.id})`).not.toMatch(proibidos);
+  });
+
+  it("todo leg press pede amplitude curta (joelho até ~60°)", () => {
+    for (const s of SLOTS) for (const o of s.opcoes) if (/^leg press/i.test(o.nome)) expect(o.nome + o.notas, o.id).toMatch(/curta|60°/);
+  });
+
   it("nada de exercício que sobrecarrega a lombar", () => {
     const proibidos = /stiff|terra|good morning|romeno|rdl|curvada|barra nas costas|agachamento livre|extensora lombar/i;
     for (const s of SLOTS) for (const o of s.opcoes) expect(o.nome, o.nome).not.toMatch(proibidos);
@@ -64,11 +73,11 @@ describe("troca de exercício", () => {
   });
 
   it("a troca vale só para a posição e mantém a prescrição", () => {
-    const a = getSessaoCompleta("A", { A1: "hack-squat" });
-    expect(a[0].id).toBe("hack-squat");
+    const a = getSessaoCompleta("A", { A1: "leg-press-horizontal" });
+    expect(a[0].id).toBe("leg-press-horizontal");
     expect(a[0].trocado).toBe(true);
     expect(a[0].series).toBe(3);
-    expect(a[1].id).toBe("passada-estatica-smith");
+    expect(a[1].id).toBe("leg-press-unilateral");
   });
 
   it("troca para um exercício que não é opção da posição é ignorada", () => {
@@ -76,13 +85,13 @@ describe("troca de exercício", () => {
   });
 
   it("a opção pode mudar a unidade (prancha em segundos)", () => {
-    const core = getSessaoCompleta("A", { A6: "prancha-frontal" })[5];
-    expect(core.reps).toBe("30-45 s");
-    expect(getSessaoCompleta("A")[5].reps).toBe("8-10 por lado");
+    const iso = getSessaoCompleta("A", { A2: "parede-isometrica" })[1];
+    expect(iso.reps).toBe("30-45 s");
+    expect(getSessaoCompleta("A")[1].reps).toBe("10-12 por perna");
   });
 
   it("o histórico resolve nome e grupo de qualquer opção", () => {
-    expect(getExercicio("hack-squat")?.grupoMuscular).toBe("Quadríceps");
+    expect(getExercicio("leg-press-horizontal")?.grupoMuscular).toBe("Quadríceps");
     expect(getExercicio("abdutora-maquina")?.grupoMuscular).toBe("Glúteo");
   });
 });

@@ -209,7 +209,7 @@ export default function HojePage() {
           ))}
         </div>
         <p className="mt-2 text-[11px] text-ink-faint">
-          Dor na lombar (ou em qualquer lugar) durante um exercício? Pare e use &ldquo;Trocar exercício&rdquo; por outra opção. Se a dor continuar, fale com quem acompanha você.
+          Dor na lombar, atrás da patela ou em qualquer lugar durante um exercício? Pare e use &ldquo;Trocar exercício&rdquo; por outra opção. Se a dor continuar, fale com quem acompanha você.
         </p>
       </section>
 
