@@ -217,11 +217,12 @@ describe("conquistas e mensagens", () => {
     const g = calcularGamificacao(hist({ [dia(0)]: 3, [dia(1)]: 3 }), dia(5));
     expect(g.mensagem.titulo).toMatch(/dia de treino/i);
     expect(g.mensagem.texto).toMatch(/não dá para pular/);
+    expect(g.mensagem.texto).toMatch(/Faltam 2 treinos e restam 2 dias/);
   });
 
   it("depois de treinar hoje, mostra quanto falta", () => {
     const g = calcularGamificacao(hist({ [dia(0)]: 3 }), dia(0));
     expect(g.treinouHoje).toBe(true);
-    expect(g.mensagem.texto).toMatch(/Faltam 3/);
+    expect(g.mensagem.texto).toMatch(/Faltam 3 treinos/);
   });
 });

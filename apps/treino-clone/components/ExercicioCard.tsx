@@ -14,7 +14,7 @@ import { GRUPOS_INFERIORES } from "@/lib/exercicios";
 import { sugerirProximaCarga } from "@/lib/progressao";
 import { seriesDoDia } from "@/lib/program";
 import { maiorCargaAntes, seriesDoExercicioNaData, ultimaExecucao, upsertSerie } from "@/lib/storage";
-import { iniciarDescanso } from "@/lib/timerDescanso";
+import { iniciarDescanso, pararDescanso } from "@/lib/timerDescanso";
 
 // Uma posição do treino: séries e repetições à vista, uma linha por série, check para registrar.
 // `exercicio` já vem com a troca aplicada; trocar só é possível antes da primeira série do dia
@@ -92,6 +92,7 @@ export function ExercicioCard({
     setErroSalvar(!salvou);
     setSeries(seriesDoExercicioNaData(exercicio.id, data));
     const ultimaDoExercicio = serieNumero >= totalSeries;
+    if (salvou && ultimaDoExercicio) pararDescanso(); // acabou o exercício: o descanso da série anterior não vale mais
     if (salvou && !ultimaDoExercicio) {
       const segundos = parseDescansoSegundos(exercicio.descanso);
       if (segundos) iniciarDescanso(segundos, `${exercicio.slotKey} · ${exercicio.nome}`);

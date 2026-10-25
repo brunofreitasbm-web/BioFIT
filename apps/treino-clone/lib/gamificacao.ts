@@ -395,7 +395,7 @@ export function mensagemMotivacional({
     if (semana.batida) {
       return { tom: "celebrar", titulo: "Meta da semana batida", texto: `${semana.feitos} de ${semana.meta} treinos. ${semanas.atual >= 2 ? `${semanas.atual} semanas seguidas na meta.` : "Descanse bem."}` };
     }
-    return { tom: "celebrar", titulo: "Treino de hoje feito", texto: `Faltam ${semana.faltam} para fechar a semana (${semana.feitos}/${semana.meta}).` };
+    return { tom: "celebrar", titulo: "Treino de hoje feito", texto: `Falta${semana.faltam === 1 ? "" : "m"} ${semana.faltam} ${semana.faltam === 1 ? "treino" : "treinos"} para fechar a semana (${semana.feitos}/${semana.meta}).` };
   }
   if (semanas.diasParada >= DIAS_PARADA_PARA_RECOMECO) {
     return {
@@ -415,7 +415,7 @@ export function mensagemMotivacional({
     };
   }
   if (semana.tudoOuNada) {
-    return { tom: "empurrar", titulo: "Hoje é dia de treino", texto: `Faltam ${semana.faltam} treinos e ${semana.diasRestantes} dias: não dá para pular nenhum para fechar a semana.` };
+    return { tom: "empurrar", titulo: "Hoje é dia de treino", texto: `Falta${semana.faltam === 1 ? "" : "m"} ${semana.faltam} ${semana.faltam === 1 ? "treino" : "treinos"} e ${semana.diasRestantes === 1 ? "resta 1 dia" : `restam ${semana.diasRestantes} dias`}: não dá para pular nenhum para fechar a semana.` };
   }
-  return { tom: "empurrar", titulo: "Hora do treino", texto: `Faltam ${semana.faltam} treino(s) para fechar a semana (${semana.feitos}/${semana.meta}).` };
+  return { tom: "empurrar", titulo: "Hora do treino", texto: `Falta${semana.faltam === 1 ? "" : "m"} ${semana.faltam} ${semana.faltam === 1 ? "treino" : "treinos"} para fechar a semana (${semana.feitos}/${semana.meta}).` };
 }

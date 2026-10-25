@@ -96,6 +96,6 @@ export function CelebracaoModal({ g, dados, onFechar }: { g: Gamificacao; dados:
 function proximoPasso(g: Gamificacao): string {
   const { semana, semanas, proxima } = g;
   if (semana.batida) return `Meta da semana batida. ${semanas.atual >= 2 ? `${semanas.atual} semanas seguidas na meta.` : "Se mantiver o ritmo, a semana que vem soma uma seguida."}`;
-  if (proxima && semana.faltam > 0) return `Faltam ${semana.faltam} treino(s) para fechar a semana. Próxima conquista: ${proxima.nome} (${proxima.atual}/${proxima.alvo}).`;
-  return `Faltam ${semana.faltam} treino(s) para fechar a semana.`;
+  if (proxima && semana.faltam > 0) return `Falta${semana.faltam === 1 ? "" : "m"} ${semana.faltam} ${semana.faltam === 1 ? "treino" : "treinos"} para fechar a semana. Próxima conquista: ${proxima.nome} (${proxima.atual}/${proxima.alvo}).`;
+  return `Falta${semana.faltam === 1 ? "" : "m"} ${semana.faltam} ${semana.faltam === 1 ? "treino" : "treinos"} para fechar a semana.`;
 }
