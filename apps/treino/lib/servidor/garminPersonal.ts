@@ -62,7 +62,7 @@ export const caminhos = {
   bodyBattery: (d: string) => `/wellness-service/wellness/bodyBattery/reports/daily?startDate=${d}&endDate=${d}`,
   // Opcional: o resumo diário v2 não traz passos. Se a chave não tiver acesso, vira "falha" no log.
   passos: (d: string) => `/usersummary-service/stats/steps/daily/${d}/${d}`,
-  atividades: (ini: string, fim: string) => `/activitylist-service/activities/search/activities?start=0&limit=30&startDate=${ini}&endDate=${fim}`,
+  atividades: (ini: string, fim: string, limite = 30) => `/activitylist-service/activities/search/activities?start=0&limit=${limite}&startDate=${ini}&endDate=${fim}`,
 };
 
 // ===== Conversão =====

@@ -162,6 +162,32 @@ describe("GET /api/garmin/sync", () => {
     expect(JSON.stringify(corpo)).not.toContain("CHAVE-SECRETA");
   });
 
+  it("?dias=N busca os últimos N dias (mais antigo primeiro) e amplia o limite de atividades", async () => {
+    const f = garminFalso();
+    const r = await GET(new Request("http://x/api/garmin/sync?dias=5", { headers: { authorization: `Bearer ${CRON}` } }));
+    expect(r.status).toBe(200);
+    expect((await r.json()).dias).toBe(5);
+    const urls = f.mock.calls.map((c) => String(c[0]));
+    for (const d of ["2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23", "2026-10-24"]) {
+      expect(urls.some((u) => u.includes(`dailySleep?date=${d}`))).toBe(true);
+    }
+    expect(urls.some((u) => u.includes("dailySleep?date=2026-10-19"))).toBe(false);
+    const ativ = urls.find((u) => u.includes("activities/search"))!;
+    expect(ativ).toContain("startDate=2026-10-20");
+    expect(ativ).toContain("limit=30");
+    const put = f.mock.calls.find((c) => String(c[0]).includes("biofit_garmin_put"))!;
+    expect(JSON.parse(put[1]!.body!).p_diario.map((d: { data: string }) => d.data)).toEqual(["2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23", "2026-10-24"]);
+  });
+
+  it("dias inválidos viram 400 sem chamar a Garmin", async () => {
+    const f = garminFalso();
+    for (const v of ["0", "36", "abc", "1.5", "-2"]) {
+      const r = await GET(new Request(`http://x/api/garmin/sync?dias=${v}`, { headers: { authorization: `Bearer ${CRON}` } }));
+      expect(r.status).toBe(400);
+    }
+    expect(f).not.toHaveBeenCalled();
+  });
+
   it("um endpoint fora do ar não impede gravar o resto", async () => {
     garminFalso("hrv-service");
     const r = await GET(req(`Bearer ${CRON}`));
