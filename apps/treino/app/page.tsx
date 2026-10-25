@@ -19,6 +19,8 @@ import { useDadosAtualizados } from "@/hooks/useDadosAtualizados";
 import { AiCoachModal } from "@/components/ai/AiCoachModal";
 import { AiCoachFloatingButton } from "@/components/ai/AiCoachFloatingButton";
 import { GarminCard, type GarminBiometria } from "@/components/GarminCard";
+import { ProntidaoBanner } from "@/components/ProntidaoBanner";
+import { avaliarProntidao, diasDaJanela } from "@/lib/prontidao";
 import { contextoIntegrado } from "@/lib/ai/contextoIntegrado";
 import type { ContextoTreinoIA, GarminJanela } from "@/lib/ai/prompts";
 
@@ -39,6 +41,25 @@ export default function HojePage() {
   const [garminJanela, setGarminJanela] = useState<GarminJanela | null>(null);
 
   const hojeISO = toISODate(hoje);
+  // Preferência só deste aparelho (não entra no backup): "ignorar o ajuste de recuperação hoje".
+  const [ignorarProntidao, setIgnorarProntidao] = useState(false);
+  useEffect(() => {
+    try {
+      setIgnorarProntidao(localStorage.getItem(`biofit-ui:prontidao-ignorada:${hojeISO}`) === "1");
+    } catch {
+      // armazenamento indisponível: o ajuste fica ligado
+    }
+  }, [hojeISO]);
+  function alternarProntidao() {
+    const novo = !ignorarProntidao;
+    setIgnorarProntidao(novo);
+    try {
+      if (novo) localStorage.setItem(`biofit-ui:prontidao-ignorada:${hojeISO}`, "1");
+      else localStorage.removeItem(`biofit-ui:prontidao-ignorada:${hojeISO}`);
+    } catch {
+      // idem
+    }
+  }
   // Sobe quando o sync traz algo gravado fora deste aparelho (ex.: pelo MCP): remonta os
   // cards que leem o storage no mount.
   const versaoDados = useDadosAtualizados();
@@ -72,6 +93,12 @@ export default function HojePage() {
   const status = pronto ? getStatusPrograma(dataInicio, hojeISO, sessaoEfetiva) : null;
   const aderencia = pronto ? getStatusAderencia(dataInicio, hojeISO) : null;
   const mesoAtual = status?.meso;
+  const diasGarmin = useMemo(() => diasDaJanela(garminJanela?.diario ?? []), [garminJanela]);
+  const prontidao = useMemo(
+    () => (garminBiometria ? avaliarProntidao(diasGarmin, hojeISO, Boolean(status?.isDeload)) : null),
+    [garminBiometria, diasGarmin, hojeISO, status?.isDeload],
+  );
+  const ajusteRecuperacao = prontidao?.ajuste && !ignorarProntidao ? prontidao.ajuste : null;
   const exercicios = useMemo(
     () => (sessaoEfetiva && mesoAtual !== undefined ? getSessaoCompleta(sessaoEfetiva, mesoAtual) : []),
     [sessaoEfetiva, mesoAtual],
@@ -237,7 +264,7 @@ export default function HojePage() {
         </div>
       )}
 
-      <GarminCard biometria={garminBiometria} carregando={garminCarregando} />
+      <GarminCard biometria={garminBiometria} carregando={garminCarregando} prontidao={prontidao} dias={diasGarmin} hojeISO={hojeISO} />
 
       {sessaoEfetiva && status && <TreinoTimer key={`timer:${versaoDados}`} hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} />}
 
@@ -258,6 +285,8 @@ export default function HojePage() {
         </div>
       )}
 
+      {sessaoEfetiva && status && <ProntidaoBanner prontidao={prontidao} ignorado={ignorarProntidao} onAlternar={alternarProntidao} />}
+
       {sessaoEfetiva && status && (
         <>
           <section className="mb-4">
@@ -273,6 +302,7 @@ export default function HojePage() {
                   onToggleExpandido={() => handleToggleExercicio(ex.id)}
                   onProgresso={handleProgresso}
                   onConsultarCoach={handleAbrirCoach}
+                  ajusteRecuperacao={ajusteRecuperacao}
                 />
               ))}
             </div>

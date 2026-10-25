@@ -9,6 +9,7 @@ import { GrupoBadge } from "./GrupoBadge";
 import { ImagemExercicio } from "./ImagemExercicio";
 import { cn } from "@/lib/cn";
 import { alvoDeEsforco, e1rm, parseDescansoSegundos } from "@/lib/descanso";
+import { deslocarRir, type Prontidao } from "@/lib/prontidao";
 import { EXERCICIOS_ASSISTIDOS, GRUPOS_INFERIORES, partidaKg } from "@/lib/exercicios";
 import { sugerirProximaCarga } from "@/lib/progressao";
 import { estimar1RM, recordesPessoais } from "@/lib/relatorio";
@@ -40,6 +41,7 @@ export function ExercicioCard({
   onToggleExpandido,
   onProgresso,
   onConsultarCoach,
+  ajusteRecuperacao = null,
 }: {
   exercicio: ExercicioEfetivo;
   status: StatusPrograma;
@@ -48,6 +50,9 @@ export function ExercicioCard({
   onToggleExpandido: () => void;
   onProgresso?: (exercicioId: string, feitas: number, total: number) => void;
   onConsultarCoach?: (exercicio: ExercicioEfetivo) => void;
+  // Ajuste vindo da prontidão Garmin (sono + Body Battery). Muda só o alvo de RIR e a sugestão
+  // de carga; o total de séries e a contagem de "completo" continuam os do programa.
+  ajusteRecuperacao?: Prontidao["ajuste"];
 }) {
   const [series, setSeries] = useState<SerieRegistrada[]>([]);
   const [ultima, setUltima] = useState<SerieRegistrada[]>([]);
@@ -92,13 +97,21 @@ export function ExercicioCard({
   const cargaInicial = cargaDeload ?? ultimaCarga ?? partidaKg(exercicio.partida);
 
   const assistencia = EXERCICIOS_ASSISTIDOS.has(exercicio.id);
-  const sugestao = sugerirProximaCarga(
+  const sugestaoBase = sugerirProximaCarga(
     exercicio.reps,
     ultima,
     anterior,
     { inferior: GRUPOS_INFERIORES.has(exercicio.grupoMuscular), assistencia },
     status.isDeload,
   );
+  // Recuperação ruim: não subir carga hoje. Reduções da própria progressão (falhou o piso) ficam.
+  const subiria =
+    sugestaoBase !== null && ultimaCarga !== null && (assistencia ? sugestaoBase.cargaKg < ultimaCarga : sugestaoBase.cargaKg > ultimaCarga);
+  const sugestao =
+    ajusteRecuperacao?.naoProgredirCarga && sugestaoBase && subiria && ultimaCarga !== null
+      ? { ...sugestaoBase, cargaKg: ultimaCarga, motivo: "recuperação baixa: sem subir carga hoje (a progressão fica para o próximo treino)" }
+      : sugestaoBase;
+  const rirAlvoHoje = ajusteRecuperacao ? deslocarRir(alvo.rirAlvo, ajusteRecuperacao.rirExtra) : alvo.rirAlvo;
   // PR de hoje: alguma série confirmada hoje supera o melhor 1RM estimado de antes de hoje.
   // No Graviton o número é assistência, então "mais kg" não é recorde.
   const bateuPR =
@@ -263,8 +276,19 @@ export function ExercicioCard({
             </p>
           )}
           <p className="mb-2 text-[11px] text-ink-faint">
-            RIR alvo: {alvo.rirAlvo} · {alvo.label}
+            RIR alvo: {rirAlvoHoje} · {alvo.label}
+            {ajusteRecuperacao && (
+              <span className="text-brand">
+                {" "}
+                · ajustado pela recuperação{alvo.testeFalha ? " (evite a falha hoje)" : ""}
+              </span>
+            )}
           </p>
+          {ajusteRecuperacao && ajusteRecuperacao.reduzirSeries > 0 && totalSeries > 2 && (
+            <p className="mb-2 text-[11px] text-brand">
+              Recuperação baixa: se precisar, {totalSeries - ajusteRecuperacao.reduzirSeries} séries bastam hoje.
+            </p>
+          )}
           {exercicio.notas && (
             <div className="mb-3">
               <button
