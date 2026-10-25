@@ -37,6 +37,8 @@ curl -H "Authorization: Bearer $CRON_SECRET" "https://biofit-treino.vercel.app/a
 curl -H "Authorization: Bearer $CRON_SECRET" "https://biofit-treino.vercel.app/api/garmin/sync?dias=11&ate=AAAA-MM-DD"   # 24 dias antes de hoje
 ```
 
+Só existe o que a Garmin tem na conta: na do Bruno o histórico começa em 19/10/2026 (sono, VFC e atividades em 20/10), então janelas anteriores voltam vazias sem erro. Os passos de dias passados só vêm pela chamada por dia (o endpoint de intervalo de passos devolveu só o dia de hoje); no intervalo a rota prefere deixar o passo vazio a atribuir um valor de outro dia.
+
 Nunca rode isso em laço curto (por exemplo, a cada 20 segundos): foi assim que o limite foi estourado.
 
 ### Limites e cuidados

@@ -53,6 +53,24 @@ describe("converterDia", () => {
     expect(l.passos).toBe(8123);
   });
 
+  it("intervalo: um item de passos só vale para o dia dele (não contamina os outros dias)", () => {
+    const so24 = [{ calendarDate: "2026-10-24", totalSteps: 1645 }];
+    const resp = { sono: SONO, hrv: null, resumo: null, bodyBattery: null, passos: so24, intervalo: true };
+    expect(converterDia("2026-10-20", resp)!.passos).toBeNull();
+    expect(converterDia("2026-10-24", resp)!.passos).toBe(1645);
+    // por dia (sem intervalo) a resposta de um item sem data é o próprio dia
+    expect(converterDia("2026-10-20", { ...resp, passos: [{ totalSteps: 900 }], intervalo: false })!.passos).toBe(900);
+  });
+
+  it("intervalo: resumo e Body Battery também exigem a data do dia", () => {
+    const resumo = { data: [{ calendarDate: "2026-10-24", heartRate: { restingValue: 55 }, stress: { avgLevel: 36 }, bodyBattery: { maxValue: 53 } }] };
+    const bb = [{ date: "2026-10-24", bodyBatteryValuesArray: [[Date.parse("2026-10-24T12:00:00Z"), 53]] }];
+    const resp = { sono: SONO, hrv: null, resumo, bodyBattery: bb, intervalo: true };
+    const outro = converterDia("2026-10-20", resp)!;
+    expect(outro).toMatchObject({ fc_repouso_bpm: null, estresse_medio: null, body_battery_max: null, body_battery_acordar: null });
+    expect(converterDia("2026-10-24", resp)).toMatchObject({ fc_repouso_bpm: 55, estresse_medio: 36, body_battery_max: 53 });
+  });
+
   it("acha os campos do resumo em qualquer nível de aninhamento", () => {
     const aninhado = { allMetrics: { dias: [{ calendarDate: DIA, resumo: { restingHeartRate: 51, totalSteps: 4321, averageStressLevel: 30 } }] } };
     const l = converterDia(DIA, { sono: null, hrv: null, resumo: aninhado, bodyBattery: null })!;
@@ -223,9 +241,10 @@ describe("GET /api/garmin/sync", () => {
     // 2 sonos ok + 3 tentativas do 3º (1 + 2 retries) e nenhuma chamada de sono depois
     const sonos = f.mock.calls.map((c) => String(c[0])).filter((u) => u.includes("dailySleep"));
     expect(sonos.length).toBe(5);
-    // as linhas dos 6 dias saem mesmo assim (resumo/passos/Body Battery vieram dos intervalos)
+    // grava só os dias que têm dado: os 2 com sono + o dia do resumo (nunca atribui dado a dia sem ele)
     const put = f.mock.calls.find((c) => String(c[0]).includes("biofit_garmin_put"))!;
-    expect(JSON.parse(put[1]!.body!).p_diario).toHaveLength(6);
+    const gravados = JSON.parse(put[1]!.body!).p_diario.map((d: { data: string }) => d.data);
+    expect(gravados).toEqual(["2026-10-19", "2026-10-20", "2026-10-24"]);
   });
 
   it("um 429 isolado é tentado de novo e não vira falha", async () => {
