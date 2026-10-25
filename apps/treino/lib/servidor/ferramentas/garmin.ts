@@ -1,4 +1,5 @@
 import { diasEntre } from "@/lib/corpo";
+import { avaliarVfc } from "@/lib/prontidao";
 import { lerGarmin, type LinhaGarmin } from "../garmin";
 import { numArg, type FerramentaLeitura } from "./comum";
 
@@ -18,7 +19,7 @@ export const GARMIN_LEITURA: FerramentaLeitura[] = [
     tipo: "leitura",
     name: "recuperacao_garmin",
     description:
-      "Recuperação medida pelo relógio Garmin: sono (horas e score), VFC noturna (ms), Body Battery, FC de repouso, estresse médio, passos e atividades gravadas pelo relógio, por dia, com médias de 7 dias e comparação com os 21 dias anteriores. Sempre olhe 'diasDesdeUltimoDado' antes de falar de hoje: se for maior que 0, o relógio ainda não sincronizou e o que existe é de outro dia. Body Battery ao acordar é aproximado (maior valor da manhã) e a Garmin não informa o status da VFC; use a tendência contra a própria média, não valores absolutos. Um dia de sono ruim ou VFC baixa isolada não justifica mudar o treino; peça atenção a 3+ dias seguidos.",
+      "Recuperação medida pelo relógio Garmin: sono (horas e score), VFC noturna (ms), Body Battery, FC de repouso, estresse médio, passos e atividades gravadas pelo relógio, por dia, com médias de 7 dias e comparação com os 21 dias anteriores. Sempre olhe 'diasDesdeUltimoDado' antes de falar de hoje: se for maior que 0, o relógio ainda não sincronizou e o que existe é de outro dia. Body Battery ao acordar é aproximado (maior valor da manhã). O objeto 'vfc' compara a média de 7 dias da VFC com a base pessoal das ~4 semanas anteriores (nivel sem_base = ainda sem histórico suficiente, não conclua nada); o status da Garmin só aparece depois de ~3 semanas. Use tendência, não valores absolutos. Um dia de sono ruim ou VFC baixa isolada não justifica mudar o treino; peça atenção a 3+ dias seguidos.",
     inputSchema: {
       type: "object",
       properties: { dias: { type: "integer", minimum: 1, maximum: 35, description: "Quantos dias mais recentes na série. Padrão 14." } },
@@ -66,6 +67,10 @@ export const GARMIN_LEITURA: FerramentaLeitura[] = [
         ultimoDia: ultimo,
         mediaUltimos7Dias: resumo(recentes),
         mediaDos21DiasAnteriores: anteriores.length >= 7 ? resumo(anteriores) : null,
+        vfc: avaliarVfc(
+          diario.map((l) => ({ data: l.data as string, hrvMs: num(l.vfc_noturna_ms), vfcStatus: typeof l.vfc_status === "string" ? l.vfc_status : null })),
+          ctx.hoje,
+        ),
         serie: serie.slice().reverse(),
         atividades: (dados?.treinos ?? []).slice(0, 10).map((t) => ({
           data: typeof t.biofit_sessao_data === "string" ? t.biofit_sessao_data : String(t.inicio_utc ?? "").slice(0, 10),

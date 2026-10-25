@@ -110,6 +110,28 @@ describe("leitura", () => {
       expect(json.exercicios.map((e: { sugestao: unknown }) => e.sugestao)).toEqual(sem.exercicios.map((e: { sugestao: unknown }) => e.sugestao));
     });
 
+    it("VFC sustentadamente abaixo da base própria entra na prontidão; sem base, não", async () => {
+      const dia = (n: number, vfc: number) => {
+        const d = new Date(`${HOJE}T12:00:00Z`);
+        d.setUTCDate(d.getUTCDate() - n);
+        return { data: d.toISOString().slice(0, 10), vfc_noturna_ms: vfc };
+      };
+      const ruido = [0, 2, -2, 1, -1, 3, -3];
+      const base = Array.from({ length: 28 }, (_, i) => dia(7 + i, 50 + ruido[i % 7]));
+      const recentes = [0, 1, 2, 3, 4, 5, 6].map((n) => dia(n, 37));
+      const hoje = { ...recentes[0], sono_minutos: 450, sono_score: 80, body_battery_acordar: 85 };
+
+      comGarmin([...base, ...recentes.slice(1), hoje]);
+      let r = (await chamar("plano_do_dia")).json;
+      expect(r.prontidaoGarmin.nivel).toBe("atencao");
+      expect(r.prontidaoGarmin.motivos.join(" ")).toContain("VFC");
+      expect(r.prontidaoGarmin.ajuste.reduzirSeries).toBe(0);
+
+      comGarmin([...recentes.slice(1), hoje]); // ~6 dias de histórico: sem base, sem efeito
+      r = (await chamar("plano_do_dia")).json;
+      expect(r.prontidaoGarmin.nivel).toBe("normal");
+    });
+
     it("dado só de ontem ou Garmin fora do ar: plano normal, sem ajuste", async () => {
       comGarmin([{ data: "2026-09-01", sono_minutos: 200, body_battery_acordar: 10 }]);
       let r = (await chamar("plano_do_dia")).json;
