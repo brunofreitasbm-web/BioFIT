@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { lerGarmin } from "@/lib/servidor/garmin";
+import { avaliarVfc } from "@/lib/prontidao";
 
 export const runtime = "nodejs";
 // Sem isso o Next pré-renderiza a resposta no build e o cartão fica congelado até o próximo deploy.
@@ -72,10 +73,17 @@ export async function GET() {
         })),
     };
 
+    // A base da VFC precisa de ~5 semanas: avalia sobre tudo o que foi lido, não só a janela de 30 dias.
+    const vfc = avaliarVfc(
+      ordenado.map((d) => ({ data: String(d.data), hrvMs: num(d.vfc_noturna_ms), vfcStatus: typeof d.vfc_status === "string" ? d.vfc_status : null })),
+      maisRecente.data,
+    );
+
     return NextResponse.json({
       disponivel: true,
       biometria,
       janela,
+      vfc,
     });
   } catch (error) {
     console.error("[Erro na rota Garmin]:", error);

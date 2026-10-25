@@ -80,7 +80,7 @@ O usuário (você) precisa ter autorizado o app na Garmin; sem isso nada é entr
 | Campo | Origem | Observação |
 | --- | --- | --- |
 | Sono (min, score) | `sleeps` | Soma das fases (profundo + leve + REM); sem fases, `durationInSeconds` |
-| VFC noturna (ms) | `hrv.lastNightAvg` | A API não informa o status da VFC nem a média semanal |
+| VFC noturna (ms) | `hrv.lastNightAvg` | Push: a API não informa o status nem a média semanal. Personal API: `hrvSummary.status`/`weeklyAvg` quando existem (status `NONE` vira nulo) |
 | Body Battery máx. / acordar | `stressDetails.timeOffsetBodyBatteryValues` | "Acordar" é o maior valor antes do meio-dia (a API não dá a hora de acordar) |
 | FC repouso, passos, estresse | `dailies` | Estresse negativo (sem dados) vira nulo |
 | Atividades | `activities` | Descarta as sem FC média (treinos importados do BIOFIT em FIT) |
@@ -95,12 +95,23 @@ Para **hoje**, o plano traz `prontidaoGarmin` (regras em `lib/prontidao.ts`, lim
 | --- | --- | --- |
 | `sem_dados` | Sem sono/Body Battery de **hoje** (relógio não sincronizou) | Nenhum: treino como planejado |
 | `normal` | Sono ≥ 6 h, score ≥ 60, Body Battery ao acordar ≥ 50 | Nenhum |
-| `atencao` | Só um dos dois ruins (sono < 6 h ou score < 60; **ou** Body Battery < 50) | +1 RIR, não subir carga, sem teste de falha |
-| `baixa` | Sono **e** Body Battery ruins | Igual, e −1 série por exercício (mínimo 2) |
+| `atencao` | Só um grupo ruim (sono < 6 h ou score < 60; **ou** Body Battery < 50; **ou** VFC abaixo da base) | +1 RIR, não subir carga, sem teste de falha |
+| `baixa` | Sono **e** (Body Battery ou VFC) ruins | Igual, e −1 série por exercício (mínimo 2) |
+
+### VFC contra a base pessoal
+
+`avaliarVfc` (`lib/prontidao.ts`) compara a média de 7 dias de ln(VFC) com a média e o desvio dos 29 dias anteriores a essa semana (dias hoje−35 a hoje−7). Exige **≥ 14 leituras na base**, ≥ 5 nos últimos 7 dias e a leitura de hoje; antes disso o nível é `sem_base` e a VFC não muda nada (o cartão mostra "base N/14 d"). O app lê 60 dias (`p_dias: 60`) para isso.
+
+| Nível | Quando | Efeito |
+| --- | --- | --- |
+| `abaixo` | Média de 7 dias abaixo da base menos meio desvio (piso de 3 %) **e** ≥ 4 das 7 noites claramente abaixo | Conta como Body Battery fraco |
+| `muito_abaixo` | Igual, com a média abaixo de base − 2× esse limite **e** hoje abaixo de base − 1 desvio | Conta como Body Battery forte |
+
+A VFC sozinha só pede +1 RIR (nunca corta série); com sono ruim junto, equivale a Body Battery ruim. Sem base própria, só a classificação `LOW`/`POOR` da Garmin conta (`UNBALANCED` não, pois pode ser VFC alta); essa classificação só aparece depois de ~3 semanas de leituras. A FC de repouso continua só informativa.
 
 Cada exercício ganha `ajusteHoje`. As cargas sugeridas pela dupla progressão e o histórico **não** são alterados, e o plano nunca manda pular o treino. Em semana de deload o nível aparece, mas sem ajuste. Duas noites seguidas com menos de 6 h pesam mais que uma.
 
-Só o MCP usa isso; a tela de treino do app ainda mostra o plano sem o ajuste.
+O MCP e a tela de treino do app usam as mesmas regras (`ProntidaoBanner` mostra o ajuste e deixa ignorar o dia).
 
 ## Legado
 

@@ -20,7 +20,7 @@ import { AiCoachModal } from "@/components/ai/AiCoachModal";
 import { AiCoachFloatingButton } from "@/components/ai/AiCoachFloatingButton";
 import { GarminCard, type GarminBiometria } from "@/components/GarminCard";
 import { ProntidaoBanner } from "@/components/ProntidaoBanner";
-import { avaliarProntidao, diasDaJanela } from "@/lib/prontidao";
+import { avaliarProntidao, diasDaJanela, type AvaliacaoVfc } from "@/lib/prontidao";
 import { contextoIntegrado } from "@/lib/ai/contextoIntegrado";
 import type { ContextoTreinoIA, GarminJanela } from "@/lib/ai/prompts";
 
@@ -39,6 +39,7 @@ export default function HojePage() {
   const [garminBiometria, setGarminBiometria] = useState<GarminBiometria | null>(null);
   const [garminCarregando, setGarminCarregando] = useState(false);
   const [garminJanela, setGarminJanela] = useState<GarminJanela | null>(null);
+  const [garminVfc, setGarminVfc] = useState<AvaliacaoVfc | null>(null);
 
   const hojeISO = toISODate(hoje);
   // Preferência só deste aparelho (não entra no backup): "ignorar o ajuste de recuperação hoje".
@@ -75,6 +76,7 @@ export default function HojePage() {
         if (data?.disponivel && data.biometria) {
           setGarminBiometria(data.biometria);
           setGarminJanela(data.janela ?? null);
+          setGarminVfc(data.vfc ?? null);
         }
       })
       .catch(() => {})
@@ -95,8 +97,8 @@ export default function HojePage() {
   const mesoAtual = status?.meso;
   const diasGarmin = useMemo(() => diasDaJanela(garminJanela?.diario ?? []), [garminJanela]);
   const prontidao = useMemo(
-    () => (garminBiometria ? avaliarProntidao(diasGarmin, hojeISO, Boolean(status?.isDeload)) : null),
-    [garminBiometria, diasGarmin, hojeISO, status?.isDeload],
+    () => (garminBiometria ? avaliarProntidao(diasGarmin, hojeISO, Boolean(status?.isDeload), garminVfc) : null),
+    [garminBiometria, diasGarmin, hojeISO, status?.isDeload, garminVfc],
   );
   const ajusteRecuperacao = prontidao?.ajuste && !ignorarProntidao ? prontidao.ajuste : null;
   const exercicios = useMemo(
@@ -264,7 +266,7 @@ export default function HojePage() {
         </div>
       )}
 
-      <GarminCard biometria={garminBiometria} carregando={garminCarregando} prontidao={prontidao} dias={diasGarmin} hojeISO={hojeISO} />
+      <GarminCard biometria={garminBiometria} carregando={garminCarregando} prontidao={prontidao} dias={diasGarmin} hojeISO={hojeISO} vfc={garminVfc} />
 
       {sessaoEfetiva && status && <TreinoTimer key={`timer:${versaoDados}`} hojeISO={hojeISO} sessaoTipo={sessaoEfetiva} />}
 

@@ -3,7 +3,7 @@
 import { Activity, AlertTriangle, BatteryCharging, CheckCircle2, Heart, Info, Moon, Watch } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ICON } from "@/lib/icones";
-import { nivelBodyBattery, nivelSono, nivelTendencia, type DiaGarmin, type NivelMetrica, type Prontidao } from "@/lib/prontidao";
+import { nivelBodyBattery, nivelSono, nivelTendencia, nivelVfc, VFC_MIN_BASE, type AvaliacaoVfc, type DiaGarmin, type NivelMetrica, type Prontidao } from "@/lib/prontidao";
 
 export interface GarminBiometria {
   data: string;
@@ -24,6 +24,7 @@ interface GarminCardProps {
   prontidao?: Prontidao | null;
   dias?: DiaGarmin[];
   hojeISO?: string;
+  vfc?: AvaliacaoVfc | null;
 }
 
 // Cor + texto: o nível nunca depende só da cor (daltonismo, sol na academia).
@@ -69,7 +70,7 @@ function dataCurta(iso: string): string {
   return `${d}/${m}`;
 }
 
-export function GarminCard({ biometria, carregando, prontidao, dias = [], hojeISO }: GarminCardProps) {
+export function GarminCard({ biometria, carregando, prontidao, dias = [], hojeISO, vfc }: GarminCardProps) {
   if (!biometria && !carregando) {
     return null; // Não exibe se ainda não sincronizou
   }
@@ -124,10 +125,10 @@ export function GarminCard({ biometria, carregando, prontidao, dias = [], hojeIS
       <div className="grid grid-cols-4 gap-1.5">
         <Metrica rotulo="Battery" Icone={BatteryCharging} valor={bb !== null ? String(bb) : "—"} nivel={nivelBodyBattery(bb)} antigo={defasado} />
         <Metrica rotulo="Sono" Icone={Moon} valor={sono !== null ? `${sono}h` : "—"} detalhe={score !== null ? `score ${score}` : null} nivel={nivelSono(sono, score)} antigo={defasado} />
-        <Metrica rotulo="VFC" Icone={Activity} valor={hrv !== null ? `${hrv}ms` : "—"} nivel={hoje ? nivelTendencia(dias, hoje, "hrvMs") : "sem_dado"} antigo={defasado} />
+        <Metrica rotulo="VFC" Icone={Activity} valor={hrv !== null ? `${hrv}ms` : "—"} detalhe={vfc?.nivel === "sem_base" ? `base ${vfc.diasBase}/${VFC_MIN_BASE} d` : null} nivel={nivelVfc(vfc)} antigo={defasado} />
         <Metrica rotulo="FC rep." Icone={Heart} valor={fc !== null ? `${fc}` : "—"} nivel={hoje ? nivelTendencia(dias, hoje, "fcRepouso") : "sem_dado"} antigo={defasado} />
       </div>
-      <p className="mt-1.5 text-[10px] text-ink-faint">VFC e FC de repouso comparam com a sua média dos últimos 7 dias; só informam, não mudam o treino.</p>
+      <p className="mt-1.5 text-[10px] text-ink-faint">A VFC compara a média de 7 dias com a sua base das semanas anteriores e só pesa na prontidão com histórico suficiente; a FC de repouso só informa.</p>
     </div>
   );
 }

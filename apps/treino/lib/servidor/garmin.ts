@@ -32,7 +32,7 @@ function lerArquivoLocal(): DadosGarmin | null {
 
 export async function lerGarmin(): Promise<DadosGarmin | null> {
   if (!supabaseConfigurado()) return lerArquivoLocal();
-  const r = (await rpc("biofit_garmin_get", { p_dias: 35 })) as Partial<DadosGarmin> | null;
+  const r = (await rpc("biofit_garmin_get", { p_dias: 60 })) as Partial<DadosGarmin> | null;
   return {
     diario: Array.isArray(r?.diario) ? r.diario : vazio.diario,
     treinos: Array.isArray(r?.treinos) ? r.treinos : vazio.treinos,

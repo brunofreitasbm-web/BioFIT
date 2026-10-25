@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { avaliarProntidao, deslocarRir, diasDaJanela, nivelBodyBattery, nivelSono, nivelTendencia, type DiaGarmin } from "./prontidao";
+import { avaliarProntidao, avaliarVfc, deslocarRir, diasDaJanela, nivelBodyBattery, nivelSono, nivelTendencia, nivelVfc, type DiaGarmin, type DiaVfc } from "./prontidao";
 
 const HOJE = "2026-10-24";
 const dia = (o: Partial<DiaGarmin> = {}): DiaGarmin => ({ data: HOJE, sonoHoras: 7.5, sonoScore: 80, bodyBatteryAcordar: 85, ...o });
@@ -73,17 +73,122 @@ describe("status por métrica", () => {
   const semana = (hrv: number[], fc: number[]): DiaGarmin[] =>
     hrv.map((h, i) => ({ data: `2026-10-${String(17 + i).padStart(2, "0")}`, sonoHoras: 7, sonoScore: 80, bodyBatteryAcordar: 80, hrvMs: h, fcRepouso: fc[i] }));
 
-  it("VFC baixa e FC alta contra a própria média; sem histórico não opina", () => {
+  it("FC alta contra a própria média; sem histórico não opina", () => {
     const base = semana([50, 50, 50, 50, 50, 50, 50, 36], [50, 50, 50, 50, 50, 50, 50, 59]); // hoje = 24
-    expect(nivelTendencia(base, "2026-10-24", "hrvMs")).toBe("alerta");
     expect(nivelTendencia(base, "2026-10-24", "fcRepouso")).toBe("alerta");
     const ok = semana([50, 50, 50, 50, 50, 50, 50, 49], [50, 50, 50, 50, 50, 50, 50, 51]);
-    expect(nivelTendencia(ok, "2026-10-24", "hrvMs")).toBe("bom");
-    expect(nivelTendencia(ok.slice(-3), "2026-10-24", "hrvMs")).toBe("sem_dado");
-    expect(nivelTendencia([], "2026-10-24", "hrvMs")).toBe("sem_dado");
+    expect(nivelTendencia(ok, "2026-10-24", "fcRepouso")).toBe("bom");
+    expect(nivelTendencia(ok.slice(-3), "2026-10-24", "fcRepouso")).toBe("sem_dado");
+    expect(nivelTendencia([], "2026-10-24", "fcRepouso")).toBe("sem_dado");
   });
 
   it("diasDaJanela renomeia bodyBattery para bodyBatteryAcordar", () => {
     expect(diasDaJanela([{ data: "d", sonoHoras: 1, sonoScore: 2, bodyBattery: 3, hrvMs: 4, fcRepouso: 5 }])[0]).toMatchObject({ bodyBatteryAcordar: 3, hrvMs: 4, fcRepouso: 5 });
+  });
+});
+
+// ===== VFC contra a base pessoal =====
+
+// `ontem` noites até hoje; base = ruído determinístico em torno de 50 ms.
+const ruido = [0, 2, -2, 1, -1, 3, -3, 2, -2, 1, -1, 0, 2, -2, 1, -1, 3, -3, 2, -2, 1, -1, 0, 2, -2, 1, -1, 3, -3, 2, -2];
+const somaDias = (iso: string, n: number) => {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
+// Base de `n` noites terminando 7 dias antes de HOJE, mais os últimos 7 dias com `recente`.
+function serieVfc(n: number, recente: number[], base = 50): DiaVfc[] {
+  const out: DiaVfc[] = [];
+  for (let i = 0; i < n; i++) out.push({ data: somaDias(HOJE, -7 - i), hrvMs: base + ruido[i % ruido.length] });
+  recente.forEach((v, i) => out.push({ data: somaDias(HOJE, -(recente.length - 1 - i)), hrvMs: v }));
+  return out;
+}
+
+describe("avaliarVfc", () => {
+  it("base curta não opina (os ~6 dias reais de hoje)", () => {
+    const v = avaliarVfc(serieVfc(0, [43, 50, 40, 39, 42, 40]), HOJE);
+    expect(v.nivel).toBe("sem_base");
+    expect(v.motivo).toContain("0/14");
+  });
+
+  it("série estável é normal", () => {
+    expect(avaliarVfc(serieVfc(28, [50, 49, 51, 50, 48, 52, 50]), HOJE).nivel).toBe("normal");
+  });
+
+  it("uma noite ruim isolada é absorvida pela média de 7 dias", () => {
+    expect(avaliarVfc(serieVfc(28, [50, 50, 51, 49, 50, 50, 36]), HOJE).nivel).toBe("normal");
+  });
+
+  it("7 dias consistentemente abaixo da faixa", () => {
+    expect(avaliarVfc(serieVfc(28, [48, 47, 49, 48, 47, 49, 48]), HOJE).nivel).toBe("abaixo");
+  });
+
+  it("queda grande e sustentada, com hoje também baixo, é muito_abaixo", () => {
+    expect(avaliarVfc(serieVfc(28, [38, 37, 39, 36, 38, 37, 36]), HOJE).nivel).toBe("muito_abaixo");
+  });
+
+  it("sem leitura de hoje não opina", () => {
+    const d = serieVfc(28, [38, 37, 39, 36, 38, 37, 36]).filter((x) => x.data !== HOJE);
+    expect(avaliarVfc(d, HOJE).nivel).toBe("sem_base");
+  });
+
+  it("sem base própria, LOW/POOR da Garmin conta como abaixo; UNBALANCED e BALANCED não", () => {
+    expect(avaliarVfc(serieVfc(0, [40]), HOJE, "LOW").nivel).toBe("abaixo");
+    expect(avaliarVfc(serieVfc(0, [40]), HOJE, "poor").nivel).toBe("abaixo");
+    expect(avaliarVfc(serieVfc(0, [40]), HOJE, "UNBALANCED").nivel).toBe("sem_base");
+    expect(avaliarVfc(serieVfc(0, [40]), HOJE, "BALANCED").nivel).toBe("sem_base");
+  });
+
+  it("devolve a base e a faixa em ms", () => {
+    const v = avaliarVfc(serieVfc(28, [50, 49, 51, 50, 48, 52, 50]), HOJE);
+    expect(v.baseMs).toBeGreaterThan(48);
+    expect(v.baseMs).toBeLessThan(52);
+    expect(v.faixaMs![0]).toBeLessThan(v.baseMs!);
+    expect(v.faixaMs![1]).toBeGreaterThan(v.baseMs!);
+    expect(v.diasBase).toBe(28);
+  });
+
+  it("nivelVfc mapeia para o ícone do cartão", () => {
+    expect(nivelVfc(null)).toBe("sem_dado");
+    expect(nivelVfc(avaliarVfc(serieVfc(0, [40]), HOJE))).toBe("sem_dado");
+    expect(nivelVfc(avaliarVfc(serieVfc(28, [48, 47, 49, 48, 47, 49, 48]), HOJE))).toBe("atencao");
+    expect(nivelVfc(avaliarVfc(serieVfc(28, [38, 37, 39, 36, 38, 37, 36]), HOJE))).toBe("alerta");
+    expect(nivelVfc(avaliarVfc(serieVfc(28, [50, 49, 51, 50, 48, 52, 50]), HOJE))).toBe("bom");
+  });
+});
+
+describe("avaliarProntidao com VFC", () => {
+  const abaixo = avaliarVfc(serieVfc(28, [48, 47, 49, 48, 47, 49, 48]), HOJE);
+  const muito = avaliarVfc(serieVfc(28, [38, 37, 39, 36, 38, 37, 36]), HOJE);
+
+  it("VFC abaixo sozinha só pede folga de esforço, sem cortar série", () => {
+    const p = avaliarProntidao([dia()], HOJE, false, abaixo);
+    expect(p.nivel).toBe("atencao");
+    expect(p.ajuste).toMatchObject({ reduzirSeries: 0, rirExtra: 1 });
+    expect(p.motivos.join(" ")).toContain("VFC");
+    expect(p.fonte.vfc).toBe("abaixo");
+  });
+
+  it("VFC baixa com sono ruim vira baixa (reduz 1 série)", () => {
+    const p = avaliarProntidao([dia({ sonoHoras: 5 })], HOJE, false, muito);
+    expect(p.nivel).toBe("baixa");
+    expect(p.ajuste?.reduzirSeries).toBe(1);
+  });
+
+  it("sem base ou sem argumento, nada muda", () => {
+    const sem = avaliarVfc(serieVfc(0, [40]), HOJE);
+    expect(avaliarProntidao([dia()], HOJE, false, sem).nivel).toBe("normal");
+    expect(avaliarProntidao([dia()], HOJE, false).nivel).toBe("normal");
+    expect(avaliarProntidao([dia({ sonoHoras: 5.5 })], HOJE, false, sem)).toMatchObject({ nivel: "atencao" });
+  });
+
+  it("deload mantém o nível e zera o ajuste", () => {
+    const p = avaliarProntidao([dia({ sonoHoras: 5 })], HOJE, true, muito);
+    expect(p.nivel).toBe("baixa");
+    expect(p.ajuste).toBeNull();
+  });
+
+  it("VFC sozinha não substitui sono/Body Battery de hoje", () => {
+    expect(avaliarProntidao([dia({ sonoHoras: null, sonoScore: null, bodyBatteryAcordar: null })], HOJE, false, muito).nivel).toBe("sem_dados");
   });
 });

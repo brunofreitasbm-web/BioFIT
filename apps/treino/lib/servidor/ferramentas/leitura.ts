@@ -3,7 +3,7 @@ import { alvoDeEsforco, statusDescansoPorSessao } from "@/lib/descanso";
 import { EXERCICIOS_ASSISTIDOS, getSessaoCompleta, GRUPOS_INFERIORES, partidaKg, SESSAO_LABEL, SESSOES } from "@/lib/exercicios";
 import { calcularStreak, labelRodada } from "@/lib/motivacao";
 import { getStatusAderencia, getStatusPrograma, proximaDaFila, seriesDaRodada } from "@/lib/program";
-import { avaliarProntidao, deslocarRir, type Prontidao } from "@/lib/prontidao";
+import { avaliarProntidao, avaliarVfc, deslocarRir, type Prontidao } from "@/lib/prontidao";
 import { sugerirProximaCarga } from "@/lib/progressao";
 import {
   calcularFrequenciaPorGrupo,
@@ -50,8 +50,10 @@ async function prontidaoDoDia(data: string, hoje: string, deload: boolean): Prom
       sonoHoras: num(l.sono_minutos) === null ? null : Math.round((num(l.sono_minutos)! / 60) * 10) / 10,
       sonoScore: num(l.sono_score),
       bodyBatteryAcordar: num(l.body_battery_acordar),
+      hrvMs: num(l.vfc_noturna_ms),
+      vfcStatus: typeof l.vfc_status === "string" ? l.vfc_status : null,
     }));
-    return avaliarProntidao(dias, hoje, deload);
+    return avaliarProntidao(dias, hoje, deload, avaliarVfc(dias, hoje));
   } catch (e) {
     console.error("[plano_do_dia] Garmin indisponível:", e);
     return avaliarProntidao([], hoje, deload);
