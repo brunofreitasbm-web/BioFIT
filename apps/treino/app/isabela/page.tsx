@@ -13,6 +13,9 @@ import { useGamificacao } from "@/hooks/isabela/useGamificacao";
 import { CalendarClock, CheckCircle2, Sprout } from "lucide-react";
 import { ICON } from "@/lib/isabela/icones";
 
+// Rótulo curto do seletor: B e D são ambos "Superior", então o número os distingue.
+const SESSAO_CURTO: Record<SessaoTreino, string> = { A: "Quadríceps", B: "Superior 1", C: "Glúteo", D: "Superior 2" };
+
 const DIAS_SEMANA_LABEL = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 export default function HojePage() {
@@ -168,6 +171,26 @@ export default function HojePage() {
         </p>
       </header>
 
+      <nav aria-label="Escolher o treino de hoje" className="mb-3">
+        <div className="grid grid-cols-4 gap-2">
+          {SESSOES.map((s) => {
+            const ativo = s === sessao;
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => escolherSessao(s)}
+                aria-pressed={ativo}
+                className={`min-h-[52px] rounded-xl border px-2 py-2 text-center active:scale-[0.97] transition-colors ${ativo ? "border-accent bg-accent-soft text-ink" : "border-line bg-base-800 text-ink-muted"}`}
+              >
+                <span className="block text-base font-extrabold leading-none">{s}</span>
+                <span className="mt-1 block text-[10px] leading-tight">{s === sugerida ? "sugerido" : SESSAO_CURTO[s]}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
       <div className="sticky top-0 z-10 -mx-4 mb-3 border-b border-line bg-base-800/95 px-4 py-2 shadow-panel backdrop-blur">
         <div className="mb-1.5 flex items-center justify-between text-xs">
           <span className="flex items-center gap-1.5 font-semibold text-ink">
@@ -200,27 +223,6 @@ export default function HojePage() {
           </p>
         </div>
       )}
-
-      <nav aria-label="Escolher o treino de hoje" className="mb-3">
-        <p className="mb-1.5 text-xs font-medium text-ink-muted">Treino de hoje</p>
-        <div className="grid grid-cols-4 gap-2">
-          {SESSOES.map((s) => {
-            const ativo = s === sessao;
-            return (
-              <button
-                key={s}
-                type="button"
-                onClick={() => escolherSessao(s)}
-                aria-pressed={ativo}
-                className={`rounded-xl border px-2 py-2 text-center transition-colors ${ativo ? "border-accent bg-accent-soft text-ink" : "border-line bg-base-800 text-ink-muted"}`}
-              >
-                <span className="block text-base font-extrabold leading-none">{s}</span>
-                <span className="mt-1 block text-[10px] leading-tight">{s === sugerida ? "sugerido" : SESSAO_NOME[s].split(" · ")[0]}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
 
       <TreinoTimer hojeISO={hojeISO} sessaoTipo={sessao} onMudou={aoMudarTimer} />
 
