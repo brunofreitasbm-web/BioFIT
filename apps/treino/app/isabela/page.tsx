@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getCelebrado, getTrocas, setCelebrado, setTroca } from "@/lib/isabela/storage";
+import { getCelebrado, getSessaoEscolhida, getTrocas, setCelebrado, setSessaoEscolhida, setTroca } from "@/lib/isabela/storage";
+import type { SessaoTreino } from "@/lib/isabela/tipos";
 import { getStatusPrograma, proximaDaFila, seriesDoDia, sessaoSugerida as calcularSessaoSugerida, toISODate, SERIES_NA_RETOMADA } from "@/lib/isabela/program";
-import { getSessaoCompleta, SESSAO_LABEL, SESSAO_NOME } from "@/lib/isabela/exercicios";
+import { getSessaoCompleta, SESSAO_LABEL, SESSAO_NOME, SESSOES } from "@/lib/isabela/exercicios";
 import { ExercicioCard } from "@/components/isabela/ExercicioCard";
 import { TreinoTimer } from "@/components/isabela/TreinoTimer";
 import { PainelGamificacao } from "@/components/isabela/PainelGamificacao";
@@ -18,6 +19,7 @@ export default function HojePage() {
   const [pronto, setPronto] = useState(false);
   const [hoje] = useState(() => new Date());
   const [trocas, setTrocas] = useState<Record<string, string>>({});
+  const [escolhida, setEscolhida] = useState<SessaoTreino | null>(null);
   const [exercicioAbertoKey, setExercicioAbertoKey] = useState<string | null>(null);
   const [progresso, setProgresso] = useState<Record<string, { feitas: number; total: number }>>({});
   const [celebracao, setCelebracao] = useState<DadosCelebracao | null>(null);
@@ -30,10 +32,12 @@ export default function HojePage() {
 
   useEffect(() => {
     setTrocas(getTrocas());
+    setEscolhida(getSessaoEscolhida(hojeISO));
     setPronto(true);
-  }, []);
+  }, [hojeISO]);
 
-  const sessao = pronto ? calcularSessaoSugerida(hojeISO) : "A";
+  const sugerida = pronto ? calcularSessaoSugerida(hojeISO) : "A";
+  const sessao = escolhida ?? sugerida;
   const status = pronto ? getStatusPrograma(hojeISO, sessao) : null;
   const retomada = status?.retomada ?? false;
   const exercicios = useMemo(() => getSessaoCompleta(sessao, trocas), [sessao, trocas]);
@@ -62,6 +66,13 @@ export default function HojePage() {
       return { ...prev, [slotKey]: { feitas, total } };
     });
   }, []);
+
+  // Escolher o treino do dia não trava na fila: tocar no sugerido volta ao automático.
+  function escolherSessao(nova: SessaoTreino) {
+    const valor = nova === sugerida ? null : nova;
+    setSessaoEscolhida(hojeISO, valor);
+    setEscolhida(valor);
+  }
 
   function trocar(slotKey: string, exercicioId: string) {
     const padrao = exercicios.find((e) => e.slotKey === slotKey)?.opcoes[0].id;
@@ -189,6 +200,27 @@ export default function HojePage() {
           </p>
         </div>
       )}
+
+      <nav aria-label="Escolher o treino de hoje" className="mb-3">
+        <p className="mb-1.5 text-xs font-medium text-ink-muted">Treino de hoje</p>
+        <div className="grid grid-cols-4 gap-2">
+          {SESSOES.map((s) => {
+            const ativo = s === sessao;
+            return (
+              <button
+                key={s}
+                type="button"
+                onClick={() => escolherSessao(s)}
+                aria-pressed={ativo}
+                className={`rounded-xl border px-2 py-2 text-center transition-colors ${ativo ? "border-accent bg-accent-soft text-ink" : "border-line bg-base-800 text-ink-muted"}`}
+              >
+                <span className="block text-base font-extrabold leading-none">{s}</span>
+                <span className="mt-1 block text-[10px] leading-tight">{s === sugerida ? "sugerido" : SESSAO_NOME[s].split(" · ")[0]}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
       <TreinoTimer hojeISO={hojeISO} sessaoTipo={sessao} onMudou={aoMudarTimer} />
 

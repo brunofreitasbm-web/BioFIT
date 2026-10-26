@@ -1,3 +1,4 @@
+import { SESSOES } from "./exercicios";
 import type { RegistroSessao, SerieRegistrada, SessaoTreino } from "./tipos";
 import {
   dadosDoBackup,
@@ -147,6 +148,30 @@ export function getTrocas(): Record<string, string> {
     return raw ? (JSON.parse(raw) as Record<string, string>) : {};
   } catch {
     return {};
+  }
+}
+
+// Treino que ela escolheu para hoje (em vez do próximo da fila). Vale só no dia: amanhã volta a
+// sugestão. Fora do backup, é uma preferência passageira.
+const KEY_SESSAO_ESCOLHIDA = "isabela:sessaoEscolhida";
+
+export function getSessaoEscolhida(hojeISO: string): SessaoTreino | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(KEY_SESSAO_ESCOLHIDA);
+    const v = raw ? (JSON.parse(raw) as { data?: string; sessao?: string }) : null;
+    return v?.data === hojeISO && SESSOES.includes(v.sessao as SessaoTreino) ? (v.sessao as SessaoTreino) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setSessaoEscolhida(hojeISO: string, sessao: SessaoTreino | null): void {
+  try {
+    if (sessao) window.localStorage.setItem(KEY_SESSAO_ESCOLHIDA, JSON.stringify({ data: hojeISO, sessao }));
+    else window.localStorage.removeItem(KEY_SESSAO_ESCOLHIDA);
+  } catch {
+    // sem localStorage: a escolha vale só até recarregar
   }
 }
 
