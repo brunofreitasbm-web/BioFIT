@@ -3,11 +3,8 @@ import type { ExercicioEfetivo, GrupoMuscular, SessaoTreino, SlotPrograma, Varia
 // Programa de hipertrofia em 4 dias: A Inferior (quadríceps) → B Superior → C Inferior (glúteo e
 // posterior) → D Superior. Pensado para quem tem dor lombar: tudo é apoiado em máquina, polia ou
 // banco; sem barra nas costas, sem peso morto/stiff, sem remada curvada e sem impacto. É um plano
-// de partida, não prescrição médica.
-//
-// Condromalácia patelar: nada de extensora, passada, búlgaro, step-up, hack nem agachamento. O joelho
-// só trabalha em amplitude curta (leg press até ~60°), isometria e extensão terminal. Dor atrás da
-// patela ou na coluna = parar e trocar (botão "Trocar") ou falar com o profissional que acompanha.
+// de partida, não prescrição médica: dor que aumenta no exercício = parar e trocar (botão
+// "Trocar") ou falar com o profissional que acompanha.
 //
 // Cada posição tem um exercício padrão e trocas com a mesma biomecânica e o mesmo grupo muscular.
 
@@ -42,6 +39,11 @@ const SECUNDARIOS: Record<string, Partial<Record<GrupoMuscular, number>>> = {
   "leg-press-unilateral": AGACHAMENTO,
   "leg-press-pes-altos-unilateral": { Posterior: MEIA },
   "leg-press-pes-altos": { Posterior: MEIA },
+  "hack-squat": AGACHAMENTO,
+  "hack-squat-pes-altos": { Posterior: MEIA },
+  "passada-estatica-smith": AGACHAMENTO,
+  "bulgaro-halteres": AGACHAMENTO,
+  "step-up-baixo": AGACHAMENTO,
   "elevacao-pelvica-maquina": { Posterior: MEIA },
   "hip-thrust-barra": { Posterior: MEIA },
   "ponte-gluteo-smith": { Posterior: MEIA },
@@ -51,18 +53,21 @@ export const SLOTS: SlotPrograma[] = [
   // ===== A — INFERIOR (quadríceps) =====
   { sessao: "A", ordem: 1, grupoMuscular: "Quadríceps", series: 3, reps: "10-12", descanso: "2 min", composto: true, pesoCorporal: false,
     opcoes: [
-      v("leg-press-45", "Leg press 45° (amplitude curta)", "Joelho flexiona só até uns 60° (não desça além disso), pés na largura dos ombros; sem dor atrás da patela e sem a lombar descolar", "Leg_Press"),
-      v("leg-press-horizontal", "Leg press horizontal", "Mesma regra: amplitude curta, joelho até uns 60°, sem dor atrás da patela", "Leg_Press"),
+      v("leg-press-45", "Leg press 45°", "Pés na largura dos ombros, desça só até a lombar não descolar do encosto", "Leg_Press"),
+      v("leg-press-horizontal", "Leg press horizontal", "Mesma regra: desça só até a lombar não descolar do encosto", "Leg_Press"),
+      v("hack-squat", "Hack squat", "Costas e quadril colados no apoio; amplitude sem a lombar descolar", "Hack_Squat"),
     ] },
-  { sessao: "A", ordem: 2, grupoMuscular: "Quadríceps", series: 3, reps: "10-12 por perna", descanso: "90 s", composto: false, pesoCorporal: false,
+  { sessao: "A", ordem: 2, grupoMuscular: "Quadríceps", series: 3, reps: "10-12", descanso: "90 s", composto: false, pesoCorporal: false,
     opcoes: [
-      v("leg-press-unilateral", "Leg press unilateral (amplitude curta)", "Uma perna por vez, joelho até uns 60°; se doer, pare mais cedo", "Leg_Press"),
-      v("parede-isometrica", "Cadeirinha isométrica na parede", "Joelhos a uns 45-60° (nunca além de 90°), costas na parede; segure sem dor atrás da patela", null, { reps: "30-45 s" }),
+      v("passada-estatica-smith", "Passada estática no Smith (por perna)", "Tronco alto, pé da frente firme; desça reto, sem inclinar à frente", "Smith_Single-Leg_Split_Squat"),
+      v("bulgaro-halteres", "Agachamento búlgaro com halteres (por perna)", "Tronco alto; apoie a mão se perder o equilíbrio", "Split_Squat_with_Dumbbells"),
+      v("step-up-baixo", "Step-up em degrau baixo (por perna)", "Degrau na altura do joelho ou menos; suba sem impulso"),
+      v("leg-press-unilateral", "Leg press unilateral", "Uma perna por vez; desça só até a lombar não descolar do encosto", "Leg_Press"),
     ] },
-  { sessao: "A", ordem: 3, grupoMuscular: "Quadríceps", series: 3, reps: "15-20", descanso: "60 s", composto: false, pesoCorporal: false,
+  { sessao: "A", ordem: 3, grupoMuscular: "Quadríceps", series: 3, reps: "12-15", descanso: "60-90 s", composto: false, pesoCorporal: false,
     opcoes: [
-      v("extensao-terminal-polia", "Extensão terminal do joelho na polia", "Joelho levemente dobrado empurra até esticar; carga leve, movimento curto e controlado"),
-      v("extensao-terminal-elastico", "Extensão terminal do joelho com elástico", "Mesmo movimento com elástico preso atrás do joelho; carga leve", null),
+      v("cadeira-extensora", "Cadeira extensora", "Costas no encosto; segure 1 s no topo", "Leg_Extensions"),
+      v("extensora-unilateral", "Cadeira extensora unilateral", "Uma perna por vez; mesmas regras da extensora", "Leg_Extensions"),
     ] },
   { sessao: "A", ordem: 4, grupoMuscular: "Posterior", series: 3, reps: "12-15", descanso: "60-90 s", composto: false, pesoCorporal: false,
     opcoes: [
@@ -131,8 +136,9 @@ export const SLOTS: SlotPrograma[] = [
     ] },
   { sessao: "C", ordem: 2, grupoMuscular: "Glúteo", series: 3, reps: "10-12", descanso: "2 min", composto: true, pesoCorporal: false,
     opcoes: [
-      v("leg-press-pes-altos", "Leg press (pés altos e afastados, amplitude curta)", "Joelho até uns 60°, lombar colada no encosto; pés altos poupam a patela", "Leg_Press"),
-      v("leg-press-pes-altos-unilateral", "Leg press unilateral (pés altos, amplitude curta)", "Uma perna por vez, joelho até uns 60°", "Leg_Press"),
+      v("leg-press-pes-altos", "Leg press (pés altos e afastados)", "Lombar colada no encosto; desça até onde ela não descolar", "Leg_Press"),
+      v("hack-squat-pes-altos", "Hack squat (pés altos e afastados)", "Costas e quadril colados no apoio", "Hack_Squat"),
+      v("leg-press-pes-altos-unilateral", "Leg press unilateral (pés altos)", "Uma perna por vez; lombar colada no encosto", "Leg_Press"),
     ] },
   { sessao: "C", ordem: 3, grupoMuscular: "Posterior", series: 3, reps: "10-12", descanso: "90 s", composto: false, pesoCorporal: false,
     opcoes: [
