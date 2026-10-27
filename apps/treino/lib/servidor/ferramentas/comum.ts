@@ -1,7 +1,7 @@
 import { dadosDoBackup, KEY_REMOVIDOS, type DadosTreino } from "@/lib/dados";
 import type { Removido } from "@/lib/merge";
 import { EXERCICIOS_PPL_V4 } from "@/lib/arquivo/pplV4";
-import { getExercicio, SESSOES, SLOTS } from "@/lib/exercicios";
+import { getExercicio, SESSOES, todasAsVariacoes } from "@/lib/exercicios";
 import { getStatusPrograma, sessaoSugerida } from "@/lib/program";
 import type { RegistroSessao, SerieRegistrada, SessaoTreino } from "@/lib/tipos";
 import type { BackupGuardado, DadosBackup } from "../backup";
@@ -125,7 +125,7 @@ interface Candidato {
 
 function candidatosDoPrograma(): Candidato[] {
   const mapa = new Map<string, string>();
-  for (const s of SLOTS) for (const v of [s.meso1, s.meso2]) mapa.set(v.id, v.nome);
+  for (const x of todasAsVariacoes()) mapa.set(x.id, x.nome);
   return Array.from(mapa, ([id, nome]) => ({ id, nome }));
 }
 
