@@ -1,13 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getExercicio, getSessaoCompleta, SESSOES } from "./exercicios";
-import { posicaoNoCiclo } from "./programaMesos23";
+import { getExercicio, getSessaoCompleta, SESSOES, SLOTS } from "./exercicios";
 
 const total = (meso: number) => SESSOES.reduce((n, s) => n + getSessaoCompleta(s, meso).reduce((x, e) => x + e.series, 0), 0);
 
 describe("mesos 2 e 3", () => {
-  it("ciclo de 3 mesos", () => {
-    expect([1, 2, 3, 4, 5, 6, 7].map(posicaoNoCiclo)).toEqual([1, 2, 3, 1, 2, 3, 1]);
-  });
   it("séries por sessão: meso 2 = 22/23/23/23/23, meso 3 = 23 em todas", () => {
     expect(SESSOES.map((s) => getSessaoCompleta(s, 2).reduce((n, e) => n + e.series, 0))).toEqual([22, 23, 23, 23, 23]);
     expect(SESSOES.map((s) => getSessaoCompleta(s, 3).reduce((n, e) => n + e.series, 0))).toEqual([23, 23, 23, 23, 23]);
@@ -16,8 +12,11 @@ describe("mesos 2 e 3", () => {
     expect(total(2)).toBe(114);
     expect(total(3)).toBe(115);
   });
-  it("meso 4 volta ao padrão do meso 1", () => {
-    for (const s of SESSOES) expect(getSessaoCompleta(s, 4).map((e) => e.id)).toEqual(getSessaoCompleta(s, 1).map((e) => e.id));
+  it("mesos 1 e 4+ seguem a regra original (ímpar = meso1, par = meso2)", () => {
+    for (const s of SESSOES) {
+      expect(getSessaoCompleta(s, 5).map((e) => e.id)).toEqual(getSessaoCompleta(s, 1).map((e) => e.id));
+      expect(getSessaoCompleta(s, 4).map((e) => e.id)).toEqual(SLOTS.filter((x) => x.sessao === s).sort((a, b) => a.ordem - b.ordem).map((x) => x.meso2.id));
+    }
   });
   it("ordens sequenciais, ids únicos por sessão, bisets recíprocos, sem teste de falha", () => {
     for (const meso of [2, 3]) for (const s of SESSOES) {

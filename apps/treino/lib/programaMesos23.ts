@@ -139,11 +139,5 @@ const MESO3: Record<SessaoTreino, Lista> = {
   ],
 };
 
-// Mesos de hipertrofia definidos sem depender do Meso 1 (que continua em SLOTS).
+// Só os mesos 2 e 3. Meso 1 e a regra de alternância dos demais continuam em SLOTS (exercicios.ts).
 export const PROGRAMA_MESOS_23: Record<2 | 3, Record<SessaoTreino, Lista>> = { 2: MESO2, 3: MESO3 };
-
-// O programa roda em ciclo de 3 mesociclos: 1 (SLOTS) → 2 → 3 → 1 → …
-export const MESOS_NO_CICLO = 3;
-export function posicaoNoCiclo(meso: number): 1 | 2 | 3 {
-  return ((((meso - 1) % MESOS_NO_CICLO) + MESOS_NO_CICLO) % MESOS_NO_CICLO + 1) as 1 | 2 | 3;
-}
