@@ -370,18 +370,16 @@ html[data-tema="papel"] .vidro-forte {
   border-color: rgb(var(--c-line));
 }
 
-/* A navegação vira abas na borda direita: o conteúdo ganha uma coluna livre à direita e o
-   fundo da tela fica sem barra. O timer de descanso desce para perto da base. */
+/* A navegação vira abas em linha na base (48 px): o conteúdo usa a largura toda da tela e o
+   timer de descanso fica logo acima das abas. */
 html[data-tema="papel"] main {
-  padding-right: 3.25rem;
-  padding-bottom: 2rem;
+  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
 }
 html[data-tema="papel"] body[data-descanso] main {
-  padding-bottom: 7rem;
+  padding-bottom: calc(9rem + env(safe-area-inset-bottom));
 }
 html[data-tema="papel"] [role="timer"].timer-descanso {
-  bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
-  padding-right: 3.25rem;
+  bottom: calc(3.75rem + env(safe-area-inset-bottom)) !important;
 }
 
 /* Série em foco (tela cheia): sem abas, e o timer de descanso sobe para ficar acima do botão
