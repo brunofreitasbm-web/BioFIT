@@ -22,7 +22,7 @@ export function GrupoBadge({ grupo }: { grupo: GrupoMuscular }) {
     <span
       role="status"
       aria-label={`Grupo muscular: ${grupo}`}
-      className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold", GRUPO_CLASSE[grupo])}
+      className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold", GRUPO_CLASSE[grupo])}
     >
       {grupo}
     </span>

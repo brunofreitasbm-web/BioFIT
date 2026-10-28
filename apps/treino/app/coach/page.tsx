@@ -237,7 +237,7 @@ export default function CoachPage() {
               <h1 className="font-display text-base font-bold uppercase tracking-wider text-ink">
                 BioFIT AI Coach
               </h1>
-              <p className="text-[11px] text-ink-muted">DeepSeek V3 · Hipertrofia & Ciência</p>
+              <p className="text-xs text-ink-muted">DeepSeek V3 · Hipertrofia & Ciência</p>
             </div>
           </div>
 
@@ -335,7 +335,7 @@ export default function CoachPage() {
                   key={i}
                   type="button"
                   onClick={() => enviar(p)}
-                  className="rounded-xl border vidro p-3 text-xs text-ink hover:border-brand/50 hover:bg-base-700 transition-all active:scale-[0.99]"
+                  className="rounded-xl border vidro p-3 text-xs text-ink hover:border-brand/50 hover:bg-base-700 transition active:scale-[0.99]"
                 >
                   {p}
                 </button>
@@ -381,7 +381,7 @@ export default function CoachPage() {
             type="button"
             onClick={toggleGravacao}
             className={cn(
-              "flex h-11 w-11 items-center justify-center rounded-xl border border-line transition-all shrink-0",
+              "flex h-11 w-11 items-center justify-center rounded-xl border border-line transition shrink-0",
               gravando
                 ? "bg-danger text-on-solid border-danger animate-pulse"
                 : "bg-base-800 text-ink-muted hover:text-ink",
@@ -403,7 +403,7 @@ export default function CoachPage() {
           <button
             type="submit"
             disabled={carregando || !inputTexto.trim()}
-            className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand text-on-solid transition-all hover:bg-brand-hover active:scale-95 disabled:opacity-40 shrink-0"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand text-on-solid transition hover:bg-brand-hover active:scale-95 disabled:opacity-40 shrink-0"
           >
             {carregando ? <RefreshCw size={18} className="animate-spin" /> : <Send size={18} />}
           </button>

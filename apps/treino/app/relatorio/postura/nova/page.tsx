@@ -145,7 +145,7 @@ export default function NovaPosturaPage() {
               ))}
               {vista === "perfil" && <li>De lado para a câmera, braços soltos. Depois da foto você marca C7, o ápice da curva e T12 nas costas.</li>}
             </ol>
-            <p className="text-[11px] text-ink-faint">
+            <p className="text-xs text-ink-faint">
               Medida de foto, não diagnóstico. O que vale é a comparação entre sessões feitas do mesmo jeito.
             </p>
           </section>
@@ -210,14 +210,14 @@ export default function NovaPosturaPage() {
                 ))}
               </ul>
             )}
-            <p className="text-[11px] text-ink-faint">
+            <p className="text-xs text-ink-faint">
               Arraste a partir de qualquer lugar do ponto: o deslocamento do dedo move o ponto e uma lupa mostra o trecho ampliado, com a mira no centro.
             </p>
           </section>
           <section className="grid grid-cols-2 gap-2">
             {MEDIDAS_POR_VISTA[vista].map((m: Medida) => (
               <div key={m} className="rounded-xl border vidro p-3 shadow-sm">
-                <p className="text-[11px] uppercase tracking-wide text-ink-faint">{INFO_MEDIDA[m].curto}</p>
+                <p className="text-xs uppercase tracking-wide text-ink-faint">{INFO_MEDIDA[m].curto}</p>
                 <p className="font-display text-2xl font-bold tabular-nums text-ink">
                   {fmt(medidas[m])}
                   <span className="text-sm font-medium text-ink-muted">{INFO_MEDIDA[m].unidade}</span>
@@ -262,7 +262,7 @@ export default function NovaPosturaPage() {
                 </li>
               ))}
             </ul>
-            <p className="text-[11px] text-ink-faint">A foto foi descartada; só os pontos e os ângulos ficam guardados.</p>
+            <p className="text-xs text-ink-faint">A foto foi descartada; só os pontos e os ângulos ficam guardados.</p>
           </section>
           <div className="flex gap-2">
             <button

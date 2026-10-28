@@ -29,7 +29,7 @@ export function PainelGamificacao({ g }: { g: Gamificacao }) {
             <Flame aria-hidden="true" size={ICON.md} className={semanas.atual > 0 ? "text-brand" : "text-ink-faint"} fill={semanas.atual > 0 ? "currentColor" : "none"} />
             {semanas.atual} {semanas.atual === 1 ? "semana seguida" : "semanas seguidas"}
           </p>
-          <span className="flex items-center gap-1 text-[11px] font-medium text-ink-muted" title="Semana livre: cobre 1 semana abaixo da meta. Ganha uma a cada 4 semanas seguidas.">
+          <span className="flex items-center gap-1 text-xs font-medium text-ink-muted" title="Semana livre: cobre 1 semana abaixo da meta. Ganha uma a cada 4 semanas seguidas.">
             <Shield aria-hidden="true" size={ICON.xs} className={semanas.escudos > 0 ? "text-brand" : "text-ink-faint"} fill={semanas.escudos > 0 ? "currentColor" : "none"} />
             {semanas.escudos > 0 ? "Semana livre disponível" : "Semana livre: a cada 4 seguidas"}
           </span>
@@ -59,7 +59,7 @@ export function PainelGamificacao({ g }: { g: Gamificacao }) {
           <li
             key={d.data}
             className={cn(
-              "flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold",
+              "flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold",
               d.estado === "treinou" && "bg-accent text-on-solid",
               d.estado === "hoje" && "border border-brand text-brand",
               d.estado === "futuro" && "text-ink-faint",
@@ -75,7 +75,7 @@ export function PainelGamificacao({ g }: { g: Gamificacao }) {
       <div className={cn("rounded-lg border px-3 py-2", TOM[mensagem.tom])}>
         <p className="text-sm font-semibold text-ink">{mensagem.titulo}</p>
         <p className="mt-0.5 text-xs text-ink-muted">{mensagem.texto}</p>
-        {g.xp.multiplicadorHoje > 1 && <p className="mt-1 text-[11px] font-semibold text-brand">XP ×{g.xp.multiplicadorHoje} nesta semana</p>}
+        {g.xp.multiplicadorHoje > 1 && <p className="mt-1 text-xs font-semibold text-brand">XP ×{g.xp.multiplicadorHoje} nesta semana</p>}
       </div>
 
       <div className="mt-3 flex items-center gap-2" aria-label={`${nivel.xpNoNivel} de ${nivel.xpParaProximo} XP para o próximo nível`}>
@@ -83,13 +83,13 @@ export function PainelGamificacao({ g }: { g: Gamificacao }) {
         <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-base-600">
           <div className="h-full rounded-full bg-brand transition-[width] duration-500 ease-out" style={{ width: `${nivel.fracao * 100}%` }} />
         </div>
-        <Link href="/isabela/conquistas" className="toque flex min-h-11 items-center gap-0.5 text-[11px] font-semibold tabular-nums text-ink-muted hover:text-ink">
+        <Link href="/isabela/conquistas" className="toque flex min-h-11 items-center gap-0.5 text-xs font-semibold tabular-nums text-ink-muted hover:text-ink">
           Nv {nivel.nivel} · {nivel.titulo} · {nivel.xpNoNivel}/{nivel.xpParaProximo} XP
           <ChevronRight aria-hidden="true" size={ICON.sm} />
         </Link>
       </div>
       {proxima && (
-        <p className="text-[11px] text-ink-muted">
+        <p className="text-xs text-ink-muted">
           Próxima conquista: <span className="font-semibold text-ink">{proxima.nome}</span> ({proxima.atual}/{proxima.alvo})
         </p>
       )}

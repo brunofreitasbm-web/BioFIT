@@ -43,7 +43,7 @@ export function NavTabs() {
               />
               <span className={cn(active && "font-semibold")}>{label}</span>
               <span
-                className={cn("h-0.5 w-5 rounded-full transition-all duration-150", active ? "bg-brand" : "bg-transparent")}
+                className={cn("h-0.5 w-5 rounded-full transition duration-150", active ? "bg-brand" : "bg-transparent")}
                 aria-hidden="true"
               />
             </Link>

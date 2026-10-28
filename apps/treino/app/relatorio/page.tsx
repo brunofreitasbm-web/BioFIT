@@ -178,7 +178,7 @@ export default function RelatorioPage() {
               <MapaMuscular volumes={volumes} />
             </>
           )}
-          <p className="text-center text-[11px] text-ink-faint">
+          <p className="text-center text-xs text-ink-faint">
             Inclui séries indiretas (meia série para o músculo auxiliar, ex.: supino → tríceps).
           </p>
         </section>
@@ -227,7 +227,7 @@ export default function RelatorioPage() {
                     </span>
                     <div>
                       <p className="text-xs font-semibold text-ink">{formatarDataBR(sessao.data)}</p>
-                      <p className="text-[11px] text-ink-muted">
+                      <p className="text-xs text-ink-muted">
                         Início: {inicioHora} {fimHora ? `· Fim: ${fimHora}` : "· Em andamento"}
                       </p>
                     </div>
@@ -235,11 +235,11 @@ export default function RelatorioPage() {
 
                   <div className="text-right">
                     {estaConcluido ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-[11px] font-medium text-accent">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent">
                         <Check aria-hidden="true" size={ICON.xs} strokeWidth={STROKE.forte} /> {formatarDuracaoMs(duracaoMs)}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-medium text-brand">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand">
                         <Timer aria-hidden="true" size={ICON.xs} strokeWidth={STROKE.forte} /> Em andamento
                       </span>
                     )}
@@ -271,7 +271,7 @@ function Kpi({ Icone, valor, rotulo }: { Icone: typeof Dumbbell; valor: string; 
     <div className="rounded-xl border vidro p-3 shadow-sm">
       <Icone aria-hidden="true" size={ICON.sm} className="mb-1 text-ink-faint" />
       <p className="font-display text-3xl font-extrabold leading-none tabular-nums text-ink">{valor}</p>
-      <p className="mt-1 text-[11px] text-ink-muted">{rotulo}</p>
+      <p className="mt-1 text-xs text-ink-muted">{rotulo}</p>
     </div>
   );
 }

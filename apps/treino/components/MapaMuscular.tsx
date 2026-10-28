@@ -61,7 +61,7 @@ function Vista({
           ));
         })}
       </svg>
-      <figcaption className="mt-1 text-center text-[11px] text-ink-faint">{rotulo}</figcaption>
+      <figcaption className="mt-1 text-center text-xs text-ink-faint">{rotulo}</figcaption>
     </figure>
   );
 }
@@ -80,7 +80,7 @@ export function MapaMuscular({ volumes }: { volumes: VolumeGrupo[] }) {
         <Vista vista={corpo.front} intensidade={intensidade} series={series} rotulo="Frente" />
         <Vista vista={corpo.back} intensidade={intensidade} series={series} rotulo="Costas" />
       </div>
-      <div className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-ink-faint">
+      <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-ink-faint">
         menos
         {[0, 0.35, 0.6, 0.8, 1].map((t) => (
           <span key={t} className="h-2.5 w-4 rounded-sm" style={{ backgroundColor: corCalor(t) }} />

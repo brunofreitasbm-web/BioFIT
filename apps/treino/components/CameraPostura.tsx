@@ -253,8 +253,8 @@ export function CameraPostura({ silhueta, aoCapturar }: { silhueta: "perfil" | "
         </button>
         <span className="w-10 text-right text-xs tabular-nums text-ink-muted">{zoom.toFixed(1)}×</span>
       </div>
-      {!faixa.nativo && <p className="text-center text-[11px] text-ink-faint">Esta câmera só aproxima. Para afastar, dê um passo para trás ou use a lente grande-angular (trocar câmera).</p>}
-      <p className="text-center text-[11px] text-ink-faint">
+      {!faixa.nativo && <p className="text-center text-xs text-ink-faint">Esta câmera só aproxima. Para afastar, dê um passo para trás ou use a lente grande-angular (trocar câmera).</p>}
+      <p className="text-center text-xs text-ink-faint">
         {silhueta === "perfil"
           ? "Encaixe o corpo no contorno, com a orelha, o ombro e o quadril sobre o prumo. Vire o contorno para o lado em que você está olhando."
           : "Encaixe o corpo no contorno: ombros e quadril nas linhas, pés sobre a marca do chão."}

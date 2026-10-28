@@ -41,7 +41,7 @@ export function AderenciaCard({ aderencia }: { aderencia: StatusAderencia }) {
           style={{ left: `${(ADERENCIA_MINIMO / ADERENCIA_META) * 100}%` }}
         />
       </div>
-      <p className={cn("text-[11px]", aderencia.decisao === "CAIR_UPPER_LOWER" ? "font-medium text-danger" : "text-ink-muted")}>
+      <p className={cn("text-xs", aderencia.decisao === "CAIR_UPPER_LOWER" ? "font-medium text-danger" : "text-ink-muted")}>
         {TEXTO_DECISAO[aderencia.decisao]} · mínimo para manter 5x: {ADERENCIA_MINIMO}
       </p>
     </div>

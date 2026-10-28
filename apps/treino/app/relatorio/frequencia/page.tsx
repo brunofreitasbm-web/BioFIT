@@ -100,7 +100,7 @@ export default function FrequenciaPage() {
                   <span className="text-xs font-semibold text-ink">{nomeTipo(s.tipo)}</span>
                 </div>
                 <p className="mt-2 text-2xl font-semibold text-ink">{s.sessoesConcluidas}</p>
-                <p className="text-[11px] text-ink-muted">
+                <p className="text-xs text-ink-muted">
                   {s.sessoesConcluidas === 1 ? "sessão" : "sessões"} · última em {formatarDataBR(s.ultimaData)}
                 </p>
               </div>

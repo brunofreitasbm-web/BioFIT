@@ -45,19 +45,19 @@ export function CelebracaoModal({ g, dados, onFechar }: { g: Gamificacao; dados:
             <p className="mt-1 text-sm text-ink-muted">Você apareceu hoje. É isso que dá resultado.</p>
             <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
               <div className="rounded-lg bg-base-700 p-2">
-                <dt className="flex items-center justify-center gap-1 text-[11px] font-medium text-ink-muted">
+                <dt className="flex items-center justify-center gap-1 text-xs font-medium text-ink-muted">
                   <Zap aria-hidden="true" size={ICON.xs} /> XP hoje
                 </dt>
                 <dd className="font-display text-xl font-bold tabular-nums text-ink">+{xp.hoje}</dd>
               </div>
               <div className="rounded-lg bg-base-700 p-2">
-                <dt className="flex items-center justify-center gap-1 text-[11px] font-medium text-ink-muted">
+                <dt className="flex items-center justify-center gap-1 text-xs font-medium text-ink-muted">
                   <Flame aria-hidden="true" size={ICON.xs} /> Seguidas
                 </dt>
                 <dd className="font-display text-xl font-bold tabular-nums text-ink">{semanas.atual}</dd>
               </div>
               <div className="rounded-lg bg-base-700 p-2">
-                <dt className="text-[11px] font-medium text-ink-muted">Semana</dt>
+                <dt className="text-xs font-medium text-ink-muted">Semana</dt>
                 <dd className="font-display text-xl font-bold tabular-nums text-ink">
                   {semana.feitos}/{semana.meta}
                 </dd>

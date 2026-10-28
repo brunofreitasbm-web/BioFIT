@@ -67,7 +67,7 @@ export function SeletorSessao({
                 />
               )}
               {op.tipo === sessaoSugerida && !selecionado && (
-                <span className="rounded-full bg-brand-soft px-1.5 py-0.5 text-[10px] font-semibold text-brand">próximo</span>
+                <span className="rounded-full bg-brand-soft px-1.5 py-0.5 text-[11px] font-semibold text-brand">próximo</span>
               )}
             </button>
           );

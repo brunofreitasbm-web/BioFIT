@@ -112,7 +112,7 @@ export default function PosturaPage() {
                 <span>{a}</span>
               </p>
             ))}
-            <p className="text-[11px] text-ink-faint">
+            <p className="text-xs text-ink-faint">
               Medida de foto, não diagnóstico. Uma diferença de 2–3° entre sessões é ruído de protocolo; o que conta é a tendência.
             </p>
           </section>
@@ -131,7 +131,7 @@ export default function PosturaPage() {
                   )}
                 >
                   {INFO_MEDIDA[m].curto}
-                  <span className="ml-1 text-[10px] opacity-70">{MEDIDAS_POR_VISTA.perfil.includes(m) ? "perfil" : "frontal"}</span>
+                  <span className="ml-1 text-[11px] opacity-70">{MEDIDAS_POR_VISTA.perfil.includes(m) ? "perfil" : "frontal"}</span>
                 </button>
               ))}
             </div>
@@ -148,7 +148,7 @@ export default function PosturaPage() {
             ) : (
               <EstadoVazio Icone={PersonStanding} texto={`Nenhuma captura ${vista === "perfil" ? "de perfil" : "frontal"} ainda.`} />
             )}
-            <p className="text-[11px] text-ink-faint">Cada ponto é a mediana das capturas do dia.</p>
+            <p className="text-xs text-ink-faint">Cada ponto é a mediana das capturas do dia.</p>
           </section>
 
           <section className="space-y-3 rounded-xl border vidro p-4 shadow-sm">

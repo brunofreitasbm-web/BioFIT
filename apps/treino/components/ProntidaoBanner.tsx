@@ -35,7 +35,7 @@ export function ProntidaoBanner({ prontidao, ignorado, onAlternar }: { prontidao
       {aberto && (
         <div className="anim-revelar pb-2.5">
           {!ignorado && (
-            <ul className="list-disc space-y-0.5 pl-6 text-[11px] text-ink-muted">
+            <ul className="list-disc space-y-0.5 pl-6 text-xs text-ink-muted">
               <li>Alvo de RIR +{ajuste.rirExtra} em todos os exercícios (pare mais longe da falha).</li>
               <li>Carga sem subir hoje; a progressão fica para o próximo treino.</li>
               {ajuste.reduzirSeries > 0 && <li>Se precisar, faça {ajuste.reduzirSeries} série a menos por exercício (mínimo 2). A contagem do treino não muda.</li>}

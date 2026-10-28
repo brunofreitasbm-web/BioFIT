@@ -39,7 +39,7 @@ export function HeatmapAnual() {
     <div>
       <div ref={rolagemRef} className="overflow-x-auto pb-1">
         <div className="inline-flex gap-1">
-          <div className="mt-4 grid grid-rows-7 gap-[3px] pr-1 text-[10px] leading-[11px] text-ink-faint">
+          <div className="mt-4 grid grid-rows-7 gap-[3px] pr-1 text-[11px] leading-[11px] text-ink-faint">
             {DIAS.map((d, i) => (
               <span key={i} className="h-[11px]">
                 {d}
@@ -52,7 +52,7 @@ export function HeatmapAnual() {
             const mostrarMes = dia <= 7 && w < colunas.length - 1;
             return (
               <div key={primeiro} className="flex flex-col gap-[3px]">
-                <span className="h-[13px] whitespace-nowrap text-[10px] leading-[13px] text-ink-faint">
+                <span className="h-[13px] whitespace-nowrap text-[11px] leading-[13px] text-ink-faint">
                   {mostrarMes ? MESES[Number(primeiro.slice(5, 7)) - 1] : ""}
                 </span>
                 {col.map((d) => (
@@ -67,7 +67,7 @@ export function HeatmapAnual() {
           })}
         </div>
       </div>
-      <div className="mt-2 flex items-center justify-between text-[11px] text-ink-faint">
+      <div className="mt-2 flex items-center justify-between text-xs text-ink-faint">
         <span>
           {diasTreinados} {diasTreinados === 1 ? "dia treinado" : "dias treinados"} em 12 meses
         </span>

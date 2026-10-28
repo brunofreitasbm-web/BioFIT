@@ -86,7 +86,7 @@ function GraficoEvolucao({ hist, prs }: { hist: PontoHistorico[]; prs: Set<strin
           ),
         )}
       </svg>
-      <figcaption className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-ink-muted">
+      <figcaption className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-0.5 w-4 bg-brand" aria-hidden="true" /> 1RM estimado
         </span>
@@ -134,16 +134,16 @@ export default function ExercicioEvolucaoPage() {
         <>
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl border vidro p-3 shadow-sm">
-              <p className="text-[11px] text-ink-muted">Melhor 1RM estimado</p>
+              <p className="text-xs text-ink-muted">Melhor 1RM estimado</p>
               <p className="text-lg font-bold text-ink">{formatarKg(recordes.melhor1RM!.kg)} kg</p>
-              <p className="text-[11px] text-ink-faint">
+              <p className="text-xs text-ink-faint">
                 {formatarKg(recordes.melhor1RM!.cargaKg)} kg × {recordes.melhor1RM!.reps} · {formatarDataCurta(recordes.melhor1RM!.data)}
               </p>
             </div>
             <div className="rounded-xl border vidro p-3 shadow-sm">
-              <p className="text-[11px] text-ink-muted">Maior carga</p>
+              <p className="text-xs text-ink-muted">Maior carga</p>
               <p className="text-lg font-bold text-ink">{formatarKg(recordes.cargaMax!.kg)} kg</p>
-              <p className="text-[11px] text-ink-faint">{formatarDataCurta(recordes.cargaMax!.data)}</p>
+              <p className="text-xs text-ink-faint">{formatarDataCurta(recordes.cargaMax!.data)}</p>
             </div>
           </div>
 
