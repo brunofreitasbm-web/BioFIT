@@ -1,0 +1,12 @@
+# Runtime state — created by the app itself, never checked in.
+# See README.md "Quick start" / docs/SELF_HOSTING.md.
+data/*
+!data/.gitkeep
+
+# Exercise media downloaded by the `media` compose service on first run (~140 MB).
+media/img/*
+!media/img/.gitkeep
+media/gif/*
+!media/gif/.gitkeep
+
+.env
