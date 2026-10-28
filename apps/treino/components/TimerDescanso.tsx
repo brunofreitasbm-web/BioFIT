@@ -78,7 +78,7 @@ export function TimerDescanso() {
     <div
       role="timer"
       aria-live={terminou ? "assertive" : "off"}
-      className="fixed inset-x-0 z-20 mx-auto max-w-xl px-3"
+      className="timer-descanso fixed inset-x-0 z-20 mx-auto max-w-xl px-3"
       style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom))" }}
     >
       <div

@@ -319,6 +319,71 @@ textarea:focus-visible {
   background-color: rgb(var(--c-base-900) / 0.96);
 }
 
+/* ---------- Tema "papel" (livro de bordo) ----------
+   Papel claro com tinta azul-escura e azul-marinho como marca; verde só para "feito" e
+   vermelho só para erro. Sempre claro. Contrastes sobre o papel (250 248 243): tinta 16,6:1,
+   marca 8,4:1, texto secundário >= 7:1. Ativado por data-tema="papel" no <html> (layout.tsx);
+   a área /isabela volta ao tema laranja por rota. */
+:root[data-tema="papel"] {
+  color-scheme: light;
+
+  --c-base-950: 20 24 40;
+  --c-base-900: 250 248 243;
+  --c-base-800: 240 237 228;
+  --c-base-700: 233 229 217;
+  --c-base-600: 222 217 202;
+  --c-base-500: 205 199 181;
+  --c-line: 185 179 160;
+  --c-ink: 20 24 40;
+  --c-ink-muted: 74 80 104;
+  --c-ink-faint: 94 100 122;
+  --c-brand: 24 64 170;
+  --c-brand-soft: 220 228 247;
+  --c-brand-hover: 18 50 140;
+  --c-accent: 15 107 58;
+  --c-accent-soft: 221 238 223;
+  --c-warn: 138 77 0;
+  --c-danger: 178 30 50;
+  --c-danger-soft: 252 228 232;
+  --c-on-solid: 255 255 255;
+
+  --shadow-panel: 0 1px 2px 0 rgba(20, 24, 40, 0.06);
+  --shadow-nav: 0 -1px 0 rgba(20, 24, 40, 0.08);
+}
+
+/* No papel as classes .vidro* são superfícies sólidas, sem blur nem aro de luz. */
+html[data-tema="papel"] .vidro {
+  background-color: rgb(var(--c-base-800));
+  border-color: rgb(var(--c-line) / 0.55);
+  box-shadow: var(--shadow-panel);
+}
+html[data-tema="papel"] .vidro-ok {
+  background-color: rgb(var(--c-accent-soft));
+  border-color: rgb(var(--c-accent) / 0.4);
+}
+html[data-tema="papel"] .vidro-barra {
+  background-color: rgb(var(--c-base-900));
+  border-color: rgb(var(--c-line) / 0.55);
+}
+html[data-tema="papel"] .vidro-forte {
+  background-color: rgb(var(--c-base-800));
+  border-color: rgb(var(--c-line));
+}
+
+/* A navegação vira abas na borda direita: o conteúdo ganha uma coluna livre à direita e o
+   fundo da tela fica sem barra. O timer de descanso desce para perto da base. */
+html[data-tema="papel"] main {
+  padding-right: 3.25rem;
+  padding-bottom: 2rem;
+}
+html[data-tema="papel"] body[data-descanso] main {
+  padding-bottom: 7rem;
+}
+html[data-tema="papel"] [role="timer"].timer-descanso {
+  bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
+  padding-right: 3.25rem;
+}
+
 /* Brilho ambiente: fica parado de propósito. Animar o fundo faria cada card de vidro refazer o
    blur a cada quadro, o que custa bateria e fluidez na rolagem. */
 html[data-tema="vidro"] body::before {
