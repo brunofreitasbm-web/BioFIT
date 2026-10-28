@@ -101,7 +101,7 @@ export default function CorpoPage() {
                 <span>{a}</span>
               </p>
             ))}
-            <p className="text-[11px] text-ink-faint">
+            <p className="text-xs text-ink-faint">
               A bioimpedância oscila com hidratação e hora do dia: olhe a tendência de várias medições, não uma só.
             </p>
           </section>
@@ -156,7 +156,7 @@ export default function CorpoPage() {
                   </li>
                 ))}
               </ul>
-              <p className="text-[11px] text-ink-faint">Variação desde a primeira medição da janela analisada.</p>
+              <p className="text-xs text-ink-faint">Variação desde a primeira medição da janela analisada.</p>
             </section>
           )}
 

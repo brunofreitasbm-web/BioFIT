@@ -25,7 +25,7 @@ export function ProgressoMeso({ status }: { status: StatusPrograma }) {
                   style={{ width: `${(concluidas / SESSOES_POR_RODADA) * 100}%` }}
                 />
               </div>
-              <p className={cn("mt-0.5 text-center text-[10px]", atual ? "font-semibold text-brand" : "text-ink-faint")}>
+              <p className={cn("mt-0.5 text-center text-[11px]", atual ? "font-semibold text-brand" : "text-ink-faint")}>
                 {r === RODADA_DELOAD ? "Deload" : `R${r}`}
               </p>
             </div>

@@ -50,7 +50,7 @@ export default function ExerciciosPage() {
                   <p className="truncate text-sm font-medium text-ink">{ex.nome}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
                     <GrupoBadge grupo={ex.grupo} />
-                    <span className="text-[11px] text-ink-muted">
+                    <span className="text-xs text-ink-muted">
                       {ex.sessoes} {ex.sessoes === 1 ? "sessão" : "sessões"} · última {formatarDataBR(ex.ultimaData)}
                     </span>
                   </div>
@@ -60,7 +60,7 @@ export default function ExerciciosPage() {
                   {ex.variacao1RM !== null && (
                     <p
                       className={cn(
-                        "inline-flex items-center gap-0.5 text-[11px] font-medium",
+                        "inline-flex items-center gap-0.5 text-xs font-medium",
                         ex.variacao1RM >= 0 ? "text-accent" : "text-danger",
                       )}
                     >

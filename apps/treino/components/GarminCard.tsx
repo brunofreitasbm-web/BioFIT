@@ -55,12 +55,12 @@ function Metrica({ rotulo, Icone, valor, detalhe, nivel: nivelReal, antigo }: { 
   return (
     <div className="relative rounded-lg border border-line/60 bg-base-900/60 p-2 text-center" aria-label={`${rotulo}: ${valor}, ${NIVEL_ROTULO[nivel]}`}>
       <span aria-hidden="true" className={cn("absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full", NIVEL_PONTO[nivel])} />
-      <div className="mb-0.5 flex items-center justify-center gap-1 text-[11px] text-ink-muted">
+      <div className="mb-0.5 flex items-center justify-center gap-1 text-xs text-ink-muted">
         <Icone aria-hidden="true" size={ICON.xs} className={NIVEL_COR[nivel]} />
         <span className="truncate">{rotulo}</span>
       </div>
       <span className={cn("block font-display text-sm font-bold", nivel === "sem_dado" ? "text-ink-faint" : "text-ink")}>{valor}</span>
-      <span className={cn("block text-[10px]", NIVEL_COR[nivel])}>{detalhe ?? (antigo ? "dado antigo" : NIVEL_ROTULO[nivel])}</span>
+      <span className={cn("block text-[11px]", NIVEL_COR[nivel])}>{detalhe ?? (antigo ? "dado antigo" : NIVEL_ROTULO[nivel])}</span>
     </div>
   );
 }
@@ -105,7 +105,7 @@ export function GarminCard({ biometria, carregando, prontidao, dias = [], hojeIS
           <Watch aria-hidden="true" size={ICON.sm} className="text-brand" />
           <span className="font-display text-xs font-bold uppercase tracking-wider text-ink">Recuperação Garmin</span>
         </div>
-        <span className={cn("text-[11px]", defasado ? "font-semibold text-brand" : "text-ink-faint")}>
+        <span className={cn("text-xs", defasado ? "font-semibold text-brand" : "text-ink-faint")}>
           {biometria?.data ? (defasado ? `Dado de ${dataCurta(biometria.data)}` : `Hoje · ${dataCurta(biometria.data)}`) : "Hoje"}
         </span>
       </div>
@@ -116,7 +116,7 @@ export function GarminCard({ biometria, carregando, prontidao, dias = [], hojeIS
           <div className="min-w-0">
             <p className={cn("text-xs font-semibold", selo.cor)}>{selo.texto}</p>
             {prontidao.nivel !== "normal" && prontidao.motivos.length > 0 && (
-              <p className="text-[11px] text-ink-muted">{prontidao.motivos.slice(0, 3).join(" · ")}</p>
+              <p className="text-xs text-ink-muted">{prontidao.motivos.slice(0, 3).join(" · ")}</p>
             )}
           </div>
         </div>
@@ -128,7 +128,7 @@ export function GarminCard({ biometria, carregando, prontidao, dias = [], hojeIS
         <Metrica rotulo="VFC" Icone={Activity} valor={hrv !== null ? `${hrv}ms` : "—"} detalhe={vfc?.nivel === "sem_base" ? `base ${vfc.diasBase}/${VFC_MIN_BASE} d` : null} nivel={nivelVfc(vfc)} antigo={defasado} />
         <Metrica rotulo="FC rep." Icone={Heart} valor={fc !== null ? `${fc}` : "—"} nivel={hoje ? nivelTendencia(dias, hoje, "fcRepouso") : "sem_dado"} antigo={defasado} />
       </div>
-      <p className="mt-1.5 text-[10px] text-ink-faint">A VFC compara a média de 7 dias com a sua base das semanas anteriores e só pesa na prontidão com histórico suficiente; a FC de repouso só informa.</p>
+      <p className="mt-1.5 text-[11px] text-ink-faint">A VFC compara a média de 7 dias com a sua base das semanas anteriores e só pesa na prontidão com histórico suficiente; a FC de repouso só informa.</p>
     </div>
   );
 }

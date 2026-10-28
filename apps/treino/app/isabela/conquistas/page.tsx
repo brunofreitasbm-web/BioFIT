@@ -92,7 +92,7 @@ export default function ConquistasPage() {
                 </span>
                 <span className="min-w-0">
                   <span className="block truncate text-xs font-semibold text-ink">{c.nome}</span>
-                  <span className="block text-[11px] leading-tight text-ink-muted">{c.descricao}</span>
+                  <span className="block text-xs leading-tight text-ink-muted">{c.descricao}</span>
                 </span>
               </li>
             ))}
@@ -112,7 +112,7 @@ export default function ConquistasPage() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-xs font-semibold text-ink">{c.nome}</span>
-                    <span className="block text-[11px] text-ink-muted">{c.descricao}</span>
+                    <span className="block text-xs text-ink-muted">{c.descricao}</span>
                   </span>
                   <span className="text-xs font-semibold tabular-nums text-ink-muted">
                     {c.atual}/{c.alvo}
@@ -162,7 +162,7 @@ function Numero({ icone, valor, rotulo }: { icone: React.ReactNode; valor: numbe
         {icone}
       </span>
       <p className="font-display text-2xl font-extrabold tabular-nums text-ink">{valor}</p>
-      <p className="text-[11px] font-medium text-ink-muted">{rotulo}</p>
+      <p className="text-xs font-medium text-ink-muted">{rotulo}</p>
     </div>
   );
 }
@@ -192,7 +192,7 @@ function Calendario({ g, hoje }: { g: Gamificacao; hoje: Date }) {
           <ChevronRight aria-hidden="true" size={ICON.md} />
         </button>
       </div>
-      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-ink-faint">
+      <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-ink-faint">
         {["S", "T", "Q", "Q", "S", "S", "D"].map((d, i) => (
           <span key={i}>{d}</span>
         ))}
@@ -204,7 +204,7 @@ function Calendario({ g, hoje }: { g: Gamificacao; hoje: Date }) {
           return <Celula key={data} data={data} doMes={doMes} hojeISO={hojeISO} a={atividade.get(data)} protegido={g.semanas.semanasProtegidas.includes(inicioDaSemana(data)) && data < hojeISO} />;
         })}
       </div>
-      <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-ink-muted">
+      <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-ink-muted">
         <Legenda cor="bg-accent" texto="treinou" />
         <Legenda cor="bg-brand-soft border border-brand/50" texto="semana livre" />
       </p>

@@ -102,7 +102,7 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
   return (
     <div
       className={cn(
-        "vidro mb-4 rounded-xl border p-4 transition-all duration-200",
+        "vidro mb-4 rounded-xl border p-4 transition duration-200",
         concluido && "vidro-ok"
       )}
     >
@@ -117,7 +117,7 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
           <div
             aria-hidden="true"
             className={cn(
-              "flex h-9 w-9 items-center justify-center rounded-xl transition-all",
+              "flex h-9 w-9 items-center justify-center rounded-xl transition",
               concluido ? "bg-accent text-on-solid" : "bg-base-700 text-ink-muted"
             )}
           >
@@ -128,7 +128,7 @@ export function BikeIndoorCard({ hojeISO, onUpdate }: BikeIndoorCardProps) {
               <h3 className="text-sm font-semibold text-ink">Bike Indoor</h3>
               <span
                 className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase",
+                  "rounded-full px-2 py-0.5 text-[11px] font-semibold tracking-wide uppercase",
                   concluido
                     ? "bg-accent/20 text-accent"
                     : "bg-base-600/50 text-ink-faint"

@@ -48,7 +48,7 @@ export function TrocaExercicio({
                 >
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-ink">{o.nome}</span>
-                    <span className="block text-[11px] text-ink-muted">
+                    <span className="block text-xs text-ink-muted">
                       {i === 0 ? "Padrão" : "Alternativa"}
                       {o.reps ? ` · ${o.reps}` : ""}
                     </span>
@@ -59,7 +59,7 @@ export function TrocaExercicio({
             );
           })}
         </ul>
-        <p className="mt-3 text-[11px] text-ink-faint">A carga de cada exercício é lembrada separadamente: ao trocar, comece leve e ache a sua carga.</p>
+        <p className="mt-3 text-xs text-ink-faint">A carga de cada exercício é lembrada separadamente: ao trocar, comece leve e ache a sua carga.</p>
       </div>
     </div>
   );

@@ -98,7 +98,7 @@ export function TimerDescanso() {
             <p className={terminou ? "text-sm font-bold" : "text-xl font-bold tabular-nums tracking-tight text-ink"}>
               {terminou ? "Descanso terminado — próxima série" : formatarMMSS(restante)}
             </p>
-            <p className={terminou ? "truncate text-[11px] opacity-90" : "truncate text-[11px] text-ink-muted"}>
+            <p className={terminou ? "truncate text-xs opacity-90" : "truncate text-xs text-ink-muted"}>
               {descanso.rotulo}
             </p>
           </div>

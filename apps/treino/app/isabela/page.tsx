@@ -184,7 +184,7 @@ export default function HojePage() {
                 className={`min-h-[52px] rounded-xl border px-2 py-2 text-center active:scale-[0.97] transition-colors ${ativo ? "border-accent bg-accent-soft text-ink" : "border-line bg-base-800 text-ink-muted"}`}
               >
                 <span className="block text-base font-extrabold leading-none">{s}</span>
-                <span className="mt-1 block text-[10px] leading-tight">{s === sugerida ? "sugerido" : SESSAO_CURTO[s]}</span>
+                <span className="mt-1 block text-[11px] leading-tight">{s === sugerida ? "sugerido" : SESSAO_CURTO[s]}</span>
               </button>
             );
           })}
@@ -242,7 +242,7 @@ export default function HojePage() {
             />
           ))}
         </div>
-        <p className="mt-2 text-[11px] text-ink-faint">
+        <p className="mt-2 text-xs text-ink-faint">
           Dor na lombar (ou em qualquer lugar) durante um exercício? Pare e use &ldquo;Trocar exercício&rdquo; por outra opção. Se a dor continuar, fale com quem acompanha você.
         </p>
       </section>

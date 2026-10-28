@@ -250,11 +250,11 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
                 <h2 className="font-display text-lg font-bold uppercase tracking-wide text-ink">
                   BioFIT Coach
                 </h2>
-                <span className="inline-flex items-center rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent">
+                <span className="inline-flex items-center rounded-full bg-accent-soft px-1.5 py-0.5 text-[11px] font-semibold text-accent">
                   DeepSeek
                 </span>
               </div>
-              <p className="text-[11px] text-ink-muted">Treinador com auto-regulação e biomecânica</p>
+              <p className="text-xs text-ink-muted">Treinador com auto-regulação e biomecânica</p>
             </div>
           </div>
 
@@ -310,7 +310,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
               <span className="text-xs font-semibold uppercase tracking-wider text-ink">
                 Chave da API DeepSeek
               </span>
-              <span className="text-[11px] text-ink-faint">Armazenada com segurança no seu navegador</span>
+              <span className="text-xs text-ink-faint">Armazenada com segurança no seu navegador</span>
             </div>
             <div className="flex gap-2">
               <input
@@ -328,7 +328,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
                 {chaveSalvaComSucesso ? <Check size={14} /> : "Salvar"}
               </button>
             </div>
-            <p className="mt-2 text-[11px] text-ink-muted">
+            <p className="mt-2 text-xs text-ink-muted">
               Também pode ser configurada no arquivo <code className="rounded bg-base-700 px-1 text-ink">.env.local</code> como <code className="rounded bg-base-700 px-1 text-brand">DEEPSEEK_API_KEY</code>.
             </p>
           </div>
@@ -368,7 +368,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
               </p>
 
               <div className="mt-6 w-full space-y-1.5 text-left">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
+                <span className="text-xs font-semibold uppercase tracking-wider text-ink-faint">
                   Ações Rápidas de Treino:
                 </span>
                 <div className="flex flex-col gap-1.5">
@@ -407,7 +407,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
                     </span>
                   )}
                 </div>
-                <span className="mt-1 px-1 text-[10px] text-ink-faint">
+                <span className="mt-1 px-1 text-[11px] text-ink-faint">
                   {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </span>
               </div>
@@ -425,7 +425,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
                 type="button"
                 disabled={carregando}
                 onClick={() => enviarMensagem(s.prompt)}
-                className="shrink-0 rounded-full border border-line bg-base-800 px-2.5 py-1 text-[11px] text-ink-muted transition-colors hover:border-brand/40 hover:text-ink active:scale-95 disabled:opacity-50"
+                className="shrink-0 rounded-full border border-line bg-base-800 px-2.5 py-1 text-xs text-ink-muted transition-colors hover:border-brand/40 hover:text-ink active:scale-95 disabled:opacity-50"
               >
                 {s.label}
               </button>
@@ -447,7 +447,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
               onClick={toggleGravacao}
               title={gravandoAudio ? "Parar gravação" : "Falar mensagem por voz"}
               className={cn(
-                "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line transition-all",
+                "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line transition",
                 gravandoAudio
                   ? "bg-danger text-on-solid border-danger animate-pulse"
                   : "bg-base-700 text-ink-muted hover:text-ink hover:border-brand/50",
@@ -468,7 +468,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
             <button
               type="submit"
               disabled={carregando || !inputTexto.trim()}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand text-on-solid transition-all hover:bg-brand-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand text-on-solid transition hover:bg-brand-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {carregando ? <RefreshCw size={18} className="animate-spin" /> : <Send size={18} />}
             </button>

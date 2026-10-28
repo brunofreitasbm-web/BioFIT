@@ -113,7 +113,7 @@ export function ExercicioCard({
         <button type="button" onClick={onToggleExpandido} aria-expanded={expandido} className="flex min-h-12 min-w-0 flex-1 items-center gap-2 text-left">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="rounded-md bg-base-600 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-ink-muted">{exercicio.slotKey}</span>
+              <span className="rounded-md bg-base-600 px-1.5 py-0.5 text-xs font-bold tabular-nums text-ink-muted">{exercicio.slotKey}</span>
               <span className="line-clamp-2 min-w-0 text-[15px] font-semibold leading-tight tracking-tight text-ink">{exercicio.nome}</span>
               {completo && (
                 <span className="anim-confirmar flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-on-solid">
@@ -121,7 +121,7 @@ export function ExercicioCard({
                 </span>
               )}
               {cargaNova && (
-                <span className="anim-pr inline-flex shrink-0 items-center gap-0.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold text-accent">
+                <span className="anim-pr inline-flex shrink-0 items-center gap-0.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[11px] font-bold text-accent">
                   <Trophy aria-hidden="true" size={ICON.xs} strokeWidth={STROKE.forte} /> Carga nova
                 </span>
               )}
@@ -131,7 +131,7 @@ export function ExercicioCard({
               <span className="text-sm font-bold tabular-nums text-ink">
                 {totalSeries} × {exercicio.reps}
               </span>
-              <span className="text-[11px] text-ink-muted">· {feitas}/{totalSeries} feitas · desc. {exercicio.descanso}</span>
+              <span className="text-xs text-ink-muted">· {feitas}/{totalSeries} feitas · desc. {exercicio.descanso}</span>
             </div>
           </div>
           <ChevronDown aria-hidden="true" size={ICON.md} className={cn("shrink-0 text-ink-faint transition-transform duration-200", expandido && "rotate-180")} />
@@ -152,13 +152,13 @@ export function ExercicioCard({
       {expandido && (
         <div className="anim-revelar border-t border-line p-3 pt-3">
           {erroSalvar && (
-            <p role="alert" className="mb-2 text-[11px] font-medium text-danger">
+            <p role="alert" className="mb-2 text-xs font-medium text-danger">
               Não foi possível salvar no dispositivo. Tente novamente.
             </p>
           )}
           {exercicio.notas && <p className="mb-2 text-sm text-ink-muted">{exercicio.notas}</p>}
-          <p className="mb-2 text-[11px] text-ink-faint">{textoDeEsforco(exercicio.composto, retomada)}</p>
-          <p className="mb-2 text-[11px] text-brand">{ultimaResumo}</p>
+          <p className="mb-2 text-xs text-ink-faint">{textoDeEsforco(exercicio.composto, retomada)}</p>
+          <p className="mb-2 text-xs text-brand">{ultimaResumo}</p>
           {sugestao && (
             <button
               type="button"
@@ -171,9 +171,9 @@ export function ExercicioCard({
                 <span className="block text-xs font-semibold text-brand">
                   Hoje: {String(sugestao.cargaKg).replace(".", ",")} kg × {sugestao.repsAlvo}
                 </span>
-                <span className="block text-[11px] text-ink-muted">{sugestao.motivo}</span>
+                <span className="block text-xs text-ink-muted">{sugestao.motivo}</span>
               </span>
-              <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-brand">
+              <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-brand">
                 usar <ArrowRight aria-hidden="true" size={ICON.xs} />
               </span>
             </button>
@@ -213,7 +213,7 @@ export function ExercicioCard({
               >
                 <Repeat aria-hidden="true" size={ICON.sm} /> Trocar exercício{exercicio.trocado ? " (você já trocou)" : ""}
               </button>
-              {!podeTrocar && feitas > 0 && <p className="text-[11px] text-ink-faint">Só dá para trocar antes da primeira série. Vale a partir do próximo treino.</p>}
+              {!podeTrocar && feitas > 0 && <p className="text-xs text-ink-faint">Só dá para trocar antes da primeira série. Vale a partir do próximo treino.</p>}
             </div>
           )}
         </div>

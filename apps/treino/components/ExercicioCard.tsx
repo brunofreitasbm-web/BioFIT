@@ -227,7 +227,7 @@ export function ExercicioCard({
         >
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="rounded-md bg-base-600 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-ink-muted">
+              <span className="rounded-md bg-base-600 px-1.5 py-0.5 text-xs font-bold tabular-nums text-ink-muted">
                 {exercicio.sessao}
                 {exercicio.ordem}
               </span>
@@ -238,22 +238,22 @@ export function ExercicioCard({
                 </span>
               )}
               {bateuPR && (
-                <span className="anim-pr inline-flex shrink-0 items-center gap-0.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold text-accent">
+                <span className="anim-pr inline-flex shrink-0 items-center gap-0.5 rounded-full bg-accent-soft px-1.5 py-0.5 text-[11px] font-bold text-accent">
                   <Trophy aria-hidden="true" size={ICON.xs} strokeWidth={STROKE.forte} /> PR
                 </span>
               )}
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] text-ink-muted">
+              <span className="text-xs text-ink-muted">
                 {totalSeries}×{exercicio.reps} · {exercicio.descanso}
               </span>
               {exercicio.bisetCom && (
-                <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-brand">
+                <span className="inline-flex items-center gap-0.5 text-xs font-medium text-brand">
                   <Link2 aria-hidden="true" size={ICON.xs} /> biset
                 </span>
               )}
               {alvo.testeFalha && (
-                <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-danger">
+                <span className="inline-flex items-center gap-0.5 text-xs font-medium text-danger">
                   <Zap aria-hidden="true" size={ICON.xs} /> teste de falha
                 </span>
               )}
@@ -272,13 +272,13 @@ export function ExercicioCard({
       {expandido && (
         <div className="anim-revelar border-t border-line p-3 pt-3">
           {erroSalvar && (
-            <p role="alert" className="mb-2 text-[11px] font-medium text-danger">
+            <p role="alert" className="mb-2 text-xs font-medium text-danger">
               Não foi possível salvar no dispositivo. Tente novamente.
             </p>
           )}
           <div className="mb-2 flex flex-wrap items-center gap-1.5">
             <GrupoBadge grupo={exercicio.grupoMuscular} />
-            <span className="text-[11px] text-ink-faint">
+            <span className="text-xs text-ink-faint">
               RIR alvo {rirAlvoHoje} · {alvo.label}
               {ajusteRecuperacao && (
                 <span className="text-brand">
@@ -288,9 +288,9 @@ export function ExercicioCard({
               )}
             </span>
           </div>
-          <p className="mb-2 text-[11px] text-ink-muted">{ultimaResumo ?? partidaTexto}</p>
+          <p className="mb-2 text-xs text-ink-muted">{ultimaResumo ?? partidaTexto}</p>
           {ajusteRecuperacao && ajusteRecuperacao.reduzirSeries > 0 && totalSeries > 2 && (
-            <p className="mb-2 text-[11px] text-brand">
+            <p className="mb-2 text-xs text-brand">
               Recuperação baixa: se precisar, {totalSeries - ajusteRecuperacao.reduzirSeries} séries bastam hoje.
             </p>
           )}
@@ -314,9 +314,9 @@ export function ExercicioCard({
                 <span className="block text-xs font-semibold text-brand">
                   Hoje: {String(sugestao.cargaKg).replace(".", ",")} kg × {sugestao.repsAlvo}
                 </span>
-                <span className="block truncate text-[11px] text-ink-muted">{sugestao.motivo}</span>
+                <span className="block truncate text-xs text-ink-muted">{sugestao.motivo}</span>
               </span>
-              <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-brand">
+              <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-brand">
                 usar <ArrowRight aria-hidden="true" size={ICON.xs} />
               </span>
             </button>
@@ -324,7 +324,7 @@ export function ExercicioCard({
 
           {alvo.testeFalha && (
             <div className="mb-3 rounded-lg border border-danger/30 bg-danger-soft px-3 py-2">
-              <p className="mb-1.5 text-[11px] text-danger">
+              <p className="mb-1.5 text-xs text-danger">
                 Antes da {totalSeries}ª série: quantas reps você ACHA que faz até a falha? Depois vá até a falha técnica.
               </p>
               <div className="flex items-center gap-2 text-xs">
@@ -348,7 +348,7 @@ export function ExercicioCard({
             </div>
           )}
 
-          <p className="mb-1.5 text-[11px] text-ink-faint">
+          <p className="mb-1.5 text-xs text-ink-faint">
             {feitas}/{totalSeries} séries{e1rmHoje ? ` · e1RM hoje ${e1rmHoje}` : ""}
           </p>
 
@@ -376,8 +376,8 @@ export function ExercicioCard({
             </div>
           ) : (
             <div className="grid grid-cols-[1fr_1fr_auto] items-center gap-x-2.5 text-xs">
-              <span className="mb-1 text-[11px] font-medium text-ink-muted">Carga (kg)</span>
-              <span className="mb-1 text-[11px] font-medium text-ink-muted">{unidadeReps}</span>
+              <span className="mb-1 text-xs font-medium text-ink-muted">Carga (kg)</span>
+              <span className="mb-1 text-xs font-medium text-ink-muted">{unidadeReps}</span>
               <span />
               <LinhaReplicada
                 totalSeries={totalSeries}
