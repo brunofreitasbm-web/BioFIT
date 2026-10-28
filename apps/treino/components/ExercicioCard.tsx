@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useBackLayers } from "@/hooks/useBackHandler";
 import { ArrowRight, ChevronDown, Image as ImageIcon, Layers, Lightbulb, ListOrdered, Check, Link2, Sparkles, TrendingUp, Trophy, Zap } from "lucide-react";
 import { MenuAcoes, type AcaoMenu } from "./MenuAcoes";
+import { SerieEmFoco } from "./SerieEmFoco";
+import { proximaSerie, valoresIniciais } from "@/lib/serieEmFoco";
 import { ICON, STROKE } from "@/lib/icones";
 import type { ExercicioEfetivo, SerieRegistrada } from "@/lib/tipos";
 import { GrupoBadge } from "./GrupoBadge";
@@ -63,10 +65,12 @@ export function ExercicioCard({
   const [preenchimento, setPreenchimento] = useState<{ kg: string; reps: string; n: number } | null>(null);
   const [fotoAberta, setFotoAberta] = useState(false);
   const [dicasAbertas, setDicasAbertas] = useState(false);
+  const [focoAberto, setFocoAberto] = useState(false);
 
-  // Botão/gesto voltar do celular fecha a foto aberta (ver hooks/useBackHandler).
+  // Botão/gesto voltar do celular fecha a série em foco e a foto aberta (ver hooks/useBackHandler).
   useBackLayers([
     { active: fotoAberta, back: () => setFotoAberta(false) },
+    { active: focoAberto, back: () => setFocoAberto(false) },
   ]);
   const [seriesIndividuais, setSeriesIndividuais] = useState(false);
   const [erroSalvar, setErroSalvar] = useState(false);
@@ -125,7 +129,7 @@ export function ExercicioCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exercicio.id, feitas, totalSeries]);
 
-  function registrar(serieNumero: number, kgStr: string, repsStr: string, registradoEm: string): boolean {
+  function registrar(serieNumero: number, kgStr: string, repsStr: string, registradoEm: string, rirNovo?: number | null): boolean {
     const anterior = series.find((s) => s.serieNumero === serieNumero);
     return upsertSerie({
       exercicioId: exercicio.id,
@@ -134,7 +138,7 @@ export function ExercicioCard({
       serieNumero,
       cargaKg: kgStr === "" ? null : Number(kgStr),
       reps: repsStr === "" ? null : Number(repsStr),
-      rir: anterior?.rir ?? null,
+      rir: rirNovo !== undefined ? rirNovo : anterior?.rir ?? null,
       registradoEm,
     });
   }
@@ -176,6 +180,11 @@ export function ExercicioCard({
     if (valor !== "" && Number.isFinite(n) && n > 0) {
       setErroSalvar(!salvarPalpite({ data, exercicioId: exercicio.id, palpite: n }));
     }
+  }
+
+  function valoresFoco(n: number): { kgInicial: string; repsInicial: string } {
+    const v = valoresIniciais(n, series, ultima, sugestao, cargaInicial);
+    return { kgInicial: v.kg, repsInicial: v.reps };
   }
 
   const e1rmHoje = melhorE1rm(series);
@@ -300,6 +309,13 @@ export function ExercicioCard({
               {exercicio.notas}
             </p>
           )}
+          <button
+            type="button"
+            onClick={() => setFocoAberto(true)}
+            className="toque mb-2 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand px-3 text-base font-bold text-on-solid"
+          >
+            {proximaSerie(series, totalSeries) !== null ? `Registrar série ${proximaSerie(series, totalSeries)} em foco` : "Revisar séries em foco"}
+          </button>
           {sugestao && (
             <button
               type="button"
@@ -411,6 +427,25 @@ export function ExercicioCard({
             </div>
           )}
         </div>
+      )}
+
+      {focoAberto && (
+        <SerieEmFoco
+          key={proximaSerie(series, totalSeries) ?? "fim"}
+          nome={exercicio.nome}
+          posicao={`${exercicio.sessao}${exercicio.ordem}`}
+          descricao={`${exercicio.grupoMuscular} · ${totalSeries}×${exercicio.reps} · ${exercicio.descanso} · RIR alvo ${rirAlvoHoje}`}
+          totalSeries={totalSeries}
+          serieNumero={proximaSerie(series, totalSeries)}
+          series={series}
+          {...valoresFoco(proximaSerie(series, totalSeries) ?? totalSeries)}
+          unidadeReps={unidadeReps}
+          cargaOpcional={exercicio.pesoCorporal}
+          ultimaResumo={ultimaResumo}
+          sugestaoTexto={sugestao ? `Hoje: ${String(sugestao.cargaKg).replace(".", ",")} kg × ${sugestao.repsAlvo}` : null}
+          onConfirmar={(n, kg, reps, rir) => aposSalvar(registrar(n, kg, reps, new Date().toISOString(), rir))}
+          onFechar={() => setFocoAberto(false)}
+        />
       )}
 
       {fotoAberta && exercicio.imagem && (

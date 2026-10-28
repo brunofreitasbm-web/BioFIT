@@ -384,6 +384,15 @@ html[data-tema="papel"] [role="timer"].timer-descanso {
   padding-right: 3.25rem;
 }
 
+/* Série em foco (tela cheia): sem abas, e o timer de descanso sobe para ficar acima do botão
+   de registrar. */
+body[data-foco] nav[aria-label="Navegação Principal"] {
+  display: none;
+}
+html[data-tema="papel"] body[data-foco] [role="timer"].timer-descanso {
+  bottom: calc(7rem + env(safe-area-inset-bottom)) !important;
+}
+
 /* Brilho ambiente: fica parado de propósito. Animar o fundo faria cada card de vidro refazer o
    blur a cada quadro, o que custa bateria e fluidez na rolagem. */
 html[data-tema="vidro"] body::before {
