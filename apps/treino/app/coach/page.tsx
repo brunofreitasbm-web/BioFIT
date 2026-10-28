@@ -227,7 +227,7 @@ export default function CoachPage() {
   return (
     <div className="flex flex-col min-h-[calc(100dvh-5rem)]">
       {/* Topo */}
-      <header className="sticky top-0 z-10 border-b border-line bg-base-950/80 backdrop-blur-md px-4 py-3">
+      <header className="sticky top-0 z-10 border-b border-line bg-base-900/90 backdrop-blur-md px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand text-on-solid">
@@ -369,7 +369,7 @@ export default function CoachPage() {
       </div>
 
       {/* Input de envio fixado */}
-      <div className="sticky bottom-14 border-t border-line bg-base-950/90 p-3 backdrop-blur-md">
+      <div className="sticky bottom-14 border-t border-line bg-base-900/95 p-3 backdrop-blur-md">
         <form
           onSubmit={(e) => {
             e.preventDefault();

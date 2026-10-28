@@ -294,7 +294,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
 
         {/* Banner de Contexto Ativo */}
         {contextoInicial?.exercicioAtual && (
-          <div className="flex items-center gap-2 border-b border-line bg-base-950/60 px-4 py-2 text-xs">
+          <div className="flex items-center gap-2 border-b border-line bg-base-900/80 px-4 py-2 text-xs">
             <Dumbbell size={14} className="text-brand shrink-0" />
             <div className="truncate text-ink-muted">
               Foco: <span className="font-semibold text-ink">{contextoInicial.exercicioAtual.nome}</span>{" "}
@@ -418,7 +418,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
 
         {/* Chips de Sugestão se já existirem mensagens */}
         {mensagens.length > 0 && (
-          <div className="flex gap-1.5 overflow-x-auto border-t border-line bg-base-950/40 px-3 py-2 no-scrollbar">
+          <div className="flex gap-1.5 overflow-x-auto border-t border-line bg-base-900/70 px-3 py-2 no-scrollbar">
             {SUGESTOES_RAPIDAS.slice(0, 3).map((s, idx) => (
               <button
                 key={idx}

@@ -12,6 +12,7 @@ import { SeletorSessao } from "@/components/SeletorSessao";
 import { TreinoTimer } from "@/components/TreinoTimer";
 import { BikeIndoorCard } from "@/components/BikeIndoorCard";
 import { ResumoPrograma } from "@/components/ResumoPrograma";
+import { ReguaMeso } from "@/components/ReguaMeso";
 import type { EscolhaDoDia, ExercicioEfetivo } from "@/lib/tipos";
 import { AlertTriangle, CalendarClock, Coffee, CheckCircle2 } from "lucide-react";
 import { ICON } from "@/lib/icones";
@@ -27,6 +28,7 @@ import type { ContextoTreinoIA, GarminJanela } from "@/lib/ai/prompts";
 
 
 const DIAS_SEMANA_LABEL = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+const MESES_LABEL = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 
 export default function HojePage() {
   const [pronto, setPronto] = useState(false);
@@ -219,15 +221,33 @@ export default function HojePage() {
 
   return (
     <div className="p-4">
-      <header className="mb-4 flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-ink-muted">{DIAS_SEMANA_LABEL[hoje.getDay()]}</p>
-          <h1 className="text-3xl font-extrabold uppercase leading-none text-ink">
-            {sessaoEfetiva ? `Treino ${sessaoEfetiva} · ${SESSAO_NOME[sessaoEfetiva]}` : "Hoje é dia de descanso"}
-          </h1>
+      <header className="mb-4 flex items-end justify-between">
+        <div className="flex items-end gap-3.5">
+          {sessaoEfetiva && (
+            <span aria-hidden="true" className="font-display text-[104px] font-bold leading-[0.8] tracking-tighter text-brand">
+              {sessaoEfetiva}
+            </span>
+          )}
+          <div className="pb-1">
+            <p className="font-mono text-[13px] text-ink-muted">
+              {DIAS_SEMANA_LABEL[hoje.getDay()]} · {hoje.getDate()} {MESES_LABEL[hoje.getMonth()]}
+            </p>
+            <h1 className="text-[26px] font-semibold leading-none text-ink">
+              {sessaoEfetiva ? (
+                <>
+                  <span className="sr-only">Treino {sessaoEfetiva} · </span>
+                  {SESSAO_NOME[sessaoEfetiva]}
+                </>
+              ) : (
+                "Dia de descanso"
+              )}
+            </h1>
+          </div>
         </div>
         <GuiaModal dataInicio={dataInicio} onDataInicioChange={setDataInicioState} />
       </header>
+
+      {sessaoEfetiva && status && <ReguaMeso status={status} />}
 
       {sessaoEfetiva && exercicios.length > 0 && (
         <div className="sticky top-0 z-10 -mx-4 mb-3 vidro-barra border-b px-4 py-2">
@@ -246,7 +266,7 @@ export default function HojePage() {
               {progressoSessao.feitas} de {progressoSessao.total} séries ({Math.round(progressoSessaoPct)}%)
             </span>
           </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-base-600">
             <div
               className={cn(
                 "h-full rounded-full transition-[width,background-color] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
@@ -284,21 +304,41 @@ export default function HojePage() {
       {sessaoEfetiva && status && (
         <section className="mb-4">
           <h2 className="mb-2.5 text-base font-bold tracking-tight text-ink">{SESSAO_LABEL[sessaoEfetiva]}</h2>
-          <div className="space-y-2">
-            {exercicios.map((ex) => (
-              <ExercicioCard
-                key={`${ex.id}:${versaoDados}`}
-                exercicio={ex}
-                status={status}
-                data={hojeISO}
-                expandido={exercicioAbertoId === ex.id}
-                onToggleExpandido={() => handleToggleExercicio(ex.id)}
-                onProgresso={handleProgresso}
-                onConsultarCoach={handleAbrirCoach}
-                ajusteRecuperacao={ajusteRecuperacao}
-              />
-            ))}
-          </div>
+          <ol className="relative">
+            <span aria-hidden="true" className="absolute bottom-4 left-4 top-4 w-0.5 -translate-x-1/2 bg-line/60" />
+            {exercicios.map((ex, i) => {
+              const p = progressoPorExercicio[ex.id];
+              const feito = Boolean(p && p.total > 0 && p.feitas >= p.total);
+              const aberto = exercicioAbertoId === ex.id;
+              return (
+                <li key={`${ex.id}:${versaoDados}`} className="relative flex gap-3 pb-2.5">
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "relative z-[1] flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 font-mono text-sm font-semibold",
+                      feito && "border-accent bg-accent text-on-solid",
+                      !feito && aberto && "border-brand bg-brand text-on-solid",
+                      !feito && !aberto && "border-line bg-base-900 text-ink",
+                    )}
+                  >
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <ExercicioCard
+                      exercicio={ex}
+                      status={status}
+                      data={hojeISO}
+                      expandido={aberto}
+                      onToggleExpandido={() => handleToggleExercicio(ex.id)}
+                      onProgresso={handleProgresso}
+                      onConsultarCoach={handleAbrirCoach}
+                      ajusteRecuperacao={ajusteRecuperacao}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
         </section>
       )}
 

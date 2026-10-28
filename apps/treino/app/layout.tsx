@@ -22,10 +22,11 @@ const barlowCondensada = Barlow_Condensed({
   display: "swap",
 });
 
-// Tema visual: "vidro" (vidro fosco com destaque violeta-gelo), "laranja" (preto e laranja) ou null
+// Tema visual: "papel" (livro de bordo: papel claro e azul-marinho), "vidro" (vidro fosco com
+// destaque violeta-gelo), "laranja" (preto e laranja) ou null
 // (azul claro/escuro do sistema). É a única linha a trocar para voltar ao visual anterior; os
 // tokens de cada tema ficam em globals.css. A área /isabela mantém o laranja (ver TEMA_POR_ROTA).
-const TEMA: "vidro" | "laranja" | null = "vidro";
+const TEMA: "papel" | "vidro" | "laranja" | null = "papel";
 
 // Roda antes da primeira pintura, para /isabela não piscar no tema do app principal.
 const TEMA_POR_ROTA = `if(location.pathname.indexOf("/isabela")===0)document.documentElement.setAttribute("data-tema","laranja")`;
@@ -43,7 +44,9 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   themeColor:
-    TEMA === "vidro"
+    TEMA === "papel"
+      ? "#faf8f3"
+      : TEMA === "vidro"
       ? "#090a11"
       : TEMA === "laranja"
       ? "#0f1216"
@@ -61,7 +64,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       className={`${barlow.variable} ${barlowCondensada.variable}`}
       suppressHydrationWarning
     >
-      <head>{TEMA === "vidro" && <script dangerouslySetInnerHTML={{ __html: TEMA_POR_ROTA }} />}</head>
+      <head>{(TEMA === "papel" || TEMA === "vidro") && <script dangerouslySetInnerHTML={{ __html: TEMA_POR_ROTA }} />}</head>
       <body>
         <div className="mx-auto flex min-h-screen max-w-xl flex-col">
           <main className="flex-1 pb-24">{children}</main>

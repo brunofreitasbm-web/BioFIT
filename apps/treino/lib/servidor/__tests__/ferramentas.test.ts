@@ -81,7 +81,9 @@ describe("leitura", () => {
     expect(json.sessoesConcluidasNoPrograma).toBe(8);
     expect(json.sessaoSugerida).toBe("D");
     expect(json.aderencia.decisao).toBe("EM_ANDAMENTO");
-    expect(json.rodada).toBe(2);
+    // As sessões do fixture são anteriores a DATA_FIM_MESO_1: contam como meso 1 completo.
+    expect(json.meso).toBe(2);
+    expect(json.rodada).toBe(1);
   });
 
   it("plano_do_dia traz carga sugerida e série do exercício", async () => {
