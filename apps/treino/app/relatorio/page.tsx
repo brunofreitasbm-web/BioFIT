@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { calcularVolumePorGrupo, evolucaoRecente, semanasNoPeriodo, totalSeriesNoPeriodo, type EvolucaoRecente, type VolumeGrupo } from "@/lib/relatorio";
-import { getTodosBikeIndoor, getTodasSessoes } from "@/lib/storage";
+import { getDataInicio, getLog, getTodosBikeIndoor, getTodasSessoes } from "@/lib/storage";
+import { DATA_FIM_MESO_1, getStatusPrograma, toISODate, type StatusPrograma } from "@/lib/program";
+import { sessoesConcluidasEm } from "@/lib/dados";
+import { diasDoMeso } from "@/lib/mapaMeso";
+import { MapaMeso } from "@/components/MapaMeso";
 import type { RegistroSessao } from "@/lib/tipos";
 import { cn } from "@/lib/cn";
 import { RelatorioTabs } from "@/components/RelatorioTabs";
@@ -57,6 +61,9 @@ export default function RelatorioPage() {
   const [historicoCompleto, setHistoricoCompleto] = useState(false);
   const versaoDados = useDadosAtualizados();
 
+  // Mapa do meso (independe do período)
+  const [mapaMeso, setMapaMeso] = useState<{ status: StatusPrograma; dias: string[] } | null>(null);
+
   // Bike
   const [totalMinutosBike, setTotalMinutosBike] = useState<number>(0);
   const [sessoesBikeCount, setSessoesBikeCount] = useState<number>(0);
@@ -71,6 +78,18 @@ export default function RelatorioPage() {
     setSemanas(semanasNoPeriodo(periodo));
     setEvolucao(evolucaoRecente());
     const agora = new Date();
+
+    const inicio = getDataInicio();
+    if (inicio) {
+      const historico = { log: getLog(), sessoes: getTodasSessoes() };
+      const status = getStatusPrograma(inicio, toISODate(agora), null, historico);
+      const datas = sessoesConcluidasEm(historico, inicio)
+        .filter((s) => s.data > DATA_FIM_MESO_1)
+        .map((s) => s.data);
+      setMapaMeso({ status, dias: diasDoMeso(status.meso, datas) });
+    } else {
+      setMapaMeso(null);
+    }
 
     // 1. Processar Bike Indoor
     const bikeData = getTodosBikeIndoor();
@@ -132,6 +151,8 @@ export default function RelatorioPage() {
         <h1 className="text-3xl font-extrabold uppercase leading-none text-ink">Relatório</h1>
         <RelatorioTabs ativa="/relatorio" />
       </header>
+
+      {mapaMeso && <MapaMeso status={mapaMeso.status} dias={mapaMeso.dias} />}
 
       {/* Seletor de Período */}
       <div className="flex gap-2">
