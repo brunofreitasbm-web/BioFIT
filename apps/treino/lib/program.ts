@@ -16,6 +16,10 @@ export const RODADAS_TREINO = 4;
 export const RODADA_DELOAD = 5;
 export const SESSOES_POR_MESO = SESSOES_POR_RODADA * RODADA_DELOAD; // 25
 
+// O meso 1 foi encerrado antes do deload (rodada 5) para entrar direto no meso 2. Sessões até
+// esta data contam como meso 1 completo; só as posteriores avançam a contagem a partir daí.
+export const DATA_FIM_MESO_1 = "2026-10-26";
+
 export function toISODate(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -60,11 +64,11 @@ export function getStatusPrograma(
   h: Historico = historicoLocal(),
 ): StatusPrograma {
   const anteriores = sessoesConcluidasEm(h, dataInicioISO).filter((s) => !(s.data === hojeISO && s.tipo === sessaoHoje));
-  const total = anteriores.length;
+  const total = SESSOES_POR_MESO + anteriores.filter((s) => s.data > DATA_FIM_MESO_1).length;
   const posNoMeso = total % SESSOES_POR_MESO;
   const rodada = Math.floor(posNoMeso / SESSOES_POR_RODADA) + 1;
   return {
-    totalConcluidas: total,
+    totalConcluidas: anteriores.length,
     meso: Math.floor(total / SESSOES_POR_MESO) + 1,
     rodada,
     isDeload: rodada === RODADA_DELOAD,
