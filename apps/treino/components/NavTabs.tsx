@@ -10,8 +10,8 @@ const TABS = [
   { href: "/coach", label: "Coach IA" },
 ];
 
-// Abas de índice de caderno na borda direita, com o texto na vertical: ficam sob o polegar e
-// liberam a base da tela. Um toque tem 44 px de largura e 118 px de altura.
+// Abas de índice de caderno na base da tela, em linha: ocupam a largura toda e deixam o
+// conteúdo usar a tela inteira. Cada toque tem pelo menos 48 px de altura.
 export function NavTabs() {
   const pathname = usePathname();
   // A área /isabela tem navegação própria (app/isabela/layout.tsx).
@@ -20,7 +20,12 @@ export function NavTabs() {
   const ativa = TABS.findIndex(({ href }) => (href === "/" ? pathname === "/" : pathname.startsWith(href)));
 
   return (
-    <nav role="navigation" aria-label="Navegação Principal" className="fixed right-0 top-36 z-20 flex w-11 flex-col gap-1.5">
+    <nav
+      role="navigation"
+      aria-label="Navegação Principal"
+      className="fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-xl gap-1.5 px-2"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
       {TABS.map(({ href, label }, i) => {
         const active = i === ativa;
         return (
@@ -29,10 +34,10 @@ export function NavTabs() {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex h-[118px] rotate-180 items-center justify-center rounded-r-xl border text-[15px] [writing-mode:vertical-rl]",
+              "flex h-12 flex-1 items-center justify-center rounded-t-xl border border-b-0 text-[15px]",
               active
                 ? "border-brand bg-brand font-semibold text-on-solid"
-                : "border-r-0 border-line/60 bg-base-800 font-medium text-ink",
+                : "border-line/60 bg-base-800 font-medium text-ink",
             )}
           >
             {label}

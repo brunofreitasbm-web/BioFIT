@@ -369,7 +369,7 @@ export default function CoachPage() {
       </div>
 
       {/* Input de envio fixado */}
-      <div className="sticky bottom-14 border-t border-line bg-base-900/95 p-3 backdrop-blur-md">
+      <div className="sticky bottom-[calc(3rem+env(safe-area-inset-bottom))] border-t border-line bg-base-900/95 p-3 backdrop-blur-md">
         <form
           onSubmit={(e) => {
             e.preventDefault();
