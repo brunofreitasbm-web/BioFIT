@@ -1,0 +1,72 @@
+{
+  "source": "https://biofit-treino.vercel.app",
+  "tokens": {
+    "spacing": {
+      "scale": [2, 4, 6, 8, 10, 12, 16, 96],
+      "base_unit": 8
+    },
+    "typography": {
+      "families": ["Barlow", "Barlow Condensed"],
+      "scale": [
+        { "role": "h1", "size": "30px", "weight": "800", "family": "Barlow Condensed" },
+        { "role": "h2", "size": "16px", "weight": "700", "family": "Barlow Condensed" },
+        { "role": "button", "size": "16px", "weight": "700", "family": "Barlow" },
+        { "role": "exercise-title", "size": "15px", "weight": "600", "family": "Barlow" },
+        { "role": "body", "size": "14px", "weight": "500", "family": "Barlow" },
+        { "role": "caption", "size": "12px", "weight": "500", "family": "Barlow" },
+        { "role": "meta", "size": "11px", "weight": "500", "family": "Barlow" }
+      ]
+    },
+    "colors": [
+      { "role": "background", "value": "#090A11" },
+      { "role": "surface-glass", "value": "rgba(24,26,40,0.5)" },
+      { "role": "surface-field", "value": "#23263A" },
+      { "role": "surface-raised", "value": "#31354E" },
+      { "role": "text-primary", "value": "#F3F4FA" },
+      { "role": "text-secondary", "value": "#B2B7CC" },
+      { "role": "text-tertiary", "value": "#9298B0" },
+      { "role": "accent", "value": "#9482FF" },
+      { "role": "on-accent", "value": "#0E0A1F" },
+      { "role": "danger-text", "value": "#FF6B7A" },
+      { "role": "danger-surface", "value": "rgba(248,114,114,0.15)" }
+    ],
+    "radius": ["6px", "8px", "12px", "14px", "18px", "9999px"],
+    "shadows": [
+      "0 12px 32px -14px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.08)",
+      "0 16px 40px -12px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1)",
+      "inset 0 1px 0 rgba(255,255,255,0.12)"
+    ],
+    "image_ratios": [],
+    "grid": { "max_width": "576px", "columns": 3, "gutter": "10px" }
+  },
+  "taste": [
+    {
+      "name": "One accent, reserved for the next action",
+      "trigger": "When a workout screen has dozens of tappable things and the user must find the one that advances the session",
+      "decision": "Chose a single violet (#9482FF) on the start button and the active tab over color-coding each muscle group or each control",
+      "reason": "Mid-set, the eye should land on 'what do I press now' without reading; a second saturated color would make it a search",
+      "evidence": ["#9482FF fills 5.1% of area (one button)", "3 accent text uses vs 23 uses of #B2B7CC", "on-accent text #0E0A1F instead of white"]
+    },
+    {
+      "name": "Edge-lit glass cards on blue-tinted blacks",
+      "trigger": "When stacking 18+ exercise cards on a near-black background where borders and flat fills disappear or look heavy",
+      "decision": "Chose a deep offset shadow plus a 1px inset white highlight on translucent cards over outlined or flat-fill cards",
+      "reason": "A lit top edge reads as a physical lip, so cards separate from each other and the background without adding border lines to scan past",
+      "evidence": ["7 of 10 shadowed elements use 0 12px 32px -14px rgba(0,0,0,.65) + inset 0 1px rgba(255,255,255,.08); the other 3 vary only in blur and alpha", "card fill rgba(24,26,40,.5) covers 70.1% of area", "neutrals #090A11/#181A28/#23263A all tilt blue-violet, not pure gray", "radius 14px on 12 elements"]
+    },
+    {
+      "name": "Condensed caps for names, plain width for data",
+      "trigger": "When workout titles like 'A — Upper (peito, costas, ombro, braços + postural)' must fit a 576px column next to numeric inputs",
+      "decision": "Chose two widths of one family (Barlow Condensed for h1/h2, Barlow for the other 171 text nodes) over an unrelated display/body pairing",
+      "reason": "Condensed heads buy horizontal room and read as gym signage; staying in one family keeps numerals and labels matched in shape",
+      "evidence": ["h1 30px/800 Barlow Condensed vs body 14px/500 Barlow (2.14x)", "h2 16px/700 with -0.4px tracking", "only 2 families on the page"]
+    },
+    {
+      "name": "Phone column even on desktop (restraint)",
+      "trigger": "When the same page is opened on a 1440px desktop but is really used with one thumb between sets",
+      "decision": "Chose a fixed 576px single column with a 96px bottom reserve for a floating tab bar over a multi-column desktop dashboard",
+      "reason": "The user's context is the phone in the gym; widening the layout would add scanning distance without adding information needed mid-workout",
+      "evidence": ["container width 576px at 1440 viewport", "container padding-bottom 96px", "input row grid 225px 225px 48px, gap 10px", "3-item bottom nav, one exercise card expanded at a time"]
+    }
+  ]
+}
