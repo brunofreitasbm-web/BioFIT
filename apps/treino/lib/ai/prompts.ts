@@ -69,23 +69,9 @@ export interface GarminTreino {
   calorias: number | null;
 }
 
-// Leitura de recuperação já calculada pelo servidor (lib/recuperacao). O modelo usa estes
-// números em vez de inventar um julgamento de prontidão a partir de médias soltas.
-export interface GarminRecuperacao {
-  data: string;
-  prontidaoBiofit: number | null;
-  recomendacao: string | null;
-  prontidaoGarmin: number | null;
-  acwr: number | null;
-  sonoProfundoMin: number | null;
-  sonoRemMin: number | null;
-  alertas: string[]; // insights de atenção (ex.: sinais precoces de doença)
-}
-
 export interface GarminJanela {
   diario: GarminDia[]; // mais antigo primeiro
   treinos: GarminTreino[];
-  recuperacao?: GarminRecuperacao | null;
 }
 
 export interface TreinoRecenteContexto {
@@ -340,16 +326,6 @@ export function formatarContextoParaPrompt(ctx?: ContextoTreinoIA | null): strin
               .join("; ")}`
           : ""),
     );
-    const rec = ctx.garminJanela.recuperacao;
-    if (rec) {
-      const itens = [
-        rec.prontidaoBiofit != null ? `prontidão BioFIT ${rec.prontidaoBiofit}/100${rec.recomendacao ? ` (${rec.recomendacao})` : ""}` : null,
-        rec.prontidaoGarmin != null ? `Training Readiness Garmin ${rec.prontidaoGarmin}` : null,
-        rec.acwr != null ? `ACWR ${rec.acwr}` : null,
-        rec.sonoProfundoMin != null && rec.sonoRemMin != null ? `sono profundo ${rec.sonoProfundoMin}min, REM ${rec.sonoRemMin}min` : null,
-      ].filter(Boolean);
-      if (itens.length) partes.push(`• Recuperação em ${rec.data}: ${itens.join("; ")}.` + (rec.alertas.length ? ` ATENÇÃO: ${rec.alertas.join(" ")}` : ""));
-    }
   }
 
   if (ctx.cruzamentos && ctx.cruzamentos.length > 0) {

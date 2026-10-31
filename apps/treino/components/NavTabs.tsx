@@ -8,7 +8,6 @@ const TABS = [
   { href: "/", label: "Hoje" },
   { href: "/relatorio", label: "Relatório" },
   { href: "/coach", label: "Coach IA" },
-  { href: "/painel", label: "Painel" },
 ];
 
 // Abas de índice de caderno na base da tela, em linha: ocupam a largura toda e deixam o

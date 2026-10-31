@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { lerGarmin } from "@/lib/servidor/garmin";
 import { avaliarVfc } from "@/lib/prontidao";
-import { resumirRecuperacao } from "@/lib/servidor/garminPainel";
 
 export const runtime = "nodejs";
 // Sem isso o Next pré-renderiza a resposta no build e o cartão fica congelado até o próximo deploy.
@@ -83,7 +82,7 @@ export async function GET() {
     return NextResponse.json({
       disponivel: true,
       biometria,
-      janela: { ...janela, recuperacao: resumirRecuperacao({ diario: data.diario, treinos: data.treinos, intraday: [] }) },
+      janela,
       vfc,
     });
   } catch (error) {

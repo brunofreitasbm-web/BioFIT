@@ -1,6 +1,5 @@
 import { LinhaSerie } from "@/components/graficos/LinhaSerie";
 import { BarrasEmpilhadas } from "@/components/graficos/BarrasEmpilhadas";
-import { HeatmapAnual } from "@/components/HeatmapAnual";
 import { resumoCarga } from "@/lib/recuperacao/carga";
 import { ehNum, diaDaSemana, somarDiasIso } from "@/lib/recuperacao/estatistica";
 import type { DadosPainel } from "@/lib/recuperacao/painel";
@@ -80,9 +79,6 @@ export function AbaCarga({ d }: { d: DadosPainel }) {
           <LinhaSerie pontos={garminCronica} rotulo="Carga crônica Garmin" unidade="" cor="accent" altura={150} />
         </Cartao>
       </div>
-      <Cartao titulo="Frequência de treino no ano" sub="Dias com séries de força registradas">
-        <HeatmapAnual />
-      </Cartao>
     </div>
   );
 }

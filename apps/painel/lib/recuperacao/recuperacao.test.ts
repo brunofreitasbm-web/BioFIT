@@ -23,8 +23,6 @@ function dia(data: string, o: Partial<DiaRecuperacao> = {}): DiaRecuperacao {
     sonoInicioUtc: null,
     sonoFimUtc: null,
     respiracao: null,
-    spo2Media: null,
-    spo2Min: null,
     bodyBatteryAcordar: null,
     bodyBatteryMax: null,
     estresse: null,
@@ -35,7 +33,6 @@ function dia(data: string, o: Partial<DiaRecuperacao> = {}): DiaRecuperacao {
     cargaAguda: null,
     cargaCronica: null,
     acwrGarmin: null,
-    vo2max: null,
     intensidadeMod: null,
     intensidadeVig: null,
     caloriasAtivas: null,
@@ -55,8 +52,6 @@ function treino(data: string, o: Partial<TreinoGarmin> = {}): TreinoGarmin {
     teAerobico: null,
     teAnaerobico: null,
     zonasFcS: null,
-    distanciaM: null,
-    potenciaMedia: null,
     ...o,
   };
 }
