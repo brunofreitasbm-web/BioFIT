@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-base-900 text-ink antialiased;
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+/* Superfície de card do painel. */
+.vidro {
+  @apply border-line bg-base-800;
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { montarDadosPainel } from "@/lib/recuperacao/painel";
-import { montarPainelGarmin, resumirRecuperacao, type DadosGarminBrutos } from "../garminPainel";
+import { montarPainelGarmin, type DadosGarminBrutos } from "../garminPainel";
 
 function brutos(): DadosGarminBrutos {
   const diario = Array.from({ length: 30 }, (_, i) => ({
@@ -50,8 +50,5 @@ describe("recuperação a partir do Garmin", () => {
     const d = montarDadosPainel(montarPainelGarmin(brutos()), []);
     expect(d?.prontidaoHoje.score).not.toBeNull();
     expect(d?.carga.length).toBeGreaterThan(20);
-    const r = resumirRecuperacao(brutos());
-    expect(r?.sonoRemMin).toBe(90);
-    expect(r?.alertas).toEqual([]);
   });
 });

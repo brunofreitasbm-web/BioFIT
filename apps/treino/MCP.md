@@ -56,16 +56,6 @@ Composição corporal (bioimpedância da balança AvaBio / Avanutri):
 
 A bioimpedância é ruidosa (hidratação, refeição, hora do dia). A análise usa tendência por data e massa magra/força como sinal principal, trata variações pequenas como ruído (`RUIDO_GORDURA_PP`, `RUIDO_MASSA_MAGRA_KG` em `lib/corpo.ts`: pontos de partida, não medidos) e rebaixa a confiança quando as medições foram feitas em horários muito diferentes. Com confiança baixa **e** mais de 45 dias sem medir dentro da janela, o veredito vira `inconclusivo` (a conta original fica em `leituraProvisoria`, só como pista). O app mostra tudo isso na aba **Corpo** do Relatório (somente leitura).
 
-Recuperação (Garmin × treino; lê `biofit_garmin_*` pela RPC `biofit_garmin_janela`, só leitura):
-
-| Ferramenta | O que faz |
-| --- | --- |
-| `prontidao_hoje` | Prontidão 0–100 contra a linha de base pessoal (VFC, FC de repouso, sono, Body Battery, carga de 72 h), recomendação do dia, Training Readiness da Garmin para comparar, ACWR e alertas |
-| `recuperacao_periodo` | Série diária (sono por fase, VFC, FC de repouso, Body Battery, estresse, respiração, prontidão Garmin e BioFIT) e médias dos últimos N dias |
-| `insights_cruzados` | Dias para recuperar de um treino, sono × séries, horário do treino × sono profundo, alerta precoce, melhor dia da semana. Cada um com n, correlação e confiança |
-
-Sem sincronização Garmin recente, as três devolvem `disponivel: false` com a instrução de rodar `sync-garmin.bat`.
-
 Postura (avaliação por foto, feita no app em Relatório → Postura; a foto não é guardada, só os pontos e os ângulos):
 
 | Ferramenta | O que faz |

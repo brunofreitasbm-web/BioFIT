@@ -7,11 +7,11 @@ import { AbaCruzamentos } from "@/components/painel/AbaCruzamentos";
 import { AbaHoje } from "@/components/painel/AbaHoje";
 import { AbaRecuperacao } from "@/components/painel/AbaRecuperacao";
 import { AbaRoadmap } from "@/components/painel/AbaRoadmap";
-import { somarDiasIso } from "@/lib/recuperacao/estatistica";
-import { forcaPorDia, montarDadosPainel, type DadosPainel } from "@/lib/recuperacao/painel";
-import type { PainelGarmin } from "@/lib/recuperacao/tipos";
-import { getLog } from "@/lib/storage";
 import { cn } from "@/lib/cn";
+import { somarDiasIso } from "@/lib/recuperacao/estatistica";
+import { cruzarIntervalos, type MedicaoCorpo } from "@/lib/recuperacao/intervalos";
+import { montarDadosPainel } from "@/lib/recuperacao/painel";
+import type { DiaForca, PainelGarmin } from "@/lib/recuperacao/tipos";
 
 const ABAS = ["Hoje", "Recuperação", "Carga", "Cruzamentos", "Corpo", "Roadmap"] as const;
 type Aba = (typeof ABAS)[number];
@@ -22,28 +22,34 @@ const PERIODOS = [
   { rotulo: "Tudo", dias: 400 },
 ];
 
-type Estado = { tipo: "carregando" } | { tipo: "vazio"; msg: string } | { tipo: "erro" } | { tipo: "ok"; painel: PainelGarmin };
+interface Carregado {
+  garmin: PainelGarmin;
+  forca: DiaForca[];
+  corpo: MedicaoCorpo[];
+  avisos: string[];
+}
+type Estado = { tipo: "carregando" } | { tipo: "vazio"; msg: string } | { tipo: "erro" } | { tipo: "ok"; dados: Carregado };
 
-export default function PainelPage() {
+export default function Painel() {
   const [estado, setEstado] = useState<Estado>({ tipo: "carregando" });
   const [aba, setAba] = useState<Aba>("Hoje");
   const [periodo, setPeriodo] = useState(90);
-  const [forca, setForca] = useState<ReturnType<typeof forcaPorDia>>([]);
 
   useEffect(() => {
-    setForca(forcaPorDia(getLog()));
-    fetch("/api/garmin/painel?dias=400")
+    fetch("/api/dados")
       .then((r) => r.json())
       .then((j) => {
-        if (j?.disponivel && j.painel?.dias?.length) setEstado({ tipo: "ok", painel: j.painel as PainelGarmin });
-        else setEstado({ tipo: "vazio", msg: "Nenhum dado Garmin sincronizado ainda." });
+        if (j?.disponivel) setEstado({ tipo: "ok", dados: { garmin: j.garmin, forca: j.forca ?? [], corpo: j.corpo ?? [], avisos: j.avisos ?? [] } });
+        else setEstado({ tipo: "vazio", msg: j?.motivo ?? "Sem dados." });
       })
       .catch(() => setEstado({ tipo: "erro" }));
   }, []);
 
-  const dados: DadosPainel | null = useMemo(() => (estado.tipo === "ok" ? montarDadosPainel(estado.painel, forca) : null), [estado, forca]);
+  const carregado = estado.tipo === "ok" ? estado.dados : null;
+  const dados = useMemo(() => (carregado ? montarDadosPainel(carregado.garmin, carregado.forca) : null), [carregado]);
+  const intervalos = useMemo(() => (carregado && dados ? cruzarIntervalos(carregado.corpo, carregado.forca, dados.painel.dias) : []), [carregado, dados]);
 
-  // O período só afeta o que é série longa; os cálculos (prontidão, carga) sempre usam o histórico todo.
+  // O período só afeta séries longas; prontidão e carga sempre usam o histórico todo.
   const diasVisiveis = useMemo(() => {
     if (!dados) return [];
     const corte = somarDiasIso(dados.hoje, -(periodo - 1));
@@ -51,13 +57,13 @@ export default function PainelPage() {
   }, [dados, periodo]);
 
   return (
-    <div className="px-4 py-5 md:px-8">
+    <div className="px-4 py-6 md:px-8">
       <header className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">Painel de recuperação</h1>
+          <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">Painel geral</h1>
           <p className="text-sm text-ink-muted">
-            Treino, sono e corpo no mesmo lugar.
-            {dados && ` Dados Garmin de ${dados.painel.dias[0].data} a ${dados.hoje} (${dados.painel.dias.length} dias).`}
+            Treino, recuperação e corpo no mesmo lugar.
+            {dados && ` Garmin de ${dados.painel.dias[0].data} a ${dados.hoje} (${dados.painel.dias.length} dias).`}
           </p>
         </div>
         {aba === "Recuperação" && (
@@ -92,25 +98,29 @@ export default function PainelPage() {
         ))}
       </div>
 
-      {estado.tipo === "carregando" && <p className="py-16 text-center text-ink-muted">Carregando dados Garmin…</p>}
+      {carregado?.avisos.map((a) => (
+        <p key={a} className="mb-4 rounded-lg border border-brand/40 bg-brand-soft p-3 text-xs text-ink-muted">
+          {a}
+        </p>
+      ))}
+
+      {estado.tipo === "carregando" && <p className="py-16 text-center text-ink-muted">Carregando…</p>}
       {estado.tipo === "erro" && <p className="py-16 text-center text-danger">Não consegui carregar os dados. Tente de novo em instantes.</p>}
       {estado.tipo === "vazio" && (
         <div className="space-y-4">
-          <p className="py-8 text-center text-ink-muted">
-            {estado.msg} Rode <code className="rounded bg-base-700 px-1">sync-garmin.bat</code> no computador. O roadmap abaixo já mostra o que o painel vai cobrir.
-          </p>
-          {aba === "Roadmap" && <AbaRoadmap dias={[]} />}
+          <p className="py-8 text-center text-ink-muted">{estado.msg}</p>
+          {aba === "Roadmap" && <AbaRoadmap />}
         </div>
       )}
 
-      {dados && (
+      {dados && carregado && (
         <div role="tabpanel">
           {aba === "Hoje" && <AbaHoje d={dados} />}
           {aba === "Recuperação" && <AbaRecuperacao dias={diasVisiveis} />}
           {aba === "Carga" && <AbaCarga d={dados} />}
           {aba === "Cruzamentos" && <AbaCruzamentos d={dados} />}
-          {aba === "Corpo" && <AbaCorpo d={dados} />}
-          {aba === "Roadmap" && <AbaRoadmap dias={dados.painel.dias} />}
+          {aba === "Corpo" && <AbaCorpo corpo={carregado.corpo} intervalos={intervalos} />}
+          {aba === "Roadmap" && <AbaRoadmap />}
         </div>
       )}
     </div>

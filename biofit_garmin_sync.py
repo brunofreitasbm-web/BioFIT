@@ -25,9 +25,9 @@ Backfill: envia em blocos de 14 dias e guarda o último dia concluído em
 ~/.biofit_garmin_estado.json. Se cair no meio, rode o mesmo comando de novo e ele
 continua de onde parou (use --recomecar para ignorar o estado).
 
-Coleta: sono (fases, horários, respiração, SpO2), VFC e baseline, prontidão, status e
-carga de treino (ACWR), VO2max, minutos de intensidade, calorias, curvas intradia de
-Body Battery e estresse, e por atividade: efeito de treino, zonas de FC, distância, potência.
+Coleta: sono (fases, horários, respiração), VFC e baseline, prontidão, status e
+carga de treino (ACWR), minutos de intensidade, calorias, curvas intradia de
+Body Battery e estresse, e por atividade: efeito de treino e zonas de FC.
 
 Os nomes de campos do Garmin são tratados de forma defensiva: o que não for encontrado
 vai como nulo e é listado no final. Rode com --dry-run antes do primeiro envio real.
@@ -136,8 +136,6 @@ def dia_metricas(api, dia: date, faltando: set):
     linha["sono_inicio_utc"] = ms_para_iso(dto.get("sleepStartTimestampGMT"))
     linha["sono_fim_utc"] = ms_para_iso(dto.get("sleepEndTimestampGMT"))
     linha["respiracao_media"] = dto.get("averageRespirationValue")
-    linha["spo2_media"] = dto.get("averageSpO2Value")
-    linha["spo2_min"] = dto.get("lowestSpO2Value")
 
     stats = tenta("stats", lambda: api.get_stats(iso))
     linha["fc_repouso_bpm"] = get(stats, "restingHeartRate")
@@ -149,8 +147,6 @@ def dia_metricas(api, dia: date, faltando: set):
     linha["minutos_intensidade_vig"] = get(stats, "vigorousIntensityMinutes")
     linha["calorias_ativas"] = get(stats, "activeKilocalories")
     linha["calorias_bmr"] = get(stats, "bmrKilocalories")
-    andares = get(stats, "floorsAscended")
-    linha["andares"] = round(andares) if isinstance(andares, (int, float)) else None
 
     # Body Battery intradia (também serve de fallback para o valor ao acordar).
     bb = tenta("body_battery", lambda: api.get_body_battery(iso))
@@ -183,15 +179,10 @@ def dia_metricas(api, dia: date, faltando: set):
     linha["carga_aguda"] = get(disp, "acuteTrainingLoadDTO", "dailyTrainingLoadAcute")
     linha["carga_cronica"] = get(disp, "acuteTrainingLoadDTO", "dailyTrainingLoadChronic")
     linha["acwr"] = get(disp, "acuteTrainingLoadDTO", "dailyAcuteChronicWorkloadRatio")
-    if linha["acwr"] is None:  # a pulseira (sem VO2max) não calcula a razão: derivamos de aguda/crônica
+    if linha["acwr"] is None:  # a razão não vem pronta: derivamos de aguda/crônica
         ag, cr = linha["carga_aguda"], linha["carga_cronica"]
         if isinstance(ag, (int, float)) and isinstance(cr, (int, float)) and cr > 0:
             linha["acwr"] = round(ag / cr, 2)
-
-    mm = tenta("vo2max", lambda: api.get_max_metrics(iso))
-    if isinstance(mm, list) and mm:
-        mm = mm[0]
-    linha["vo2max"] = get(mm, "generic", "vo2MaxPreciseValue") or get(mm, "generic", "vo2MaxValue")
 
     # Dia sem nenhum dado útil não vale a linha.
     if all(linha.get(k) is None for k in linha if k != "data"):
@@ -237,8 +228,6 @@ def treinos(api, ini: date, fim: date):
             "te_aerobico": a.get("aerobicTrainingEffect"),
             "te_anaerobico": a.get("anaerobicTrainingEffect"),
             "zonas_fc_s": zonas_fc(api, a),
-            "distancia_m": a.get("distance"),
-            "potencia_media": a.get("avgPower"),
         })
     return saida
 

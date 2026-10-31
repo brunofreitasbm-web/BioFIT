@@ -18,8 +18,6 @@ export interface DiaRecuperacao {
   sonoInicioUtc: string | null;
   sonoFimUtc: string | null;
   respiracao: number | null;
-  spo2Media: number | null;
-  spo2Min: number | null;
   bodyBatteryAcordar: number | null;
   bodyBatteryMax: number | null;
   estresse: number | null;
@@ -30,7 +28,6 @@ export interface DiaRecuperacao {
   cargaAguda: number | null;
   cargaCronica: number | null;
   acwrGarmin: number | null;
-  vo2max: number | null;
   intensidadeMod: number | null;
   intensidadeVig: number | null;
   caloriasAtivas: number | null;
@@ -47,8 +44,6 @@ export interface TreinoGarmin {
   teAerobico: number | null;
   teAnaerobico: number | null;
   zonasFcS: number[] | null; // [z1..z5] em segundos
-  distanciaM: number | null;
-  potenciaMedia: number | null;
 }
 
 export type TipoCurva = "body_battery" | "estresse";

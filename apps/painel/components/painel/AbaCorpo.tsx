@@ -1,49 +1,24 @@
-"use client";
-
-import { useMemo } from "react";
-import { GraficoTempo } from "@/components/GraficoTempo";
-import { cruzarIntervalos } from "@/lib/ai/contextoIntegrado";
-import type { GarminJanela } from "@/lib/ai/prompts";
-import { getMedicoes } from "@/lib/bioimpedancia";
-import type { DadosPainel } from "@/lib/recuperacao/painel";
-import { getLog } from "@/lib/storage";
+import { LinhaSerie } from "@/components/graficos/LinhaSerie";
+import type { Intervalo, MedicaoCorpo } from "@/lib/recuperacao/intervalos";
 import { Cartao } from "./Cartao";
 
-const fmt = (v: number | null, un = "") => (v === null ? "—" : `${v > 0 && un === "kg" ? "+" : ""}${v.toLocaleString("pt-BR")}${un ? ` ${un}` : ""}`);
+const fmt = (v: number | null, un = "", sinal = false) =>
+  v === null ? "—" : `${sinal && v > 0 ? "+" : ""}${v.toLocaleString("pt-BR")}${un ? ` ${un}` : ""}`;
 
-export function AbaCorpo({ d }: { d: DadosPainel }) {
-  const medicoes = useMemo(() => getMedicoes(), []);
-  const janela: GarminJanela = useMemo(
-    () => ({
-      diario: d.painel.dias.map((x) => ({
-        data: x.data,
-        sonoHoras: x.sonoMin === null ? null : Math.round((x.sonoMin / 60) * 10) / 10,
-        sonoScore: x.sonoScore,
-        hrvMs: x.hrvMs,
-        fcRepouso: x.fcRepouso,
-        passos: x.passos,
-        estresse: x.estresse,
-        bodyBattery: x.bodyBatteryAcordar,
-      })),
-      treinos: [],
-    }),
-    [d],
-  );
-  const intervalos = useMemo(() => cruzarIntervalos(medicoes, getLog(), janela, 8), [medicoes, janela]);
-
-  const serie = (f: (m: (typeof medicoes)[number]) => number | null) => medicoes.flatMap((m) => (f(m) === null ? [] : [{ data: m.data, valor: f(m) as number }]));
+export function AbaCorpo({ corpo, intervalos }: { corpo: MedicaoCorpo[]; intervalos: Intervalo[] }) {
+  const serie = (f: (m: MedicaoCorpo) => number | null) => corpo.flatMap((m) => (f(m) === null ? [] : [{ data: m.data, valor: f(m) as number }]));
 
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-3">
         <Cartao titulo="Peso">
-          <GraficoTempo pontos={serie((m) => m.pesoKg)} unidade="kg" rotulo="peso" />
+          <LinhaSerie pontos={serie((m) => m.pesoKg)} rotulo="Peso" unidade="kg" altura={170} />
         </Cartao>
         <Cartao titulo="Gordura corporal">
-          <GraficoTempo pontos={serie((m) => m.gorduraPct)} unidade="%" rotulo="gordura" />
+          <LinhaSerie pontos={serie((m) => m.gorduraPct)} rotulo="Gordura" unidade="%" cor="danger" altura={170} />
         </Cartao>
         <Cartao titulo="Massa magra">
-          <GraficoTempo pontos={serie((m) => m.massaMagraKg)} unidade="kg" rotulo="massa magra" />
+          <LinhaSerie pontos={serie((m) => m.massaMagraKg)} rotulo="Massa magra" unidade="kg" cor="accent" altura={170} />
         </Cartao>
       </div>
       <Cartao titulo="O que aconteceu entre cada medição" sub="Treino e recuperação média em cada intervalo, ao lado da variação do corpo">
@@ -71,9 +46,9 @@ export function AbaCorpo({ d }: { d: DadosPainel }) {
                     <td className="py-1.5 pr-3 text-ink-muted">
                       {i.de.slice(5)} → {i.ate.slice(5)} ({i.dias} d)
                     </td>
-                    <td className="pr-3">{fmt(i.delta.pesoKg, "kg")}</td>
-                    <td className="pr-3">{fmt(i.delta.gorduraPp, "p.p.")}</td>
-                    <td className="pr-3">{fmt(i.delta.massaMagraKg, "kg")}</td>
+                    <td className="pr-3">{fmt(i.delta.pesoKg, "kg", true)}</td>
+                    <td className="pr-3">{fmt(i.delta.gorduraPp, "p.p.", true)}</td>
+                    <td className="pr-3">{fmt(i.delta.massaMagraKg, "kg", true)}</td>
                     <td className="pr-3">{i.treino.treinosPorSemana}</td>
                     <td className="pr-3">{i.treino.seriesPorSemana}</td>
                     <td className="pr-3">{fmt(i.garmin?.sonoHoras ?? null)}</td>
@@ -84,7 +59,7 @@ export function AbaCorpo({ d }: { d: DadosPainel }) {
               </tbody>
             </table>
             <p className="mt-2 text-[11px] text-ink-faint">
-              Células com “—” são intervalos anteriores ao início da coleta Garmin. Bioimpedância mistura hidratação e hora do dia com mudança real: leia tendência, não um ponto.
+              “—” indica intervalo anterior ao início da coleta Garmin. Bioimpedância mistura hidratação e hora do dia com mudança real: leia tendência, não um ponto.
             </p>
           </div>
         )}

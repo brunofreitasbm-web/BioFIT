@@ -14,12 +14,11 @@ function serie(dias: DiaRecuperacao[], f: (d: DiaRecuperacao) => number | null) 
 
 export function AbaRecuperacao({ dias }: { dias: DiaRecuperacao[] }) {
   const temFases = dias.some((d) => ehNum(d.sonoProfundoMin));
-  const temSpo2 = dias.some((d) => ehNum(d.spo2Media));
   const banda = dias.flatMap((d) => (ehNum(d.hrvBaseBaixo) && ehNum(d.hrvBaseAlto) ? [{ data: d.data, baixo: d.hrvBaseBaixo, alto: d.hrvBaseAlto }] : []));
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <Cartao titulo="VFC noturna" sub={banda.length ? "Faixa cinza = seu normal (Garmin)" : "Sua faixa normal ainda está em calibração na Garmin"}>
+      <Cartao titulo="VFC noturna" sub={banda.length ? "Faixa cinza = seu normal (Garmin)" : undefined}>
         <LinhaSerie pontos={serie(dias, (d) => d.hrvMs)} banda={banda} rotulo="VFC" unidade="ms" cor="accent" />
       </Cartao>
       <Cartao titulo="FC de repouso" sub="Subida de 3+ bpm sobre o normal costuma indicar cansaço ou doença">
@@ -51,15 +50,6 @@ export function AbaRecuperacao({ dias }: { dias: DiaRecuperacao[] }) {
       <Cartao titulo="Estresse médio do dia">
         <LinhaSerie pontos={serie(dias, (d) => d.estresse)} rotulo="Estresse" unidade="" cor="danger" />
       </Cartao>
-      {temSpo2 ? (
-        <Cartao titulo="Saturação de oxigênio (SpO2)">
-          <LinhaSerie pontos={serie(dias, (d) => d.spo2Media)} rotulo="SpO2" unidade="%" />
-        </Cartao>
-      ) : (
-        <Cartao titulo="Saturação de oxigênio (SpO2)">
-          <p className="text-sm text-ink-muted">O seu dispositivo não envia SpO2. Com um relógio que meça, o painel passa a mostrar a curva e o alerta de altitude/apneia.</p>
-        </Cartao>
-      )}
       <Cartao titulo="Passos por dia">
         <LinhaSerie pontos={serie(dias, (d) => d.passos)} rotulo="Passos" unidade="" cor="brand" />
       </Cartao>
