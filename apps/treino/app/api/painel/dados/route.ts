@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { lerGarminPainel, montarPainelGarmin } from "@/lib/servidor/garminPainel";
-import { supabaseConfigurado } from "@/lib/servidor/supabase";
-import { lerTreino, type DadosTreino } from "@/lib/servidor/treino";
+import { lerGarminPainel, montarPainelGarmin } from "@/lib/painel/servidor/garminPainel";
+import { supabaseConfigurado } from "@/lib/servidor/garmin";
+import { lerTreino, type DadosTreino } from "@/lib/painel/servidor/treino";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

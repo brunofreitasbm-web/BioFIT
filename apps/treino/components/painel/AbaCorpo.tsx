@@ -1,5 +1,5 @@
-import { LinhaSerie } from "@/components/graficos/LinhaSerie";
-import type { Intervalo, MedicaoCorpo } from "@/lib/recuperacao/intervalos";
+import { LinhaSerie } from "@/components/painel/graficos/LinhaSerie";
+import type { Intervalo, MedicaoCorpo } from "@/lib/painel/intervalos";
 import { Cartao } from "./Cartao";
 
 const fmt = (v: number | null, un = "", sinal = false) =>

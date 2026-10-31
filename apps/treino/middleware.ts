@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-// Os dados são pessoais (saúde): o painel exige senha (HTTP Basic). Sem PAINEL_SENHA configurada
-// em produção, recusa tudo (fail-closed). Em desenvolvimento local, sem senha, libera.
+// A página /painel (visão geral, uso no computador) mostra dados pessoais de saúde: exige senha
+// (HTTP Basic; o usuário é ignorado). A senha é PAINEL_SENHA ou, se não existir, o MCP_TOKEN que
+// o app já usa. Sem nenhuma das duas em produção, recusa tudo. Só atua em /painel e /api/painel:
+// o restante do app de treino não passa por aqui.
 function iguais(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let r = 0;
@@ -10,7 +12,7 @@ function iguais(a: string, b: string): boolean {
 }
 
 export function middleware(req: NextRequest) {
-  const senha = process.env.PAINEL_SENHA ?? "";
+  const senha = process.env.PAINEL_SENHA || process.env.MCP_TOKEN || "";
   if (!senha) {
     if (process.env.NODE_ENV !== "production") return NextResponse.next();
     return new NextResponse("Painel não configurado (defina PAINEL_SENHA).", { status: 503 });
@@ -27,3 +29,5 @@ export function middleware(req: NextRequest) {
   }
   return new NextResponse("Acesso restrito.", { status: 401, headers: { "WWW-Authenticate": 'Basic realm="BioFIT Painel", charset="UTF-8"' } });
 }
+
+export const config = { matcher: ["/painel/:path*", "/api/painel/:path*"] };

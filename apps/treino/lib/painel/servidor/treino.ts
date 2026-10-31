@@ -1,7 +1,7 @@
-import { forcaPorDia } from "@/lib/recuperacao/painel";
-import type { DiaForca } from "@/lib/recuperacao/tipos";
-import type { MedicaoCorpo } from "@/lib/recuperacao/intervalos";
-import { rpc } from "./supabase";
+import { forcaPorDia } from "@/lib/painel/dados";
+import type { DiaForca } from "@/lib/painel/tipos";
+import type { MedicaoCorpo } from "@/lib/painel/intervalos";
+import { rpc } from "@/lib/servidor/backup";
 
 // Leitura (somente) do que o app de treino já guardou: séries de força e bioimpedância.
 // Vem do backup que o app envia ao Supabase; o painel nunca grava de volta.

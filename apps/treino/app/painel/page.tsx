@@ -8,10 +8,10 @@ import { AbaHoje } from "@/components/painel/AbaHoje";
 import { AbaRecuperacao } from "@/components/painel/AbaRecuperacao";
 import { AbaRoadmap } from "@/components/painel/AbaRoadmap";
 import { cn } from "@/lib/cn";
-import { somarDiasIso } from "@/lib/recuperacao/estatistica";
-import { cruzarIntervalos, type MedicaoCorpo } from "@/lib/recuperacao/intervalos";
-import { montarDadosPainel } from "@/lib/recuperacao/painel";
-import type { DiaForca, PainelGarmin } from "@/lib/recuperacao/tipos";
+import { somarDiasIso } from "@/lib/painel/estatistica";
+import { cruzarIntervalos, type MedicaoCorpo } from "@/lib/painel/intervalos";
+import { montarDadosPainel } from "@/lib/painel/dados";
+import type { DiaForca, PainelGarmin } from "@/lib/painel/tipos";
 
 const ABAS = ["Hoje", "Recuperação", "Carga", "Cruzamentos", "Corpo", "Roadmap"] as const;
 type Aba = (typeof ABAS)[number];
@@ -36,7 +36,7 @@ export default function Painel() {
   const [periodo, setPeriodo] = useState(90);
 
   useEffect(() => {
-    fetch("/api/dados")
+    fetch("/api/painel/dados")
       .then((r) => r.json())
       .then((j) => {
         if (j?.disponivel) setEstado({ tipo: "ok", dados: { garmin: j.garmin, forca: j.forca ?? [], corpo: j.corpo ?? [], avisos: j.avisos ?? [] } });
@@ -57,7 +57,9 @@ export default function Painel() {
   }, [dados, periodo]);
 
   return (
-    <div className="px-4 py-6 md:px-8">
+    // Tela própria: cobre a moldura do app de treino (navegação, largura de celular). Não altera o app.
+    <div className="fixed inset-0 z-[60] overflow-y-auto bg-base-900 text-ink">
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
       <header className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">Painel geral</h1>
@@ -123,6 +125,7 @@ export default function Painel() {
           {aba === "Roadmap" && <AbaRoadmap />}
         </div>
       )}
+    </div>
     </div>
   );
 }

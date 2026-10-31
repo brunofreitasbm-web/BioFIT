@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { montarDadosPainel } from "@/lib/recuperacao/painel";
+import { montarDadosPainel } from "@/lib/painel/dados";
 import { montarPainelGarmin, type DadosGarminBrutos } from "../garminPainel";
 
 function brutos(): DadosGarminBrutos {
