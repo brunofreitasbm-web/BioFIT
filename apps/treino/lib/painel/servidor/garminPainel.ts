@@ -1,5 +1,5 @@
-import { rpc } from "./supabase";
-import type { CurvaIntraday, DiaRecuperacao, PainelGarmin, TipoCurva, TreinoGarmin } from "@/lib/recuperacao/tipos";
+import { rpc } from "@/lib/servidor/backup";
+import type { CurvaIntraday, DiaRecuperacao, PainelGarmin, TipoCurva, TreinoGarmin } from "@/lib/painel/tipos";
 
 // Leitura completa do Garmin para o painel, pela RPC `biofit_garmin_janela` (todas as colunas,
 // mais as curvas intradia). Somente leitura.

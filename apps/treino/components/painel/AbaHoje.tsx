@@ -1,7 +1,7 @@
-import { Gauge } from "@/components/graficos/Gauge";
-import { CurvaIntraday } from "@/components/graficos/CurvaIntraday";
-import { divergenciaComGarmin } from "@/lib/recuperacao/prontidao";
-import type { DadosPainel } from "@/lib/recuperacao/painel";
+import { Gauge } from "@/components/painel/graficos/Gauge";
+import { CurvaIntraday } from "@/components/painel/graficos/CurvaIntraday";
+import { divergenciaComGarmin } from "@/lib/painel/prontidao";
+import type { DadosPainel } from "@/lib/painel/dados";
 import { Cartao, Metrica } from "./Cartao";
 
 const REC: Record<string, string> = { pesado: "Treino pesado", moderado: "Treino normal", leve: "Treino leve", recuperar: "Recuperar" };

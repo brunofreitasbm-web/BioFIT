@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import type { Confianca } from "@/lib/recuperacao/tipos";
+import type { Confianca } from "@/lib/painel/tipos";
 
 export function Cartao({ titulo, sub, children, className }: { titulo: string; sub?: string; children: ReactNode; className?: string }) {
   return (

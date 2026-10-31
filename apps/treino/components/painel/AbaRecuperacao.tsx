@@ -1,7 +1,7 @@
-import { LinhaSerie } from "@/components/graficos/LinhaSerie";
-import { BarrasEmpilhadas } from "@/components/graficos/BarrasEmpilhadas";
-import { ehNum } from "@/lib/recuperacao/estatistica";
-import type { DiaRecuperacao } from "@/lib/recuperacao/tipos";
+import { LinhaSerie } from "@/components/painel/graficos/LinhaSerie";
+import { BarrasEmpilhadas } from "@/components/painel/graficos/BarrasEmpilhadas";
+import { ehNum } from "@/lib/painel/estatistica";
+import type { DiaRecuperacao } from "@/lib/painel/tipos";
 import { Cartao } from "./Cartao";
 
 // Série de um campo numérico, descartando dias sem valor.

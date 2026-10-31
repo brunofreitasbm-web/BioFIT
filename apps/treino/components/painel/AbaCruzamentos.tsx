@@ -1,5 +1,5 @@
-import { Dispersao } from "@/components/graficos/Dispersao";
-import type { DadosPainel } from "@/lib/recuperacao/painel";
+import { Dispersao } from "@/components/painel/graficos/Dispersao";
+import type { DadosPainel } from "@/lib/painel/dados";
 import { Cartao, SeloConfianca } from "./Cartao";
 
 export function AbaCruzamentos({ d }: { d: DadosPainel }) {

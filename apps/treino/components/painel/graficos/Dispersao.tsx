@@ -1,4 +1,4 @@
-import { correlacao } from "@/lib/recuperacao/estatistica";
+import { correlacao } from "@/lib/painel/estatistica";
 import { extremos, fmt } from "./escala";
 
 const W = 360;

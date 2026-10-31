@@ -1,8 +1,8 @@
-import { LinhaSerie } from "@/components/graficos/LinhaSerie";
-import { BarrasEmpilhadas } from "@/components/graficos/BarrasEmpilhadas";
-import { resumoCarga } from "@/lib/recuperacao/carga";
-import { ehNum, diaDaSemana, somarDiasIso } from "@/lib/recuperacao/estatistica";
-import type { DadosPainel } from "@/lib/recuperacao/painel";
+import { LinhaSerie } from "@/components/painel/graficos/LinhaSerie";
+import { BarrasEmpilhadas } from "@/components/painel/graficos/BarrasEmpilhadas";
+import { resumoCarga } from "@/lib/painel/carga";
+import { ehNum, diaDaSemana, somarDiasIso } from "@/lib/painel/estatistica";
+import type { DadosPainel } from "@/lib/painel/dados";
 import { Cartao, Metrica } from "./Cartao";
 
 const ZONA_TEXTO = { baixa: "abaixo do ideal (destreino)", ideal: "na faixa ideal", alta: "alta", "muito-alta": "muito alta (risco de sobrecarga)" } as const;
