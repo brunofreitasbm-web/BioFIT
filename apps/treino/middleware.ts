@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 // A página /painel (visão geral, uso no computador) mostra dados pessoais de saúde: exige senha
-// (HTTP Basic; o usuário é ignorado). A senha é PAINEL_SENHA ou, se não existir, o MCP_TOKEN que
-// o app já usa. Sem nenhuma das duas em produção, recusa tudo. Só atua em /painel e /api/painel:
-// o restante do app de treino não passa por aqui.
+// (HTTP Basic). Senha: PAINEL_SENHA ou, se não existir, o MCP_TOKEN que o app já usa. Usuário:
+// PAINEL_USUARIO; se não estiver definido, qualquer usuário serve. Sem senha em produção, recusa
+// tudo. Só atua em /painel e /api/painel: o restante do app de treino não passa por aqui.
 function iguais(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
   let r = 0;
@@ -13,6 +13,7 @@ function iguais(a: string, b: string): boolean {
 
 export function middleware(req: NextRequest) {
   const senha = process.env.PAINEL_SENHA || process.env.MCP_TOKEN || "";
+  const usuario = process.env.PAINEL_USUARIO ?? "";
   if (!senha) {
     if (process.env.NODE_ENV !== "production") return NextResponse.next();
     return new NextResponse("Painel não configurado (defina PAINEL_SENHA).", { status: 503 });
@@ -21,8 +22,13 @@ export function middleware(req: NextRequest) {
   if (auth.toLowerCase().startsWith("basic ")) {
     try {
       const decodificado = atob(auth.slice(6).trim());
-      const candidata = decodificado.slice(decodificado.indexOf(":") + 1);
-      if (iguais(candidata, senha)) return NextResponse.next();
+      const separador = decodificado.indexOf(":");
+      const candidataUsuario = decodificado.slice(0, separador);
+      const candidataSenha = decodificado.slice(separador + 1);
+      // Sem short-circuit: as duas comparações sempre rodam.
+      const okSenha = iguais(candidataSenha, senha);
+      const okUsuario = !usuario || iguais(candidataUsuario, usuario);
+      if (okSenha && okUsuario) return NextResponse.next();
     } catch {
       // cai no 401
     }
