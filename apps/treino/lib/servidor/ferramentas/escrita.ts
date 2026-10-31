@@ -1,5 +1,5 @@
 import { KEY_BIKE, KEY_LOG, KEY_REMOVIDOS, KEY_SESSOES } from "@/lib/dados";
-import { getSessaoCompleta, SESSOES, SLOTS } from "@/lib/exercicios";
+import { getSessaoCompleta, SESSOES, todasAsVariacoes } from "@/lib/exercicios";
 import { chaveBike, chaveSerie, registrarRemocao } from "@/lib/merge";
 import type { RegistroBikeIndoor, RegistroSessao, SerieRegistrada, SessaoTreino } from "@/lib/tipos";
 import {
@@ -43,7 +43,7 @@ function sessoesDoExercicio(id: string, meso: number): SessaoTreino[] {
 function sessaoDaSerie(ctx: Contexto, id: string, data: string, pedida: SessaoTreino | null): SessaoTreino {
   const meso = mesoAtual(ctx, data, null);
   const noMeso = sessoesDoExercicio(id, meso);
-  const emAlgum = SLOTS.filter((s) => s.meso1.id === id || s.meso2.id === id).map((s) => s.sessao);
+  const emAlgum = todasAsVariacoes().filter((x) => x.id === id).map((x) => x.sessao);
   if (pedida) {
     if (!emAlgum.includes(pedida)) throw new Error(`O exercício ${id} não faz parte da sessão ${pedida}.`);
     return pedida;

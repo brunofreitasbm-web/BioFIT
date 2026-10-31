@@ -29,7 +29,7 @@ export default function ExerciciosPage() {
   return (
     <div className="p-4 space-y-6">
       <header className="mb-2 space-y-2">
-        <h1 className="font-display text-[2rem] font-bold uppercase leading-none tracking-tight text-ink">Evolução por Exercício</h1>
+        <h1 className="text-xl font-semibold text-ink">Evolução por Exercício</h1>
         <p className="text-sm text-ink-muted">1RM estimado (Epley) e recordes de cada exercício que você já registrou</p>
         <RelatorioTabs ativa="/relatorio/exercicios" />
       </header>
@@ -44,13 +44,13 @@ export default function ExerciciosPage() {
             <li key={ex.exercicioId}>
               <Link
                 href={`/relatorio/exercicios/${ex.exercicioId}`}
-                className="flex items-center gap-3 rounded-xl border border-line bg-base-800 p-3 shadow-sm hover:border-brand/40"
+                className="flex items-center gap-3 rounded-xl border vidro p-3 shadow-sm hover:border-brand/40"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-ink">{ex.nome}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
                     <GrupoBadge grupo={ex.grupo} />
-                    <span className="text-[11px] text-ink-muted">
+                    <span className="text-xs text-ink-muted">
                       {ex.sessoes} {ex.sessoes === 1 ? "sessão" : "sessões"} · última {formatarDataBR(ex.ultimaData)}
                     </span>
                   </div>
@@ -60,7 +60,7 @@ export default function ExerciciosPage() {
                   {ex.variacao1RM !== null && (
                     <p
                       className={cn(
-                        "inline-flex items-center gap-0.5 text-[11px] font-medium",
+                        "inline-flex items-center gap-0.5 text-xs font-medium",
                         ex.variacao1RM >= 0 ? "text-accent" : "text-danger",
                       )}
                     >

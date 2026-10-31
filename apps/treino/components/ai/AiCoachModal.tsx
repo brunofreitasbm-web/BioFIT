@@ -236,13 +236,13 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-base-950/80 p-0 sm:p-4 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-base-950/80 p-0 sm:p-4 backdrop-blur-sm anim-revelar"
     >
-      <div className="flex h-[92dvh] sm:h-[85vh] w-full max-w-lg flex-col rounded-t-2xl sm:rounded-2xl border border-line bg-base-900 shadow-2xl overflow-hidden">
+      <div className="flex h-[92dvh] sm:h-[85vh] w-full max-w-lg flex-col rounded-t-2xl sm:rounded-2xl border border-line vidro-forte shadow-2xl overflow-hidden">
         {/* Cabeçalho */}
         <header className="flex items-center justify-between border-b border-line bg-base-800 px-4 py-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand to-brand-hover text-brand-ink shadow-sm">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand to-brand-hover text-on-solid shadow-sm">
               <Sparkles size={20} className="animate-pulse" />
             </div>
             <div>
@@ -250,11 +250,11 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
                 <h2 className="font-display text-lg font-bold uppercase tracking-wide text-ink">
                   BioFIT Coach
                 </h2>
-                <span className="inline-flex items-center rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent">
+                <span className="inline-flex items-center rounded-full bg-accent-soft px-1.5 py-0.5 text-[11px] font-semibold text-accent">
                   DeepSeek
                 </span>
               </div>
-              <p className="text-[11px] text-ink-muted">Treinador com auto-regulação e biomecânica</p>
+              <p className="text-xs text-ink-muted">Treinador com auto-regulação e biomecânica</p>
             </div>
           </div>
 
@@ -294,7 +294,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
 
         {/* Banner de Contexto Ativo */}
         {contextoInicial?.exercicioAtual && (
-          <div className="flex items-center gap-2 border-b border-line bg-base-950/60 px-4 py-2 text-xs">
+          <div className="flex items-center gap-2 border-b border-line bg-base-900/80 px-4 py-2 text-xs">
             <Dumbbell size={14} className="text-brand shrink-0" />
             <div className="truncate text-ink-muted">
               Foco: <span className="font-semibold text-ink">{contextoInicial.exercicioAtual.nome}</span>{" "}
@@ -305,12 +305,12 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
 
         {/* Painel expansível de configuração da chave */}
         {mostrarConfigChave && (
-          <div className="border-b border-line bg-base-800/90 p-4 animate-slide-down">
+          <div className="border-b border-line bg-base-800/90 p-4 anim-revelar">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-ink">
                 Chave da API DeepSeek
               </span>
-              <span className="text-[11px] text-ink-faint">Armazenada com segurança no seu navegador</span>
+              <span className="text-xs text-ink-faint">Armazenada com segurança no seu navegador</span>
             </div>
             <div className="flex gap-2">
               <input
@@ -323,12 +323,12 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
               <button
                 type="button"
                 onClick={handleSalvarChave}
-                className="flex items-center gap-1 rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-brand-ink transition-transform active:scale-95 hover:bg-brand-hover"
+                className="flex items-center gap-1 rounded-lg bg-brand px-3 py-2 text-xs font-semibold text-on-solid transition-transform active:scale-95 hover:bg-brand-hover"
               >
                 {chaveSalvaComSucesso ? <Check size={14} /> : "Salvar"}
               </button>
             </div>
-            <p className="mt-2 text-[11px] text-ink-muted">
+            <p className="mt-2 text-xs text-ink-muted">
               Também pode ser configurada no arquivo <code className="rounded bg-base-700 px-1 text-ink">.env.local</code> como <code className="rounded bg-base-700 px-1 text-brand">DEEPSEEK_API_KEY</code>.
             </p>
           </div>
@@ -368,7 +368,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
               </p>
 
               <div className="mt-6 w-full space-y-1.5 text-left">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
+                <span className="text-xs font-semibold uppercase tracking-wider text-ink-faint">
                   Ações Rápidas de Treino:
                 </span>
                 <div className="flex flex-col gap-1.5">
@@ -377,7 +377,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
                       key={idx}
                       type="button"
                       onClick={() => enviarMensagem(s.prompt)}
-                      className="rounded-xl border border-line bg-base-800/80 p-2.5 text-xs text-ink text-left transition-colors hover:border-brand/60 hover:bg-base-700 active:scale-[0.99]"
+                      className="rounded-xl border vidro p-2.5 text-xs text-ink text-left transition-colors hover:border-brand/60 hover:bg-base-700 active:scale-[0.99]"
                     >
                       {s.label}
                     </button>
@@ -395,8 +395,8 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
                   className={cn(
                     "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm",
                     msg.role === "user"
-                      ? "rounded-br-xs bg-brand text-brand-ink font-medium"
-                      : "rounded-bl-xs border border-line bg-base-800 text-ink",
+                      ? "rounded-br-sm bg-brand text-on-solid font-medium"
+                      : "rounded-bl-sm border border-line bg-base-800 text-ink",
                   )}
                 >
                   {msg.content ? (
@@ -407,7 +407,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
                     </span>
                   )}
                 </div>
-                <span className="mt-1 px-1 text-[10px] text-ink-faint">
+                <span className="mt-1 px-1 text-[11px] text-ink-faint">
                   {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </span>
               </div>
@@ -418,14 +418,14 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
 
         {/* Chips de Sugestão se já existirem mensagens */}
         {mensagens.length > 0 && (
-          <div className="flex gap-1.5 overflow-x-auto border-t border-line bg-base-950/40 px-3 py-2 no-scrollbar">
+          <div className="flex gap-1.5 overflow-x-auto border-t border-line bg-base-900/70 px-3 py-2 no-scrollbar">
             {SUGESTOES_RAPIDAS.slice(0, 3).map((s, idx) => (
               <button
                 key={idx}
                 type="button"
                 disabled={carregando}
                 onClick={() => enviarMensagem(s.prompt)}
-                className="shrink-0 rounded-full border border-line bg-base-800 px-2.5 py-1 text-[11px] text-ink-muted transition-colors hover:border-brand/40 hover:text-ink active:scale-95 disabled:opacity-50"
+                className="shrink-0 rounded-full border border-line bg-base-800 px-2.5 py-1 text-xs text-ink-muted transition-colors hover:border-brand/40 hover:text-ink active:scale-95 disabled:opacity-50"
               >
                 {s.label}
               </button>
@@ -447,9 +447,9 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
               onClick={toggleGravacao}
               title={gravandoAudio ? "Parar gravação" : "Falar mensagem por voz"}
               className={cn(
-                "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line transition-all",
+                "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-line transition",
                 gravandoAudio
-                  ? "bg-danger text-danger-ink border-danger animate-pulse"
+                  ? "bg-danger text-on-solid border-danger animate-pulse"
                   : "bg-base-700 text-ink-muted hover:text-ink hover:border-brand/50",
               )}
             >
@@ -468,7 +468,7 @@ export function AiCoachModal({ aberto, onFechar, contextoInicial }: AiCoachModal
             <button
               type="submit"
               disabled={carregando || !inputTexto.trim()}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand text-brand-ink transition-all hover:bg-brand-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand text-on-solid transition hover:bg-brand-hover active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {carregando ? <RefreshCw size={18} className="animate-spin" /> : <Send size={18} />}
             </button>

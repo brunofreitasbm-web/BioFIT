@@ -9,3 +9,9 @@ dist/
 
 .vercel
 .env*
+
+# Dados pessoais: nunca versionar
+apps/treino/.local/
+apps/treino/public/garmin-data.json
+bioimpedância Bruno/
+*.db

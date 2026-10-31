@@ -29,7 +29,7 @@ export function ImagemExercicio({ pasta, titulo, onClose }: { pasta: string; tit
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={src(1)} alt="" aria-hidden="true" className="anim-alternar-foto absolute inset-0 h-full w-full object-contain" />
         </div>
-        <p className="mt-2 text-center text-[11px] text-white/70">Referência do movimento; a sua máquina pode ser diferente.</p>
+        <p className="mt-2 text-center text-xs text-white/70">Referência do movimento; a sua máquina pode ser diferente.</p>
       </div>
     </div>
   );

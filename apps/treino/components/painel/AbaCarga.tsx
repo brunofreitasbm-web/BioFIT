@@ -30,7 +30,7 @@ export function AbaCarga({ d }: { d: DadosPainel }) {
     t.zonasFcS.forEach((s, i) => (z[i] += s / 60));
     semanas.set(k, z);
   }
-  const CLASSES = ["fill-base-500", "fill-grupo-costas", "fill-accent", "fill-brand", "fill-danger"];
+  const CLASSES = ["fill-base-500", "fill-accent/50", "fill-accent", "fill-brand", "fill-danger"];
 
   const garminAguda = d.painel.dias.flatMap((x) => (ehNum(x.cargaAguda) ? [{ data: x.data, valor: x.cargaAguda }] : []));
   const garminCronica = d.painel.dias.flatMap((x) => (ehNum(x.cargaCronica) ? [{ data: x.data, valor: x.cargaCronica }] : []));

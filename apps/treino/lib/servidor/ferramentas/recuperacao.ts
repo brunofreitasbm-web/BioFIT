@@ -1,6 +1,6 @@
 import { media } from "@/lib/recuperacao/estatistica";
 import { forcaPorDia, montarDadosPainel, type DadosPainel } from "@/lib/recuperacao/painel";
-import { lerGarminSupabase, montarPainelGarmin } from "../garmin";
+import { lerGarminPainel, montarPainelGarmin } from "../garminPainel";
 import { numArg, type Contexto, type FerramentaLeitura } from "./comum";
 
 // Recuperação (Garmin) cruzada com as séries de força do BioFIT. Lê as tabelas biofit_garmin_*
@@ -10,7 +10,7 @@ const SEM_GARMIN = { disponivel: false, mensagem: "Sem dados Garmin no servidor.
 const r1 = (n: number | null) => (n === null ? null : Math.round(n * 10) / 10);
 
 async function carregar(ctx: Contexto, dias: number): Promise<DadosPainel | null> {
-  const brutos = await lerGarminSupabase(dias);
+  const brutos = await lerGarminPainel(dias);
   if (!brutos || brutos.diario.length === 0) return null;
   return montarDadosPainel(montarPainelGarmin(brutos), forcaPorDia(ctx.dados.log));
 }

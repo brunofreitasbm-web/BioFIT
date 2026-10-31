@@ -78,14 +78,14 @@ export function TimerDescanso() {
     <div
       role="timer"
       aria-live={terminou ? "assertive" : "off"}
-      className="fixed inset-x-0 z-20 mx-auto max-w-xl px-3"
-      style={{ bottom: "calc(4.75rem + env(safe-area-inset-bottom))" }}
+      className="timer-descanso fixed inset-x-0 z-20 mx-auto max-w-xl px-3"
+      style={{ bottom: "calc(5.5rem + env(safe-area-inset-bottom))" }}
     >
       <div
         className={
           terminou
             ? "anim-confirmar overflow-hidden rounded-xl border border-accent bg-accent text-on-solid shadow-panel"
-            : "overflow-hidden rounded-xl border border-brand/40 bg-base-800 shadow-panel"
+            : "vidro-forte overflow-hidden rounded-xl border shadow-nav ring-1 ring-brand/40"
         }
       >
         <div className="flex items-center gap-2 px-3 py-2">
@@ -98,7 +98,7 @@ export function TimerDescanso() {
             <p className={terminou ? "text-sm font-bold" : "text-xl font-bold tabular-nums tracking-tight text-ink"}>
               {terminou ? "Descanso terminado — próxima série" : formatarMMSS(restante)}
             </p>
-            <p className={terminou ? "truncate text-[11px] opacity-90" : "truncate text-[11px] text-ink-muted"}>
+            <p className={terminou ? "truncate text-xs opacity-90" : "truncate text-xs text-ink-muted"}>
               {descanso.rotulo}
             </p>
           </div>

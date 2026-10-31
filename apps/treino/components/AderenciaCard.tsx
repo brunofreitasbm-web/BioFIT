@@ -21,7 +21,7 @@ export function AderenciaCard({ aderencia }: { aderencia: StatusAderencia }) {
     <div
       className={cn(
         "mb-3 rounded-xl border p-3",
-        aderencia.decisao === "CAIR_UPPER_LOWER" ? "border-danger/30 bg-danger-soft" : "border-line bg-base-800 shadow-panel",
+        aderencia.decisao === "CAIR_UPPER_LOWER" ? "border-danger/30 bg-danger-soft" : "vidro",
       )}
     >
       <div className="mb-1 flex items-center justify-between text-xs">
@@ -41,7 +41,7 @@ export function AderenciaCard({ aderencia }: { aderencia: StatusAderencia }) {
           style={{ left: `${(ADERENCIA_MINIMO / ADERENCIA_META) * 100}%` }}
         />
       </div>
-      <p className={cn("text-[11px]", aderencia.decisao === "CAIR_UPPER_LOWER" ? "font-medium text-danger" : "text-ink-muted")}>
+      <p className={cn("text-xs", aderencia.decisao === "CAIR_UPPER_LOWER" ? "font-medium text-danger" : "text-ink-muted")}>
         {TEXTO_DECISAO[aderencia.decisao]} · mínimo para manter 5x: {ADERENCIA_MINIMO}
       </p>
     </div>

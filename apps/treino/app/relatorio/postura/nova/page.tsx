@@ -122,7 +122,7 @@ export default function NovaPosturaPage() {
 
       {etapa === "protocolo" && (
         <>
-          <section className="space-y-3 rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+          <section className="space-y-3 rounded-xl border vidro p-4 shadow-sm">
             <div className="flex gap-1.5 rounded-full border border-line bg-base-700 p-1 text-sm font-medium">
               {(["perfil", "frontal"] as VistaPostura[]).map((v) => (
                 <button
@@ -145,7 +145,7 @@ export default function NovaPosturaPage() {
               ))}
               {vista === "perfil" && <li>De lado para a câmera, braços soltos. Depois da foto você marca C7, o ápice da curva e T12 nas costas.</li>}
             </ol>
-            <p className="text-[11px] text-ink-faint">
+            <p className="text-xs text-ink-faint">
               Medida de foto, não diagnóstico. O que vale é a comparação entre sessões feitas do mesmo jeito.
             </p>
           </section>
@@ -191,7 +191,7 @@ export default function NovaPosturaPage() {
               </button>
             ))}
           </div>
-          <section className="space-y-2 rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+          <section className="space-y-2 rounded-xl border vidro p-4 shadow-sm">
             {deteccao === "carregando" && <p className="text-sm text-ink-muted">Detectando a pose… (na primeira vez baixa o modelo, ~20 MB)</p>}
             {deteccao === "sem_pessoa" && <p className="text-sm text-danger">Não achei ninguém na foto. Os pontos estão num gabarito: arraste cada um para o lugar, ou refaça a foto.</p>}
             {deteccao === "falhou" && <p className="text-sm text-danger">Detector indisponível (sem rede na primeira vez?). Marque todos os pontos à mão arrastando.</p>}
@@ -210,14 +210,14 @@ export default function NovaPosturaPage() {
                 ))}
               </ul>
             )}
-            <p className="text-[11px] text-ink-faint">
+            <p className="text-xs text-ink-faint">
               Arraste a partir de qualquer lugar do ponto: o deslocamento do dedo move o ponto e uma lupa mostra o trecho ampliado, com a mira no centro.
             </p>
           </section>
           <section className="grid grid-cols-2 gap-2">
             {MEDIDAS_POR_VISTA[vista].map((m: Medida) => (
-              <div key={m} className="rounded-xl border border-line bg-base-800 p-3 shadow-sm">
-                <p className="text-[11px] uppercase tracking-wide text-ink-faint">{INFO_MEDIDA[m].curto}</p>
+              <div key={m} className="rounded-xl border vidro p-3 shadow-sm">
+                <p className="text-xs uppercase tracking-wide text-ink-faint">{INFO_MEDIDA[m].curto}</p>
                 <p className="font-display text-2xl font-bold tabular-nums text-ink">
                   {fmt(medidas[m])}
                   <span className="text-sm font-medium text-ink-muted">{INFO_MEDIDA[m].unidade}</span>
@@ -247,7 +247,7 @@ export default function NovaPosturaPage() {
 
       {etapa === "salvo" && (
         <>
-          <section className="space-y-2 rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+          <section className="space-y-2 rounded-xl border vidro p-4 shadow-sm">
             <h2 className="flex items-center gap-2 text-base font-semibold text-accent">
               <Check size={ICON.md} aria-hidden="true" /> Captura salva ({salvasHoje}/{CAPTURAS_POR_SESSAO} hoje)
             </h2>
@@ -262,7 +262,7 @@ export default function NovaPosturaPage() {
                 </li>
               ))}
             </ul>
-            <p className="text-[11px] text-ink-faint">A foto foi descartada; só os pontos e os ângulos ficam guardados.</p>
+            <p className="text-xs text-ink-faint">A foto foi descartada; só os pontos e os ângulos ficam guardados.</p>
           </section>
           <div className="flex gap-2">
             <button

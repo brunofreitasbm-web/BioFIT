@@ -34,8 +34,8 @@ export function AbaRecuperacao({ dias }: { dias: DiaRecuperacao[] }) {
             .map((d) => ({
               chave: d.data,
               segmentos: [
-                { rotulo: "Profundo", valor: d.sonoProfundoMin ?? 0, classe: "fill-grupo-costas" },
-                { rotulo: "REM", valor: d.sonoRemMin ?? 0, classe: "fill-grupo-biceps" },
+                { rotulo: "Profundo", valor: d.sonoProfundoMin ?? 0, classe: "fill-brand" },
+                { rotulo: "REM", valor: d.sonoRemMin ?? 0, classe: "fill-accent" },
                 { rotulo: "Leve", valor: d.sonoLeveMin ?? 0, classe: "fill-base-500" },
                 { rotulo: "Acordado", valor: d.sonoAcordadoMin ?? 0, classe: "fill-danger" },
               ],

@@ -1,5 +1,6 @@
 import type { ExercicioEfetivo, GrupoMuscular, SessaoTreino, SlotPrograma, VariacaoExercicio } from "./tipos";
 import { EXERCICIOS_PPL_V4 } from "./arquivo/pplV4";
+import { PROGRAMA_MESOS_23, type DefExercicioMeso } from "./programaMesos23";
 
 // Fonte: "Treinos/programa_ULPPL_meso1.xlsx" (aba "Sessões").
 //
@@ -53,6 +54,11 @@ const SECUNDARIOS: Record<string, Partial<Record<GrupoMuscular, number>>> = {
   "passada-estatica-smith": AGACHAMENTO,
   "elevacao-pelvica-maquina": { Posterior: MEIA },
   "hip-thrust-barra": { Posterior: MEIA },
+  // ids novos dos mesos 2 e 3 (programaMesos23.ts)
+  "remada-baixa-triangulo": PUXADA,
+  "remada-alta-polia-corda": { Deltoides: MEIA },
+  "pullover-polia": { Tríceps: MEIA },
+  "crucifixo-polia-baixa": { Deltoides: MEIA },
 };
 
 // Fotos início/fim do free-exercise-db (Unlicense) — ver NOTICE.md e
@@ -251,13 +257,54 @@ function variacaoDoMeso(slot: SlotPrograma, meso: number): VariacaoExercicio {
   return meso % 2 === 1 ? slot.meso1 : slot.meso2;
 }
 
+// Mesos 2 e 3 do plano de hipertrofia vêm de `programaMesos23.ts` (prescrição própria por
+// exercício). Os demais mesos seguem exatamente a regra original (ímpar = meso1, par = meso2).
+const NOTA_DE_HISTORICO = /^(Último|Histórico|Confirmar|Estagnada|Sem histórico)/;
+
+function variacaoPorId(id: string): VariacaoExercicio | undefined {
+  for (const s of SLOTS) for (const m of [s.meso1, s.meso2]) if (m.id === id) return m;
+  return undefined;
+}
+
+function efetivoDoDef(sessao: SessaoTreino, ordem: number, d: DefExercicioMeso): ExercicioEfetivo {
+  const base = variacaoPorId(d.id);
+  const nome = d.nome ?? base?.nome;
+  if (!nome) throw new Error(`Exercício novo sem nome: ${d.id}`);
+  const notaBase = base && base.notas && !NOTA_DE_HISTORICO.test(base.notas) ? base.notas : "";
+  const partida = d.partida ?? (base?.partida === "peso corporal" ? "peso corporal" : "calibrar");
+  return {
+    sessao,
+    ordem,
+    grupoMuscular: d.grupoMuscular,
+    series: d.series,
+    reps: d.reps,
+    descanso: d.descanso,
+    testeFalha: false,
+    composto: ordem <= 2,
+    pesoCorporal: d.pesoCorporal ?? false,
+    ...(d.bisetCom ? { bisetCom: d.bisetCom } : {}),
+    ...v(d.id, nome, partida, d.notas ?? notaBase, base?.youtubeId ?? null),
+  };
+}
+
 export function getSessaoCompleta(sessao: SessaoTreino, meso: number): ExercicioEfetivo[] {
+  if (meso === 2 || meso === 3) return PROGRAMA_MESOS_23[meso][sessao].map((d, i) => efetivoDoDef(sessao, i + 1, d));
   return SLOTS.filter((s) => s.sessao === sessao)
     .sort((a, b) => a.ordem - b.ordem)
     .map((slot) => {
       const { meso1: _m1, meso2: _m2, ...prescricao } = slot;
       return { ...prescricao, ...variacaoDoMeso(slot, meso) };
     });
+}
+
+// Todos os exercícios que o programa pode apresentar em alguma sessão (SLOTS + mesos 2 e 3).
+export function todasAsVariacoes(): { id: string; nome: string; sessao: SessaoTreino }[] {
+  const out: { id: string; nome: string; sessao: SessaoTreino }[] = [];
+  for (const s of SLOTS) for (const m of [s.meso1, s.meso2]) out.push({ id: m.id, nome: m.nome, sessao: s.sessao });
+  for (const meso of [2, 3] as const) {
+    for (const sessao of SESSOES) for (const ex of getSessaoCompleta(sessao, meso)) out.push({ id: ex.id, nome: ex.nome, sessao });
+  }
+  return out;
 }
 
 export function gruposDaSessao(sessao: SessaoTreino): GrupoMuscular[] {
@@ -277,6 +324,14 @@ for (const e of EXERCICIOS_PPL_V4) CATALOGO.set(e.id, e);
 for (const s of SLOTS) {
   for (const m of [s.meso1, s.meso2]) {
     CATALOGO.set(m.id, { nome: m.nome, grupoMuscular: s.grupoMuscular, secundarios: m.secundarios });
+  }
+}
+// Ids que só existem nos mesos 2 e 3.
+for (const meso of [2, 3] as const) {
+  for (const sessao of SESSOES) {
+    for (const ex of getSessaoCompleta(sessao, meso)) {
+      if (!CATALOGO.has(ex.id)) CATALOGO.set(ex.id, { nome: ex.nome, grupoMuscular: ex.grupoMuscular, secundarios: ex.secundarios });
+    }
   }
 }
 

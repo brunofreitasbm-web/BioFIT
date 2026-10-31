@@ -1,7 +1,7 @@
 // Medidor semicircular 0–100. A cor segue a recomendação, mas o número e o texto também
 // aparecem: a cor nunca é o único canal de informação.
 
-const COR = (v: number) => (v >= 75 ? "stroke-accent" : v >= 55 ? "stroke-brand" : v >= 35 ? "stroke-grupo-deltoides" : "stroke-danger");
+const COR = (v: number) => (v >= 75 ? "stroke-accent" : v >= 55 ? "stroke-brand" : v >= 35 ? "stroke-brand/60" : "stroke-danger");
 
 export function Gauge({ valor, rotulo, sub }: { valor: number | null; rotulo: string; sub?: string }) {
   const R = 70;

@@ -227,17 +227,17 @@ export default function CoachPage() {
   return (
     <div className="flex flex-col min-h-[calc(100dvh-5rem)]">
       {/* Topo */}
-      <header className="sticky top-0 z-10 border-b border-line bg-base-950/80 backdrop-blur-md px-4 py-3">
+      <header className="sticky top-0 z-10 border-b border-line bg-base-900/90 backdrop-blur-md px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand text-brand-ink">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand text-on-solid">
               <Sparkles size={18} />
             </div>
             <div>
               <h1 className="font-display text-base font-bold uppercase tracking-wider text-ink">
                 BioFIT AI Coach
               </h1>
-              <p className="text-[11px] text-ink-muted">DeepSeek V3 · Hipertrofia & Ciência</p>
+              <p className="text-xs text-ink-muted">DeepSeek V3 · Hipertrofia & Ciência</p>
             </div>
           </div>
 
@@ -272,7 +272,7 @@ export default function CoachPage() {
         </div>
 
         {mostrarConfigChave && (
-          <div className="mt-3 rounded-xl border border-line bg-base-800 p-3">
+          <div className="mt-3 rounded-xl border vidro p-3">
             <div className="flex justify-between text-xs text-ink-muted mb-1.5">
               <span>Chave da API DeepSeek</span>
               {chaveSalva && <span className="text-accent flex items-center gap-1"><Check size={12}/> Salva!</span>}
@@ -288,7 +288,7 @@ export default function CoachPage() {
               <button
                 type="button"
                 onClick={salvarChave}
-                className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-brand-ink hover:bg-brand-hover"
+                className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-on-solid hover:bg-brand-hover"
               >
                 Salvar
               </button>
@@ -300,7 +300,7 @@ export default function CoachPage() {
       {/* Conteúdo de Mensagens */}
       <div className="flex-1 space-y-3 p-4 overflow-y-auto">
         {contexto?.statusPrograma && (
-          <div className="flex items-center justify-between rounded-xl border border-line bg-base-800/60 px-3 py-2 text-xs text-ink-muted">
+          <div className="flex items-center justify-between rounded-xl border vidro px-3 py-2 text-xs text-ink-muted">
             <span>
               Meso <strong className="text-ink">{contexto.statusPrograma.meso}</strong> · Rodada{" "}
               <strong className="text-ink">{contexto.statusPrograma.rodada}</strong>
@@ -335,7 +335,7 @@ export default function CoachPage() {
                   key={i}
                   type="button"
                   onClick={() => enviar(p)}
-                  className="rounded-xl border border-line bg-base-800 p-3 text-xs text-ink hover:border-brand/50 hover:bg-base-700 transition-all active:scale-[0.99]"
+                  className="rounded-xl border vidro p-3 text-xs text-ink hover:border-brand/50 hover:bg-base-700 transition active:scale-[0.99]"
                 >
                   {p}
                 </button>
@@ -352,7 +352,7 @@ export default function CoachPage() {
                 className={cn(
                   "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed shadow-sm",
                   msg.role === "user"
-                    ? "bg-brand text-brand-ink font-medium"
+                    ? "bg-brand text-on-solid font-medium"
                     : "border border-line bg-base-800 text-ink",
                 )}
               >
@@ -369,7 +369,7 @@ export default function CoachPage() {
       </div>
 
       {/* Input de envio fixado */}
-      <div className="sticky bottom-14 border-t border-line bg-base-950/90 p-3 backdrop-blur-md">
+      <div className="sticky bottom-[calc(3rem+env(safe-area-inset-bottom))] border-t border-line bg-base-900/95 p-3 backdrop-blur-md">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -381,9 +381,9 @@ export default function CoachPage() {
             type="button"
             onClick={toggleGravacao}
             className={cn(
-              "flex h-11 w-11 items-center justify-center rounded-xl border border-line transition-all shrink-0",
+              "flex h-11 w-11 items-center justify-center rounded-xl border border-line transition shrink-0",
               gravando
-                ? "bg-danger text-danger-ink border-danger animate-pulse"
+                ? "bg-danger text-on-solid border-danger animate-pulse"
                 : "bg-base-800 text-ink-muted hover:text-ink",
             )}
             title="Ditar por voz"
@@ -403,7 +403,7 @@ export default function CoachPage() {
           <button
             type="submit"
             disabled={carregando || !inputTexto.trim()}
-            className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand text-brand-ink transition-all hover:bg-brand-hover active:scale-95 disabled:opacity-40 shrink-0"
+            className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand text-on-solid transition hover:bg-brand-hover active:scale-95 disabled:opacity-40 shrink-0"
           >
             {carregando ? <RefreshCw size={18} className="animate-spin" /> : <Send size={18} />}
           </button>

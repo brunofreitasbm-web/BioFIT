@@ -1,200 +1,46 @@
+import fs from "fs";
+import path from "path";
 import { rpc } from "@/lib/servidor/backup";
-import { montarDadosPainel } from "@/lib/recuperacao/painel";
-import type { GarminRecuperacao } from "@/lib/ai/prompts";
-import type { CurvaIntraday, DiaRecuperacao, PainelGarmin, TipoCurva, TreinoGarmin } from "@/lib/recuperacao/tipos";
+import type { Convertido } from "@/lib/servidor/garminHealth";
 
-// Leitura dos dados Garmin. Fonte principal: RPC `biofit_garmin_janela` (Supabase), que serve
-// a Vercel. Fallback: o JSON local gerado por biofit_garmin_sync.py (só existe em dev).
-// As duas fontes têm o mesmo formato de linha (snake_case das tabelas biofit_garmin_*).
+// Dados do Garmin no formato de `garmin-data.json` (o mesmo que o biofit_garmin_sync.py grava).
+export type LinhaGarmin = Record<string, any>;
 
-export interface LinhaDiario {
-  [campo: string]: unknown;
-  data?: string;
-  sono_minutos?: number | null;
-  sono_score?: number | null;
-  vfc_status?: string | null;
-  vfc_noturna_ms?: number | null;
-  estresse_medio?: number | null;
-  fc_repouso_bpm?: number | null;
-  passos?: number | null;
-  body_battery_acordar?: number | null;
-  body_battery_max?: number | null;
+export interface DadosGarmin {
+  diario: LinhaGarmin[];
+  treinos: LinhaGarmin[];
 }
 
-export type LinhaTreino = Record<string, unknown>;
+const vazio: DadosGarmin = { diario: [], treinos: [] };
 
-export interface LinhaIntraday {
-  data?: unknown;
-  tipo?: unknown;
-  pontos?: unknown;
+// Na Vercel não existe o arquivo do PC: o sync envia à edge function `biofit-garmin-ingest` e o
+// app lê via RPC `biofit_garmin_get` (mesmo segredo do backup). Sem as variáveis do Supabase
+// (dev local), cai no `.local/garmin-data.json` (fora de `public/`, que a Vercel serve; ignorado pelo git).
+export function supabaseConfigurado(): boolean {
+  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY && process.env.BIOFIT_DB_SECRET);
 }
 
-export interface DadosGarminBrutos {
-  diario: LinhaDiario[];
-  treinos: LinhaTreino[];
-  intraday: LinhaIntraday[];
-}
-
-const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
-const horas = (min: unknown): number | null => (num(min) !== null ? Math.round(((min as number) / 60) * 10) / 10 : null);
-
-export function diasAtras(n: number, base = new Date()): string {
-  const d = new Date(base.getTime() - n * 86_400_000);
-  return d.toISOString().slice(0, 10);
-}
-
-export async function lerGarminSupabase(dias = 90): Promise<DadosGarminBrutos | null> {
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY || !process.env.BIOFIT_DB_SECRET) return null;
-  const r = (await rpc("biofit_garmin_janela", { p_inicio: diasAtras(dias), p_fim: diasAtras(0) })) as {
-    diario?: LinhaDiario[];
-    treinos?: LinhaTreino[];
-    intraday?: LinhaIntraday[];
-  } | null;
-  if (!r) return null;
-  return { diario: r.diario ?? [], treinos: r.treinos ?? [], intraday: r.intraday ?? [] };
-}
-
-// Converte linhas brutas no contrato que o GarminCard e o Coach consomem.
-export function montarRespostaGarmin(brutos: DadosGarminBrutos) {
-  const ordenado = [...brutos.diario].sort((a, b) => (b.data || "").localeCompare(a.data || ""));
-  const hoje = ordenado[0];
-  if (!hoje) return null;
-
-  const biometria = {
-    data: hoje.data,
-    bodyBattery: hoje.body_battery_acordar ?? hoje.body_battery_max ?? null,
-    sonoMinutos: hoje.sono_minutos ?? null,
-    sonoHoras: horas(hoje.sono_minutos),
-    sonoScore: hoje.sono_score ?? null,
-    hrvStatus: hoje.vfc_status ?? null,
-    hrvMs: hoje.vfc_noturna_ms ?? null,
-    stress: hoje.estresse_medio ?? null,
-    fcRepouso: hoje.fc_repouso_bpm ?? null,
-    passos: hoje.passos ?? null,
-  };
-
-  const janela = {
-    diario: ordenado
-      .slice(0, 30)
-      .reverse()
-      .map((d) => ({
-        data: d.data,
-        sonoHoras: horas(d.sono_minutos),
-        sonoScore: num(d.sono_score),
-        hrvMs: num(d.vfc_noturna_ms),
-        fcRepouso: num(d.fc_repouso_bpm),
-        passos: num(d.passos),
-        estresse: num(d.estresse_medio),
-        bodyBattery: num(d.body_battery_acordar ?? d.body_battery_max),
-      })),
-    treinos: brutos.treinos.slice(0, 30).map((t) => ({
-      data: typeof t.biofit_sessao_data === "string" ? t.biofit_sessao_data : String(t.inicio_utc ?? "").slice(0, 10),
-      tipo: String(t.tipo ?? ""),
-      duracaoMin: num(t.duracao_s) !== null ? Math.round((t.duracao_s as number) / 60) : null,
-      fcMedia: num(t.fc_media) !== null ? Math.round(t.fc_media as number) : null,
-      calorias: num(t.calorias),
-    })),
-  };
-
-  return { disponivel: true as const, biometria, janela: { ...janela, recuperacao: resumirRecuperacao(brutos) } };
-}
-
-// Prontidão e alertas calculados só com dados Garmin (o servidor não vê as séries de força do
-// navegador; a carga usa apenas o TRIMP do relógio).
-export function resumirRecuperacao(brutos: DadosGarminBrutos): GarminRecuperacao | null {
-  const d = montarDadosPainel(montarPainelGarmin(brutos), []);
-  if (!d) return null;
-  const ultimo = d.painel.dias[d.painel.dias.length - 1];
+function lerArquivoLocal(): DadosGarmin | null {
+  const filePath = path.join(process.cwd(), ".local", "garmin-data.json");
+  if (!fs.existsSync(filePath)) return null;
+  const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
   return {
-    data: d.hoje,
-    prontidaoBiofit: d.prontidaoHoje.score,
-    recomendacao: d.prontidaoHoje.recomendacao,
-    prontidaoGarmin: ultimo.prontidaoGarmin,
-    acwr: d.resumo?.acwr ?? ultimo.acwrGarmin,
-    sonoProfundoMin: ultimo.sonoProfundoMin,
-    sonoRemMin: ultimo.sonoRemMin,
-    alertas: d.insights.filter((i) => i.id === "alerta-precoce" && i.resumo.startsWith("Atenção")).map((i) => i.resumo),
+    diario: Array.isArray(data?.diario) ? data.diario : [],
+    treinos: Array.isArray(data?.treinos) ? data.treinos : [],
   };
 }
 
-// ===== Painel completo (todas as colunas) =====
-
-const txt = (v: unknown): string | null => (typeof v === "string" && v ? v : null);
-
-function dataLocal(t: LinhaTreino): string {
-  return typeof t.biofit_sessao_data === "string" ? t.biofit_sessao_data : String(t.inicio_utc ?? "").slice(0, 10);
+export async function lerGarmin(): Promise<DadosGarmin | null> {
+  if (!supabaseConfigurado()) return lerArquivoLocal();
+  const r = (await rpc("biofit_garmin_get", { p_dias: 60 })) as Partial<DadosGarmin> | null;
+  return {
+    diario: Array.isArray(r?.diario) ? r.diario : vazio.diario,
+    treinos: Array.isArray(r?.treinos) ? r.treinos : vazio.treinos,
+  };
 }
 
-function zonas(v: unknown): number[] | null {
-  return Array.isArray(v) && v.length === 5 && v.every((x) => typeof x === "number") ? (v as number[]) : null;
-}
-
-export function montarPainelGarmin(brutos: DadosGarminBrutos): PainelGarmin {
-  const dias: DiaRecuperacao[] = brutos.diario
-    .filter((d) => typeof d.data === "string")
-    .sort((a, b) => String(a.data).localeCompare(String(b.data)))
-    .map((d) => ({
-      data: String(d.data),
-      hrvMs: num(d.vfc_noturna_ms),
-      hrvStatus: txt(d.vfc_status),
-      hrvMediaSemanal: num(d.vfc_media_semanal_ms),
-      hrvBaseBaixo: num(d.vfc_base_baixo_ms),
-      hrvBaseAlto: num(d.vfc_base_alto_ms),
-      fcRepouso: num(d.fc_repouso_bpm),
-      sonoMin: num(d.sono_minutos),
-      sonoScore: num(d.sono_score),
-      sonoProfundoMin: num(d.sono_profundo_min),
-      sonoRemMin: num(d.sono_rem_min),
-      sonoLeveMin: num(d.sono_leve_min),
-      sonoAcordadoMin: num(d.sono_acordado_min),
-      sonoInicioUtc: txt(d.sono_inicio_utc),
-      sonoFimUtc: txt(d.sono_fim_utc),
-      respiracao: num(d.respiracao_media),
-      spo2Media: num(d.spo2_media),
-      spo2Min: num(d.spo2_min),
-      bodyBatteryAcordar: num(d.body_battery_acordar),
-      bodyBatteryMax: num(d.body_battery_max),
-      estresse: num(d.estresse_medio),
-      passos: num(d.passos),
-      prontidaoGarmin: num(d.prontidao_score),
-      prontidaoNivel: txt(d.prontidao_nivel),
-      statusTreino: txt(d.status_treino),
-      cargaAguda: num(d.carga_aguda),
-      cargaCronica: num(d.carga_cronica),
-      acwrGarmin: num(d.acwr),
-      vo2max: num(d.vo2max),
-      intensidadeMod: num(d.minutos_intensidade_mod),
-      intensidadeVig: num(d.minutos_intensidade_vig),
-      caloriasAtivas: num(d.calorias_ativas),
-    }));
-
-  const treinos: TreinoGarmin[] = brutos.treinos
-    .filter((t) => typeof t.inicio_utc === "string")
-    .map((t) => ({
-      data: dataLocal(t),
-      inicioUtc: String(t.inicio_utc),
-      tipo: String(t.tipo ?? ""),
-      duracaoMin: num(t.duracao_s) !== null ? Math.round((t.duracao_s as number) / 60) : null,
-      fcMedia: num(t.fc_media),
-      fcMax: num(t.fc_max),
-      calorias: num(t.calorias),
-      teAerobico: num(t.te_aerobico),
-      teAnaerobico: num(t.te_anaerobico),
-      zonasFcS: zonas(t.zonas_fc_s),
-      distanciaM: num(t.distancia_m),
-      potenciaMedia: num(t.potencia_media),
-    }))
-    .sort((a, b) => b.inicioUtc.localeCompare(a.inicioUtc));
-
-  const intraday: CurvaIntraday[] = brutos.intraday
-    .filter((i) => typeof i.data === "string" && (i.tipo === "body_battery" || i.tipo === "estresse") && Array.isArray(i.pontos))
-    .map((i) => ({
-      data: String(i.data),
-      tipo: i.tipo as TipoCurva,
-      pontos: (i.pontos as unknown[]).filter(
-        (p): p is [number, number] => Array.isArray(p) && typeof p[0] === "number" && typeof p[1] === "number",
-      ),
-    }));
-
-  return { dias, treinos, intraday };
+// Grava o que o webhook da Garmin Health API entregou (merge no banco: campo nulo não apaga).
+export async function gravarGarmin(c: Pick<Convertido, "diario" | "treinos">): Promise<{ diario: number; treinos: number }> {
+  const r = (await rpc("biofit_garmin_put", { p_diario: c.diario, p_treinos: c.treinos })) as { diario?: number; treinos?: number } | null;
+  return { diario: r?.diario ?? 0, treinos: r?.treinos ?? 0 };
 }

@@ -70,7 +70,7 @@ export default function CorpoPage() {
       </header>
 
       {regs !== null && regs.length === 0 && (
-        <section className="rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+        <section className="rounded-xl border vidro p-4 shadow-sm">
           <EstadoVazio
             Icone={Scale}
             texto="Nenhuma bioimpedância importada. Peça ao Claude: “importa minha última bioimpedância”. Aqui aparece depois do próximo sync."
@@ -80,7 +80,7 @@ export default function CorpoPage() {
 
       {regs && regs.length > 0 && analise && (
         <>
-          <section className="space-y-2 rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+          <section className="space-y-2 rounded-xl border vidro p-4 shadow-sm">
             <div className="flex items-center justify-between gap-2">
               <h2
                 className={cn(
@@ -101,12 +101,12 @@ export default function CorpoPage() {
                 <span>{a}</span>
               </p>
             ))}
-            <p className="text-[11px] text-ink-faint">
+            <p className="text-xs text-ink-faint">
               A bioimpedância oscila com hidratação e hora do dia: olhe a tendência de várias medições, não uma só.
             </p>
           </section>
 
-          <section className="space-y-3 rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+          <section className="space-y-3 rounded-xl border vidro p-4 shadow-sm">
             <div className="flex flex-wrap gap-2">
               {METRICAS.map((m) => (
                 <button
@@ -138,7 +138,7 @@ export default function CorpoPage() {
           </section>
 
           {segmentos && (
-            <section className="space-y-3 rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+            <section className="space-y-3 rounded-xl border vidro p-4 shadow-sm">
               <h2 className="text-base font-semibold text-ink">Massa magra por segmento</h2>
               <ul className="divide-y divide-line text-sm">
                 {segmentos.map((s) => (
@@ -156,11 +156,11 @@ export default function CorpoPage() {
                   </li>
                 ))}
               </ul>
-              <p className="text-[11px] text-ink-faint">Variação desde a primeira medição da janela analisada.</p>
+              <p className="text-xs text-ink-faint">Variação desde a primeira medição da janela analisada.</p>
             </section>
           )}
 
-          <section className="space-y-3 rounded-xl border border-line bg-base-800 p-4 shadow-sm">
+          <section className="space-y-3 rounded-xl border vidro p-4 shadow-sm">
             <h2 className="text-base font-semibold text-ink">Medições</h2>
             <ul className="divide-y divide-line text-sm">
               {[...regs].reverse().map((r) => (

@@ -90,7 +90,7 @@ export function BioimpedanciaCard({ onAtualizar }: { onAtualizar?: () => void })
   }
 
   return (
-    <section className="mb-4 rounded-xl border border-line bg-base-800/90 p-3" aria-label="Bioimpedância">
+    <section className="mb-4 rounded-xl border vidro p-3" aria-label="Bioimpedância">
       <div className="mb-2 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <Scale size={15} className="text-brand" />
@@ -108,7 +108,7 @@ export function BioimpedanciaCard({ onAtualizar }: { onAtualizar?: () => void })
 
       {resumo ? (
         <>
-          <p className="mb-2 text-[11px] text-ink-faint">
+          <p className="mb-2 text-xs text-ink-faint">
             Última: {resumo.atual.data}
             {resumo.anterior && resumo.diasEntre != null && ` · variação vs ${resumo.diasEntre} dias antes`}
             {` · ${resumo.total} medição(ões)`}
@@ -125,15 +125,15 @@ export function BioimpedanciaCard({ onAtualizar }: { onAtualizar?: () => void })
                     : d > 0;
               return (
                 <div key={c.chave} className="rounded-lg border border-line/60 bg-base-900/60 p-2">
-                  <span className="block text-[11px] text-ink-muted">{c.label}</span>
+                  <span className="block text-xs text-ink-muted">{c.label}</span>
                   <span className="font-display text-base font-bold text-ink">
                     {valor}
-                    <span className="ml-0.5 text-[10px] font-normal text-ink-faint">{c.unidade}</span>
+                    <span className="ml-0.5 text-[11px] font-normal text-ink-faint">{c.unidade}</span>
                   </span>
                   {d != null && (
                     <span
                       className={cn(
-                        "flex items-center gap-0.5 text-[11px] font-medium",
+                        "flex items-center gap-0.5 text-xs font-medium",
                         bom === null ? "text-ink-faint" : bom ? "text-accent" : "text-danger",
                       )}
                     >
@@ -146,7 +146,7 @@ export function BioimpedanciaCard({ onAtualizar }: { onAtualizar?: () => void })
               );
             })}
           </div>
-          <button type="button" onClick={excluir} className="mt-2 text-[11px] text-ink-faint underline hover:text-danger">
+          <button type="button" onClick={excluir} className="mt-2 text-xs text-ink-faint underline hover:text-danger">
             Apagar última medição
           </button>
         </>
@@ -171,7 +171,7 @@ export function BioimpedanciaCard({ onAtualizar }: { onAtualizar?: () => void })
           </label>
           <div className="grid grid-cols-2 gap-2">
             {CAMPOS.map((c) => (
-              <label key={c.chave} className="text-[11px] text-ink-muted">
+              <label key={c.chave} className="text-xs text-ink-muted">
                 {c.label} ({c.unidade})
                 <input
                   type="text"
@@ -183,11 +183,11 @@ export function BioimpedanciaCard({ onAtualizar }: { onAtualizar?: () => void })
               </label>
             ))}
           </div>
-          {erro && <p role="alert" className="mt-2 text-[11px] text-danger">{erro}</p>}
+          {erro && <p role="alert" className="mt-2 text-xs text-danger">{erro}</p>}
           <button
             type="button"
             onClick={salvar}
-            className="mt-3 min-h-11 w-full rounded-lg bg-brand text-sm font-semibold text-brand-ink hover:bg-brand-hover"
+            className="mt-3 min-h-11 w-full rounded-lg bg-brand text-sm font-semibold text-on-solid hover:bg-brand-hover"
           >
             Salvar medição
           </button>

@@ -68,7 +68,7 @@ export default function PainelPage() {
                 type="button"
                 onClick={() => setPeriodo(p.dias)}
                 aria-pressed={periodo === p.dias}
-                className={cn("rounded-full px-3 py-1.5", periodo === p.dias ? "bg-brand text-brand-ink" : "text-ink-muted hover:text-ink")}
+                className={cn("rounded-full px-3 py-1.5", periodo === p.dias ? "bg-brand text-on-solid" : "text-ink-muted hover:text-ink")}
               >
                 {p.rotulo}
               </button>
@@ -85,7 +85,7 @@ export default function PainelPage() {
             role="tab"
             aria-selected={aba === a}
             onClick={() => setAba(a)}
-            className={cn("flex-1 whitespace-nowrap rounded-full px-4 py-2", aba === a ? "bg-brand text-brand-ink shadow-sm" : "text-ink-muted hover:text-ink")}
+            className={cn("flex-1 whitespace-nowrap rounded-full px-4 py-2", aba === a ? "bg-brand text-on-solid shadow-sm" : "text-ink-muted hover:text-ink")}
           >
             {a}
           </button>

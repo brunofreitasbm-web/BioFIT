@@ -13,7 +13,8 @@ Primeiro uso (pede e-mail, senha e código MFA no terminal; a senha NÃO fica
 salva, só os tokens em ~/.garminconnect):
     python biofit_garmin_sync.py --login
 
-Uso diário (usa os tokens salvos, sem senha):
+Uso diário (usa os tokens salvos, sem senha). O app na Vercel lê do Supabase, então o
+token é obrigatório (no Windows, uma vez: setx BIOFIT_GARMIN_INGEST_TOKEN "<token>"):
     export BIOFIT_GARMIN_INGEST_TOKEN="o mesmo valor cadastrado no Supabase"
     python biofit_garmin_sync.py              # últimos 3 dias
     python biofit_garmin_sync.py --dias 60    # últimos 60 dias
@@ -280,7 +281,9 @@ def main():
 
     token = os.environ.get("BIOFIT_GARMIN_INGEST_TOKEN", "")
     if not token and not args.dry_run:
-        print("Aviso: BIOFIT_GARMIN_INGEST_TOKEN não definido. Dados salvos localmente no app, envio ao Supabase ignorado.")
+        # Sem token o app publicado (Vercel) não recebe nada: falha alto e cedo, não em silêncio.
+        sys.exit("ERRO: BIOFIT_GARMIN_INGEST_TOKEN não definido; nada foi enviado ao Supabase. "
+                 "Defina uma vez no Windows: setx BIOFIT_GARMIN_INGEST_TOKEN \"<token>\" e abra um novo terminal.")
 
     api = cliente()
     hoje = date.today()
@@ -327,7 +330,7 @@ def main():
         "diario": [x for x in todo["diario"] if x["data"] >= corte],
         "treinos": [x for x in todo["treinos"] if x["inicio_utc"][:10] >= corte],
     }
-    caminho_local = os.path.join(os.path.dirname(os.path.abspath(__file__)), "apps", "treino", "public", "garmin-data.json")
+    caminho_local = os.path.join(os.path.dirname(os.path.abspath(__file__)), "apps", "treino", ".local", "garmin-data.json")
     try:
         os.makedirs(os.path.dirname(caminho_local), exist_ok=True)
         with open(caminho_local, "w", encoding="utf-8") as f:

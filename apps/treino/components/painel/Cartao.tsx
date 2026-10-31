@@ -4,7 +4,7 @@ import type { Confianca } from "@/lib/recuperacao/tipos";
 
 export function Cartao({ titulo, sub, children, className }: { titulo: string; sub?: string; children: ReactNode; className?: string }) {
   return (
-    <section className={cn("rounded-xl border border-line bg-base-800 p-4", className)}>
+    <section className={cn("rounded-xl border vidro p-4", className)}>
       <h2 className="font-display text-sm font-bold uppercase tracking-wider text-ink">{titulo}</h2>
       {sub && <p className="mb-2 mt-0.5 text-xs text-ink-muted">{sub}</p>}
       <div className={sub ? "" : "mt-2"}>{children}</div>
