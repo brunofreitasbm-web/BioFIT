@@ -85,7 +85,7 @@ export function GarminCard({ biometria, carregando }: GarminCardProps) {
           <span className="font-display text-base font-bold text-ink">
             {sono != null ? `${sono}h` : "—"}
           </span>
-          {biometria?.sonoScore && (
+          {biometria?.sonoScore != null && (
             <span className="block text-[10px] text-ink-faint">Score {biometria.sonoScore}</span>
           )}
         </div>
@@ -99,7 +99,7 @@ export function GarminCard({ biometria, carregando }: GarminCardProps) {
           <span className="font-display text-xs font-bold text-ink capitalize truncate block">
             {hrv ?? (fc ? `${fc} bpm` : "—")}
           </span>
-          {biometria?.hrvMs && (
+          {biometria?.hrvMs != null && (
             <span className="block text-[10px] text-ink-faint">{biometria.hrvMs} ms</span>
           )}
         </div>

@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Dumbbell, LineChart, Sparkles } from "lucide-react";
+import { Activity, Dumbbell, LineChart, Sparkles } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const TABS = [
   { href: "/", label: "Hoje", Icon: Dumbbell },
   { href: "/coach", label: "Coach IA", Icon: Sparkles },
+  { href: "/painel", label: "Painel", Icon: Activity },
   { href: "/relatorio", label: "Relatório", Icon: LineChart },
 ];
 

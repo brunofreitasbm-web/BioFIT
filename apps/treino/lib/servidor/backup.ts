@@ -25,7 +25,7 @@ function config(): { url: string; chave: string; segredo: string } {
   return { url: url.replace(/\/$/, ""), chave, segredo };
 }
 
-async function rpc(nome: string, corpo: Record<string, unknown>): Promise<unknown> {
+export async function rpc(nome: string, corpo: Record<string, unknown>): Promise<unknown> {
   const { url, chave, segredo } = config();
   const res = await fetch(`${url}/rest/v1/rpc/${nome}`, {
     method: "POST",

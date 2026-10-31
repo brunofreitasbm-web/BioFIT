@@ -50,7 +50,7 @@ async function executar(ferramenta: Ferramenta, args: Record<string, unknown>): 
   const ctx = contextoDe(backup);
 
   if (ferramenta.tipo === "leitura") {
-    return texto({ atualizadoEm: backup.atualizadoEm, ...(ferramenta.executar(args, ctx) as object) });
+    return texto({ atualizadoEm: backup.atualizadoEm, ...((await ferramenta.executar(args, ctx)) as object) });
   }
 
   const { entrada, data, mensagem, detalhe } = await ferramenta.escrever(args, ctx);

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Barlow, Barlow_Condensed } from "next/font/google";
 import "./globals.css";
 import { NavTabs } from "@/components/NavTabs";
+import { Shell } from "@/components/Shell";
 import { TimerDescanso } from "@/components/TimerDescanso";
 import { RegistrarSW } from "@/components/RegistrarSW";
 import { IniciarSync } from "@/components/IniciarSync";
@@ -41,11 +42,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR" className={`${display.variable} ${body.variable}`}>
       <body>
-        <div className="mx-auto flex min-h-dvh max-w-xl flex-col">
+        <Shell>
           <main className="flex-1 pb-24">{children}</main>
           <TimerDescanso />
           <NavTabs />
-        </div>
+        </Shell>
         <RegistrarSW />
         <IniciarSync />
       </body>
