@@ -7,8 +7,8 @@ export function AbaCruzamentos({ d }: { d: DadosPainel }) {
   return (
     <div className="space-y-4">
       <p className="rounded-lg border border-line bg-base-800 p-3 text-xs text-ink-muted">
-        Cada leitura mostra quantos pares de dados a sustentam. Com {diasComDados} dias de Garmin, a maioria ainda é indício, não conclusão: correlação não prova causa e só ganha
-        peso com semanas de repetição.
+        O sistema analisa como seu sono, seus treinos e sua rotina conversam entre si. Com {diasComDados} dias de dados registrados,
+        os primeiros padrões começam a aparecer. Quanto mais semanas de uso contínuo, mais confiáveis e personalizadas ficam as descobertas.
       </p>
       <div className="grid gap-4 md:grid-cols-2">
         {d.insights.map((i) => (

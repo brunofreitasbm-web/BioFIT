@@ -48,10 +48,10 @@ export function recomendacaoDe(score: number): Recomendacao {
 }
 
 const TEXTOS: Record<Recomendacao, string> = {
-  pesado: "Pronto para carga alta: pode buscar as séries de topo.",
-  moderado: "Treino normal. Evite falhar nas primeiras séries.",
-  leve: "Reduza o volume em cerca de 30% ou mantenha a carga com RIR maior.",
-  recuperar: "Priorize descanso, sono e caminhada leve.",
+  pesado: "Seu corpo está bem recuperado: pode treinar com intensidade cheia e cargas altas.",
+  moderado: "Boa recuperação: faça seu treino normalmente no ritmo planejado.",
+  leve: "Recuperação moderada: reduza um pouco o volume e guarde 2 a 3 repetições de reserva antes da falha.",
+  recuperar: "Corpo cansado: priorize descanso, boa noite de sono e no máximo caminhada leve.",
 };
 
 // Neutro (no seu normal) = 70: um dia comum cai em "moderado"; só acima do normal chega a "pesado".
@@ -63,7 +63,7 @@ function baseAnterior(dias: DiaRecuperacao[], data: string, campo: (d: DiaRecupe
 }
 
 function notaSono(d: DiaRecuperacao): { nota: number; detalhe: string } | null {
-  if (!ehNum(d.sonoMin)) return ehNum(d.sonoScore) ? { nota: d.sonoScore, detalhe: `score Garmin ${d.sonoScore}` } : null;
+  if (!ehNum(d.sonoMin)) return ehNum(d.sonoScore) ? { nota: d.sonoScore, detalhe: `Nota Garmin: ${d.sonoScore}/100` } : null;
   const duracao = limitar(d.sonoMin / 480, 0, 1); // meta de 8 h
   const horas = arred(d.sonoMin / 60);
   if (ehNum(d.sonoProfundoMin) && ehNum(d.sonoRemMin)) {
@@ -71,10 +71,10 @@ function notaSono(d: DiaRecuperacao): { nota: number; detalhe: string } | null {
     const qualidade = limitar(restaurador / 0.4, 0, 1);
     return {
       nota: Math.round(100 * (0.6 * duracao + 0.4 * qualidade)),
-      detalhe: `${horas} h, ${Math.round(restaurador * 100)}% profundo+REM`,
+      detalhe: `${horas} h de sono (${Math.round(restaurador * 100)}% de sono reparador)`,
     };
   }
-  return { nota: Math.round(100 * duracao), detalhe: `${horas} h` };
+  return { nota: Math.round(100 * duracao), detalhe: `${horas} h de sono` };
 }
 
 // `carga72` vem de carga.ts (carga72Relativa). 1 = habitual; ≥ 2 = o dobro do normal.
@@ -91,34 +91,36 @@ export function calcularProntidao(
     const baseHrv = baseAnterior(dias, data, (d) => d.hrvMs);
     const zHrv = zscore(dia.hrvMs, baseHrv);
     if (zHrv !== null) {
-      brutos.push({ chave: "hrv", rotulo: "VFC", nota: Math.round(notaZ(zHrv)), detalhe: `${dia.hrvMs} ms (z ${arred(zHrv)})` });
+      const situacao = zHrv >= 0.5 ? "acima do habitual" : zHrv >= -0.5 ? "no padrão normal" : "abaixo do habitual";
+      brutos.push({ chave: "hrv", rotulo: "VFC", nota: Math.round(notaZ(zHrv)), detalhe: `${dia.hrvMs} ms (${situacao})` });
     } else if (ehNum(dia.hrvMs) && ehNum(dia.hrvMediaSemanal) && dia.hrvMediaSemanal > 0) {
       const razao = dia.hrvMs / dia.hrvMediaSemanal;
       brutos.push({
         chave: "hrv",
         rotulo: "VFC",
         nota: Math.round(limitar(70 + (razao - 1) * 250)),
-        detalhe: `${dia.hrvMs} ms vs média semanal ${dia.hrvMediaSemanal}`,
+        detalhe: `${dia.hrvMs} ms (média da semana: ${dia.hrvMediaSemanal} ms)`,
       });
     }
 
     const zFc = zscore(dia.fcRepouso, baseAnterior(dias, data, (d) => d.fcRepouso));
     if (zFc !== null) {
-      brutos.push({ chave: "fcRepouso", rotulo: "FC de repouso", nota: Math.round(notaZ(zFc, -1)), detalhe: `${dia.fcRepouso} bpm (z ${arred(zFc)})` });
+      const situacaoFc = zFc <= 0 ? "ritmo tranquilo" : "um pouco acelerado";
+      brutos.push({ chave: "fcRepouso", rotulo: "FC de repouso", nota: Math.round(notaZ(zFc, -1)), detalhe: `${dia.fcRepouso} bpm (${situacaoFc})` });
     }
 
     const sono = notaSono(dia);
     if (sono) brutos.push({ chave: "sono", rotulo: "Sono", nota: Math.round(sono.nota), detalhe: sono.detalhe });
 
     if (ehNum(dia.bodyBatteryAcordar)) {
-      brutos.push({ chave: "bodyBattery", rotulo: "Body Battery", nota: dia.bodyBatteryAcordar, detalhe: `${dia.bodyBatteryAcordar}/100 ao acordar` });
+      brutos.push({ chave: "bodyBattery", rotulo: "Body Battery", nota: dia.bodyBatteryAcordar, detalhe: `${dia.bodyBatteryAcordar}/100 de energia ao acordar` });
     }
   }
 
   if (ehNum(opcoes.carga72)) {
     const r = opcoes.carga72;
     // até 1,0 do habitual = 100; 1,5 = 50; ≥ 2,0 = 0
-    brutos.push({ chave: "carga", rotulo: "Carga 72 h", nota: Math.round(limitar(100 - (r - 1) * 100)), detalhe: `${arred(r, 2)}× o habitual` });
+    brutos.push({ chave: "carga", rotulo: "Carga 72 h", nota: Math.round(limitar(100 - (r - 1) * 100)), detalhe: `${arred(r, 1)}× o cansaço habitual recente` });
   }
 
   const diasDeBase = baseAnterior(dias, data, (d) => d.hrvMs).filter(ehNum).length;

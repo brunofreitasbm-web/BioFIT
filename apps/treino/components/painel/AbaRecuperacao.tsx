@@ -18,39 +18,48 @@ export function AbaRecuperacao({ dias }: { dias: DiaRecuperacao[] }) {
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <Cartao titulo="VFC noturna" sub={banda.length ? "Faixa cinza = seu normal (Garmin)" : undefined}>
+      <Cartao
+        titulo="Recuperação do coração durante o sono (VFC)"
+        sub={banda.length ? "A VFC mede o descanso do corpo. A faixa cinza é o seu padrão normal do relógio." : "A VFC (variabilidade da frequência cardíaca) reflete o descanso do organismo."}
+      >
         <LinhaSerie pontos={serie(dias, (d) => d.hrvMs)} banda={banda} rotulo="VFC" unidade="ms" cor="accent" />
       </Cartao>
-      <Cartao titulo="FC de repouso" sub="Subida de 3+ bpm sobre o normal costuma indicar cansaço ou doença">
-        <LinhaSerie pontos={serie(dias, (d) => d.fcRepouso)} rotulo="FC de repouso" unidade="bpm" cor="danger" />
+      <Cartao
+        titulo="Batimentos cardíacos em repouso"
+        sub="Seus batimentos dormindo. Subir 3+ bpm acima do seu habitual costuma indicar cansaço acumulado ou início de resfriado."
+      >
+        <LinhaSerie pontos={serie(dias, (d) => d.fcRepouso)} rotulo="Batimentos de repouso" unidade="bpm" cor="danger" />
       </Cartao>
-      <Cartao titulo="Sono por fase" sub={temFases ? "Minutos por noite" : "Fases do sono só existem nos dias sincronizados após a coleta ampliada"}>
+      <Cartao
+        titulo="Fases do sono em cada noite"
+        sub={temFases ? "Minutos dormidos por noite (fases profunda e REM são as que mais recuperam o corpo e a mente)." : "Fases do sono detalhadas estão disponíveis nas sincronizações recentes."}
+      >
         <BarrasEmpilhadas
-          rotulo="Sono"
+          rotulo="Tempo de sono"
           unidade="min"
           barras={dias
             .filter((d) => ehNum(d.sonoProfundoMin))
             .map((d) => ({
               chave: d.data,
               segmentos: [
-                { rotulo: "Profundo", valor: d.sonoProfundoMin ?? 0, classe: "fill-brand" },
-                { rotulo: "REM", valor: d.sonoRemMin ?? 0, classe: "fill-accent" },
+                { rotulo: "Profundo (corpo)", valor: d.sonoProfundoMin ?? 0, classe: "fill-brand" },
+                { rotulo: "REM (mente)", valor: d.sonoRemMin ?? 0, classe: "fill-accent" },
                 { rotulo: "Leve", valor: d.sonoLeveMin ?? 0, classe: "fill-base-500" },
                 { rotulo: "Acordado", valor: d.sonoAcordadoMin ?? 0, classe: "fill-danger" },
               ],
             }))}
         />
       </Cartao>
-      <Cartao titulo="Body Battery ao acordar" sub="Quanto da bateria o sono recarregou">
-        <LinhaSerie pontos={serie(dias, (d) => d.bodyBatteryAcordar)} rotulo="Body Battery" unidade="" faixaIdeal={{ de: 70, ate: 100 }} />
+      <Cartao titulo="Bateria de energia ao acordar" sub="O quanto seu sono conseguiu recarregar a sua energia para o dia (ideal: 70 a 100)">
+        <LinhaSerie pontos={serie(dias, (d) => d.bodyBatteryAcordar)} rotulo="Energia corporal" unidade="" faixaIdeal={{ de: 70, ate: 100 }} />
       </Cartao>
-      <Cartao titulo="Respiração noturna" sub="Alta fora do padrão, com FC alta, é o sinal mais precoce de doença">
+      <Cartao titulo="Ritmo de respiração no sono" sub="Respirações por minuto. Aumento fora do comum com batimentos altos é o primeiro sinal de estresse ou início de infecção.">
         <LinhaSerie pontos={serie(dias, (d) => d.respiracao)} rotulo="Respiração" unidade="rpm" />
       </Cartao>
-      <Cartao titulo="Estresse médio do dia">
+      <Cartao titulo="Nível médio de estresse no dia" sub="Escala de 0 a 100: mede o quanto sua rotina exigiu do coração ao longo das 24 horas.">
         <LinhaSerie pontos={serie(dias, (d) => d.estresse)} rotulo="Estresse" unidade="" cor="danger" />
       </Cartao>
-      <Cartao titulo="Passos por dia">
+      <Cartao titulo="Passos e movimentação diária" sub="Total de passos registrados pelo relógio em cada dia.">
         <LinhaSerie pontos={serie(dias, (d) => d.passos)} rotulo="Passos" unidade="" cor="brand" />
       </Cartao>
     </div>

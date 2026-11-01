@@ -22,13 +22,13 @@ const MIN_PARES = 8;
 const porData = (dias: DiaRecuperacao[]) => new Map(dias.map((d) => [d.data, d]));
 
 function semDados(id: string, titulo: string, falta: string): Insight {
-  return { id, titulo, resumo: `Ainda sem dados para isto: ${falta}`, n: 0, confianca: "baixa" };
+  return { id, titulo, resumo: `Ainda reunindo dados suficientes: ${falta}`, n: 0, confianca: "baixa" };
 }
 
 // 1) Quantos dias o corpo leva para responder a um dia de carga alta?
 export function defasagemDoseResposta(dias: DiaRecuperacao[], carga: CargaDia[]): Insight {
   const id = "defasagem";
-  const titulo = "Dias para recuperar de um treino";
+  const titulo = "Tempo de recuperação pós-treino";
   const cargaPorDia = new Map(carga.map((c) => [c.data, c.total]));
   const mapa = porData(dias);
   let melhor: { lag: number; r: number; n: number; pontos: { x: number; y: number }[] } | null = null;
@@ -44,12 +44,12 @@ export function defasagemDoseResposta(dias: DiaRecuperacao[], carga: CargaDia[])
       melhor = { lag, r: corr.r, n: corr.n, pontos };
     }
   }
-  if (!melhor) return semDados(id, titulo, `preciso de ${MIN_PARES}+ dias com VFC e carga registrada.`);
+  if (!melhor) return semDados(id, titulo, `preciso de ${MIN_PARES}+ dias com dados de recuperação e treinos registrados.`);
 
   const forte = melhor.r <= -0.25;
   const resumo = forte
-    ? `A VFC cai mais ${melhor.lag === 0 ? "no mesmo dia" : `${melhor.lag} dia(s) depois`} de um treino pesado (r = ${arred(melhor.r, 2)}). Use esse intervalo para espaçar sessões duras.`
-    : `Sem associação clara entre a carga do dia e a VFC dos 3 dias seguintes (melhor r = ${arred(melhor.r, 2)}).`;
+    ? `A recuperação do coração (VFC) cai mais ${melhor.lag === 0 ? "no mesmo dia" : `${melhor.lag} dia(s) depois`} de um treino pesado. Dica: use esse intervalo para espaçar sessões muito intensas.`
+    : `Sem queda relevante na recuperação do coração nos 3 dias seguintes a um treino pesado (melhor resposta observada: ${melhor.lag} dia(s) depois).`;
   return {
     id,
     titulo,
@@ -58,15 +58,15 @@ export function defasagemDoseResposta(dias: DiaRecuperacao[], carga: CargaDia[])
     r: arred(melhor.r, 2),
     confianca: confiancaDe(melhor.n, melhor.r),
     pontos: melhor.pontos,
-    rotuloX: "Carga do dia (UA)",
-    rotuloY: `VFC em D+${melhor.lag} (ms)`,
+    rotuloX: "Esforço do treino (pontos)",
+    rotuloY: `Recuperação cardíaca (VFC) em D+${melhor.lag} (ms)`,
   };
 }
 
 // 2) O sono da noite anterior muda o volume que o senhor consegue fazer?
 export function sonoVsDesempenho(dias: DiaRecuperacao[], forca: DiaForca[]): Insight {
   const id = "sono-desempenho";
-  const titulo = "Sono da noite × volume do treino";
+  const titulo = "Sono reparador × rendimento no treino";
   const mapa = porData(dias);
   const pontos: { x: number; y: number }[] = [];
   const curto: number[] = [];
@@ -80,31 +80,31 @@ export function sonoVsDesempenho(dias: DiaRecuperacao[], forca: DiaForca[]): Ins
   }
   const corr = correlacao(pontos);
   if (!corr || pontos.length < MIN_PARES) {
-    return semDados(id, titulo, `preciso de ${MIN_PARES}+ treinos de força com o sono da noite anterior.`);
+    return semDados(id, titulo, `preciso de ${MIN_PARES}+ treinos de força com sono da noite anterior registrado.`);
   }
   const mc = media(curto);
   const ml = media(longo);
   const comparacao =
     mc !== null && ml !== null && curto.length >= 3 && longo.length >= 3
-      ? ` Com menos de 7 h de sono: ${arred(mc)} séries; com 7 h ou mais: ${arred(ml)}.`
+      ? ` Com menos de 7 h de sono: média de ${arred(mc)} séries; com 7 h ou mais: ${arred(ml)} séries.`
       : "";
   return {
     id,
     titulo,
-    resumo: `Cada 30 min a mais de sono profundo+REM se associa a ${arred(corr.inclinacao * 30, 1)} séries a mais (r = ${arred(corr.r, 2)}).${comparacao}`,
+    resumo: `Cada 30 min a mais de sono reparador (profundo + REM) se associam a cerca de ${arred(corr.inclinacao * 30, 1)} séries a mais no treino.${comparacao}`,
     n: corr.n,
     r: arred(corr.r, 2),
     confianca: confiancaDe(corr.n, corr.r),
     pontos,
-    rotuloX: "Sono profundo + REM (min)",
-    rotuloY: "Séries no dia",
+    rotuloX: "Sono reparador (profundo + REM em min)",
+    rotuloY: "Séries de musculação no dia",
   };
 }
 
 // 3) Treinar à noite estraga o sono profundo?
 export function horarioTreinoVsSono(dias: DiaRecuperacao[], treinos: TreinoGarmin[]): Insight {
   const id = "horario-sono";
-  const titulo = "Horário do treino × sono profundo";
+  const titulo = "Treinar à noite × sono profundo";
   const mapa = porData(dias);
   const noite: number[] = [];
   const outros: number[] = [];
@@ -115,7 +115,7 @@ export function horarioTreinoVsSono(dias: DiaRecuperacao[], treinos: TreinoGarmi
     (hora >= 19 ? noite : outros).push(prof);
   }
   if (noite.length < 3 || outros.length < 3) {
-    return semDados(id, titulo, "preciso de 3+ treinos depois das 19 h e 3+ em outros horários, com o sono da noite seguinte.");
+    return semDados(id, titulo, "preciso de 3+ treinos depois das 19 h e 3+ em outros horários, com registro do sono seguinte.");
   }
   const a = media(noite)!;
   const b = media(outros)!;
@@ -126,18 +126,18 @@ export function horarioTreinoVsSono(dias: DiaRecuperacao[], treinos: TreinoGarmi
     titulo,
     resumo:
       Math.abs(dif) < 5
-        ? `Sem diferença relevante: ${Math.round(a)} min de sono profundo após treino noturno vs ${Math.round(b)} min nos demais.`
+        ? `Sem diferença relevante: ${Math.round(a)} min de sono profundo após treino noturno vs ${Math.round(b)} min nos demais horários.`
         : `Após treino depois das 19 h o sono profundo foi ${Math.round(a)} min, contra ${Math.round(b)} min nos demais horários (${dif > 0 ? "+" : ""}${Math.round(dif)} min).`,
     n,
     confianca: n >= 20 ? "media" : "baixa",
-    detalhe: `${noite.length} treinos noturnos, ${outros.length} em outros horários.`,
+    detalhe: `${noite.length} treinos noturnos analisados e ${outros.length} realizados em outros períodos do dia.`,
   };
 }
 
 // 4) Sinais precoces de doença ou sobrecarga: FC de repouso alta + respiração alta + VFC baixa.
 export function alertaPrecoce(dias: DiaRecuperacao[]): Insight {
   const id = "alerta-precoce";
-  const titulo = "Alerta precoce de doença ou sobrecarga";
+  const titulo = "Aviso preventivo de imunidade e cansaço";
   const ultimo = dias[dias.length - 1];
   if (!ultimo) return semDados(id, titulo, "sem dias carregados.");
   const base = (campo: (d: DiaRecuperacao) => number | null) =>
@@ -147,21 +147,21 @@ export function alertaPrecoce(dias: DiaRecuperacao[]): Insight {
   const zResp = zscore(ultimo.respiracao, base((d) => d.respiracao));
   const zHrv = zscore(ultimo.hrvMs, base((d) => d.hrvMs));
   const sinais: string[] = [];
-  if (zFc !== null && zFc > 1.5) sinais.push(`FC de repouso ${ultimo.fcRepouso} bpm (z ${arred(zFc)})`);
-  if (zResp !== null && zResp > 1.5) sinais.push(`respiração ${ultimo.respiracao}/min (z ${arred(zResp)})`);
-  if (zHrv !== null && zHrv < -1.5) sinais.push(`VFC ${ultimo.hrvMs} ms (z ${arred(zHrv)})`);
+  if (zFc !== null && zFc > 1.5) sinais.push(`batimentos de repouso altos (${ultimo.fcRepouso} bpm)`);
+  if (zResp !== null && zResp > 1.5) sinais.push(`respiração acelerada (${ultimo.respiracao}/min)`);
+  if (zHrv !== null && zHrv < -1.5) sinais.push(`recuperação cardíaca baixa (VFC ${ultimo.hrvMs} ms)`);
   const medidos = [zFc, zResp, zHrv].filter((z) => z !== null).length;
-  if (medidos === 0) return semDados(id, titulo, "preciso de 7+ dias de linha de base.");
+  if (medidos === 0) return semDados(id, titulo, "preciso de pelo menos 7 dias de dados prévios para estabelecer seu padrão.");
 
   return {
     id,
     titulo,
     resumo:
       sinais.length >= 2
-        ? `Atenção: ${sinais.length} de ${medidos} sinais fora do seu normal em ${ultimo.data}: ${sinais.join("; ")}. Considere aliviar o treino e observar sintomas.`
+        ? `Atenção: ${sinais.length} de ${medidos} sinais vitais estão fora do seu padrão normal em ${ultimo.data}: ${sinais.join("; ")}. Considere pegar leve no treino hoje e priorizar repouso.`
         : sinais.length === 1
-          ? `1 sinal fora do normal (${sinais[0]}). Sozinho, não indica problema.`
-          : `Nenhum dos ${medidos} sinais está fora do seu normal em ${ultimo.data}.`,
+          ? `1 sinal fora do padrão (${sinais[0]}). Isoladamente, é normal e não indica nenhum problema.`
+          : `Tudo normal: nenhum dos ${medidos} sinais vitais está fora do seu padrão habitual em ${ultimo.data}.`,
     n: medidos,
     confianca: dias.length >= 30 ? "media" : "baixa",
   };
@@ -170,7 +170,7 @@ export function alertaPrecoce(dias: DiaRecuperacao[]): Insight {
 // 5) Em que dia da semana o senhor costuma acordar mais recuperado?
 export function janelaIdeal(dias: DiaRecuperacao[]): Insight {
   const id = "janela-ideal";
-  const titulo = "Dia da semana com melhor recuperação";
+  const titulo = "Melhor dia da semana para treinar";
   const grupos = new Map<number, number[]>();
   for (const d of dias) {
     if (!ehNum(d.bodyBatteryAcordar)) continue;
@@ -178,7 +178,7 @@ export function janelaIdeal(dias: DiaRecuperacao[]): Insight {
     grupos.set(k, [...(grupos.get(k) ?? []), d.bodyBatteryAcordar]);
   }
   const medias = [...grupos.entries()].filter(([, v]) => v.length >= 3).map(([k, v]) => ({ k, m: media(v)!, n: v.length }));
-  if (medias.length < 4) return semDados(id, titulo, "preciso de 3+ semanas de Body Battery ao acordar.");
+  if (medias.length < 4) return semDados(id, titulo, "preciso de pelo menos 3 semanas de dados de energia matinal (Body Battery).");
   medias.sort((a, b) => b.m - a.m);
   const melhor = medias[0];
   const pior = medias[medias.length - 1];
@@ -186,7 +186,7 @@ export function janelaIdeal(dias: DiaRecuperacao[]): Insight {
   return {
     id,
     titulo,
-    resumo: `Você acorda mais recuperado na ${NOMES_SEMANA[melhor.k]} (Body Battery ${Math.round(melhor.m)}) e menos na ${NOMES_SEMANA[pior.k]} (${Math.round(pior.m)}). Coloque as sessões mais duras depois dos dias bons.`,
+    resumo: `Você acorda mais recuperado na ${NOMES_SEMANA[melhor.k]} (energia ao acordar: ${Math.round(melhor.m)}/100) e menos na ${NOMES_SEMANA[pior.k]} (${Math.round(pior.m)}/100). Dica: agende os treinos mais exigentes após os dias em que seu corpo descansa melhor.`,
     n,
     confianca: n >= 28 ? "media" : "baixa",
   };

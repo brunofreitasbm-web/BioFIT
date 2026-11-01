@@ -32,7 +32,7 @@ const CONF: Record<Confianca, string> = {
 export function SeloConfianca({ nivel, n }: { nivel: Confianca; n: number }) {
   return (
     <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium", CONF[nivel])}>
-      confiança {nivel} · n = {n}
+      Confiança {nivel} · {n} dados analisados
     </span>
   );
 }

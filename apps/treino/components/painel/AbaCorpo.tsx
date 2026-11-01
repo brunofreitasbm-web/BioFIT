@@ -11,55 +11,55 @@ export function AbaCorpo({ corpo, intervalos }: { corpo: MedicaoCorpo[]; interva
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-3">
-        <Cartao titulo="Peso">
+        <Cartao titulo="Peso corporal">
           <LinhaSerie pontos={serie((m) => m.pesoKg)} rotulo="Peso" unidade="kg" altura={170} />
         </Cartao>
-        <Cartao titulo="Gordura corporal">
+        <Cartao titulo="Percentual de gordura">
           <LinhaSerie pontos={serie((m) => m.gorduraPct)} rotulo="Gordura" unidade="%" cor="danger" altura={170} />
         </Cartao>
-        <Cartao titulo="Massa magra">
+        <Cartao titulo="Massa muscular e magra">
           <LinhaSerie pontos={serie((m) => m.massaMagraKg)} rotulo="Massa magra" unidade="kg" cor="accent" altura={170} />
         </Cartao>
       </div>
-      <Cartao titulo="O que aconteceu entre cada medição" sub="Treino e recuperação média em cada intervalo, ao lado da variação do corpo">
+      <Cartao titulo="O que mudou entre cada avaliação física" sub="Como sua rotina de sono e treinos influenciou a mudança de peso e músculo em cada período">
         {intervalos.length === 0 ? (
-          <p className="text-sm text-ink-muted">Precisa de pelo menos duas bioimpedâncias.</p>
+          <p className="text-sm text-ink-muted">São necessárias pelo menos duas avaliações corporais para comparar.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-xs">
               <thead className="text-ink-muted">
                 <tr>
-                  <th className="py-1.5 pr-3 font-medium">Intervalo</th>
+                  <th className="py-1.5 pr-3 font-medium">Período</th>
                   <th className="pr-3 font-medium">Peso</th>
                   <th className="pr-3 font-medium">Gordura</th>
-                  <th className="pr-3 font-medium">Massa magra</th>
-                  <th className="pr-3 font-medium">Treinos/sem</th>
-                  <th className="pr-3 font-medium">Séries/sem</th>
-                  <th className="pr-3 font-medium">Sono (h)</th>
-                  <th className="pr-3 font-medium">FC rep.</th>
-                  <th className="font-medium">VFC</th>
+                  <th className="pr-3 font-medium">Massa muscular</th>
+                  <th className="pr-3 font-medium">Treinos / sem</th>
+                  <th className="pr-3 font-medium">Séries / sem</th>
+                  <th className="pr-3 font-medium">Sono médio</th>
+                  <th className="pr-3 font-medium">Batimentos repouso</th>
+                  <th className="font-medium">Recuperação (VFC)</th>
                 </tr>
               </thead>
               <tbody className="text-ink">
                 {intervalos.map((i) => (
                   <tr key={i.de + i.ate} className="border-t border-line/60">
                     <td className="py-1.5 pr-3 text-ink-muted">
-                      {i.de.slice(5)} → {i.ate.slice(5)} ({i.dias} d)
+                      {i.de.slice(5)} → {i.ate.slice(5)} ({i.dias} dias)
                     </td>
                     <td className="pr-3">{fmt(i.delta.pesoKg, "kg", true)}</td>
-                    <td className="pr-3">{fmt(i.delta.gorduraPp, "p.p.", true)}</td>
+                    <td className="pr-3">{fmt(i.delta.gorduraPp, "%", true)}</td>
                     <td className="pr-3">{fmt(i.delta.massaMagraKg, "kg", true)}</td>
                     <td className="pr-3">{i.treino.treinosPorSemana}</td>
                     <td className="pr-3">{i.treino.seriesPorSemana}</td>
-                    <td className="pr-3">{fmt(i.garmin?.sonoHoras ?? null)}</td>
-                    <td className="pr-3">{fmt(i.garmin?.fcRepouso ?? null)}</td>
-                    <td>{fmt(i.garmin?.hrvMs ?? null)}</td>
+                    <td className="pr-3">{fmt(i.garmin?.sonoHoras ?? null, "h")}</td>
+                    <td className="pr-3">{fmt(i.garmin?.fcRepouso ?? null, "bpm")}</td>
+                    <td>{fmt(i.garmin?.hrvMs ?? null, "ms")}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
             <p className="mt-2 text-[11px] text-ink-faint">
-              “—” indica intervalo anterior ao início da coleta Garmin. Bioimpedância mistura hidratação e hora do dia com mudança real: leia tendência, não um ponto.
+              “—” indica período antes do início da coleta pelo relógio. Dica: os números de bioimpedância sofrem influência da quantidade de água ingerida e do horário da pesagem. O mais importante é acompanhar a evolução geral ao longo dos meses.
             </p>
           </div>
         )}
