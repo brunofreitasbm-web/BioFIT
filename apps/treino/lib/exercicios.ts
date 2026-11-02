@@ -129,7 +129,7 @@ export const SLOTS: SlotPrograma[] = [
   // ===== A — UPPER =====
   { sessao: "A", ordem: 1, grupoMuscular: "Peito", series: 3, reps: "6-9", descanso: "2-3 min", testeFalha: true, composto: true, pesoCorporal: false,
     meso1: v("supino-inclinado-maquina", "Supino inclinado na máquina", "45", "Último registro 45×9 (3 exp. sem progredir)", "7_scLkTCwTU"),
-    meso2: v("supino-reto-halteres", "Supino reto com halteres", "calibrar", "", "Cjh2fIMQHk0") },
+    meso2: v("supino-maquina-convergente", "Supino na máquina (convergente)", "calibrar", "", "bKSvckCwvh4") },
   { sessao: "A", ordem: 2, grupoMuscular: "Costas", series: 3, reps: "6-10", descanso: "2-3 min", testeFalha: true, composto: true, pesoCorporal: false,
     meso1: v("puxada-frente-pronada", "Puxada frente pronada", "65", "Começar pela depressão escapular", "mPmfwbc_svw"),
     meso2: v("puxada-neutra-fechada", "Puxada neutra fechada", "calibrar", "", "vUu_4jBxM1c") },
@@ -172,7 +172,7 @@ export const SLOTS: SlotPrograma[] = [
   // ===== C — PUSH =====
   { sessao: "C", ordem: 1, grupoMuscular: "Peito", series: 4, reps: "6-9", descanso: "2-3 min", testeFalha: true, composto: true, pesoCorporal: false,
     meso1: v("supino-maquina-convergente", "Supino na máquina (convergente)", "70", "Último 70×9", "bKSvckCwvh4"),
-    meso2: v("supino-inclinado-halteres", "Supino inclinado com halteres", "calibrar", "", null) },
+    meso2: v("supino-inclinado-maquina", "Supino inclinado na máquina", "calibrar", "", "7_scLkTCwTU") },
   { sessao: "C", ordem: 2, grupoMuscular: "Deltoides", series: 3, reps: "8-12", descanso: "2 min", testeFalha: false, composto: true, pesoCorporal: false,
     meso1: v("desenvolvimento-sentado-halteres", "Desenvolvimento sentado com halteres", "18", "Último 18×10", "eufDL9MmF8A"),
     meso2: v("desenvolvimento-maquina", "Desenvolvimento na máquina", "calibrar", "", "cAwjHUklmig") },
@@ -184,7 +184,7 @@ export const SLOTS: SlotPrograma[] = [
     meso2: v("elevacao-lateral-maquina", "Elevação lateral na máquina", "calibrar", "", "7KmaeJ4z66s") },
   { sessao: "C", ordem: 5, grupoMuscular: "Tríceps", series: 3, reps: "10-15", descanso: "60-90 s", testeFalha: true, composto: false, pesoCorporal: false,
     meso1: v("triceps-overhead-polia-corda", "Tríceps overhead na polia (corda)", "17", "Último 17×14", "mRozZKkGIfg"),
-    meso2: v("triceps-frances-halter", "Tríceps francês com halter", "calibrar", "", "IJ6J7EKprsc") },
+    meso2: v("triceps-barra-reta", "Tríceps barra reta", "calibrar", "", "er01XwtbP6g") },
 
   // ===== D — PULL =====
   { sessao: "D", ordem: 1, grupoMuscular: "Costas", series: 3, reps: "6-10", descanso: "2-3 min", testeFalha: false, composto: true, pesoCorporal: false,
@@ -334,6 +334,15 @@ for (const meso of [2, 3] as const) {
     }
   }
 }
+
+// Exercícios que saíram do programa (supino com halteres → máquina), mas ainda existem no histórico.
+for (const [id, nome] of [
+  ["supino-reto-halteres", "Supino reto com halteres"],
+  ["supino-inclinado-halteres", "Supino inclinado com halteres"],
+] as const) {
+  CATALOGO.set(id, { nome, grupoMuscular: "Peito", secundarios: PRESS_PEITO });
+}
+CATALOGO.set("triceps-frances-halter", { nome: "Tríceps francês com halter", grupoMuscular: "Tríceps" });
 
 export function getExercicio(id: string): ExercicioCatalogo | undefined {
   return CATALOGO.get(id);

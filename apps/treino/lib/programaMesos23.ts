@@ -42,7 +42,7 @@ const BISET = "Biset: alternar sem descanso entre os dois";
 const MESO2: Record<SessaoTreino, Lista> = {
   // 22 séries
   A: [
-    e("supino-inclinado-halteres", "Peito", 3, "6-10", "2-3 min"),
+    e("supino-inclinado-maquina", "Peito", 3, "6-10", "2-3 min"),
     e("puxada-frente-supinada", "Costas", 3, "8-12", "2 min"),
     e("remada-baixa-triangulo", "Costas", 3, "8-12", "2 min", { nome: "Remada baixa na polia (triângulo)" }),
     e("elevacao-lateral-halteres", "Deltoides", 4, "12-20", "60-90 s", { nome: "Elevação lateral com halteres", notas: "Carga registrada por halter" }),
@@ -61,12 +61,12 @@ const MESO2: Record<SessaoTreino, Lista> = {
   ],
   // 23
   C: [
-    e("supino-reto-halteres", "Peito", 4, "6-10", "2-3 min", { notas: "Carga registrada por halter" }),
+    e("supino-maquina-convergente", "Peito", 4, "6-10", "2-3 min"),
     e("desenvolvimento-arnold", "Deltoides", 4, "8-12", "2 min", { notas: "Carga registrada por halter" }),
     e("peck-deck", "Peito", 4, "10-15", "90 s"),
     e("crucifixo-polia-baixa", "Peito", 3, "10-15", "90 s", { nome: "Crucifixo na polia baixa (ascendente)" }),
     e("elevacao-lateral-banco-inclinado", "Deltoides", 4, "12-20", "60 s", { nome: "Elevação lateral no banco inclinado (de lado)", notas: "Carga registrada por halter" }),
-    e("triceps-frances-halter", "Tríceps", 4, "10-15", "60-90 s", { notas: "Unilateral" }),
+    e("triceps-overhead-polia-corda", "Tríceps", 4, "10-15", "60-90 s"),
   ],
   // 23
   D: [
