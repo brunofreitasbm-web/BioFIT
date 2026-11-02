@@ -129,7 +129,7 @@ export const SLOTS: SlotPrograma[] = [
   // ===== A — UPPER =====
   { sessao: "A", ordem: 1, grupoMuscular: "Peito", series: 3, reps: "6-9", descanso: "2-3 min", testeFalha: true, composto: true, pesoCorporal: false,
     meso1: v("supino-inclinado-maquina", "Supino inclinado na máquina", "45", "Último registro 45×9 (3 exp. sem progredir)", "7_scLkTCwTU"),
-    meso2: v("supino-reto-halteres", "Supino reto com halteres", "calibrar", "", "Cjh2fIMQHk0") },
+    meso2: v("supino-maquina-convergente", "Supino na máquina (convergente)", "calibrar", "", "bKSvckCwvh4") },
   { sessao: "A", ordem: 2, grupoMuscular: "Costas", series: 3, reps: "6-10", descanso: "2-3 min", testeFalha: true, composto: true, pesoCorporal: false,
     meso1: v("puxada-frente-pronada", "Puxada frente pronada", "65", "Começar pela depressão escapular", "mPmfwbc_svw"),
     meso2: v("puxada-neutra-fechada", "Puxada neutra fechada", "calibrar", "", "vUu_4jBxM1c") },
@@ -172,7 +172,7 @@ export const SLOTS: SlotPrograma[] = [
   // ===== C — PUSH =====
   { sessao: "C", ordem: 1, grupoMuscular: "Peito", series: 4, reps: "6-9", descanso: "2-3 min", testeFalha: true, composto: true, pesoCorporal: false,
     meso1: v("supino-maquina-convergente", "Supino na máquina (convergente)", "70", "Último 70×9", "bKSvckCwvh4"),
-    meso2: v("supino-inclinado-halteres", "Supino inclinado com halteres", "calibrar", "", null) },
+    meso2: v("supino-inclinado-maquina", "Supino inclinado na máquina", "calibrar", "", "7_scLkTCwTU") },
   { sessao: "C", ordem: 2, grupoMuscular: "Deltoides", series: 3, reps: "8-12", descanso: "2 min", testeFalha: false, composto: true, pesoCorporal: false,
     meso1: v("desenvolvimento-sentado-halteres", "Desenvolvimento sentado com halteres", "18", "Último 18×10", "eufDL9MmF8A"),
     meso2: v("desenvolvimento-maquina", "Desenvolvimento na máquina", "calibrar", "", "cAwjHUklmig") },
@@ -333,6 +333,14 @@ for (const meso of [2, 3] as const) {
       if (!CATALOGO.has(ex.id)) CATALOGO.set(ex.id, { nome: ex.nome, grupoMuscular: ex.grupoMuscular, secundarios: ex.secundarios });
     }
   }
+}
+
+// Exercícios que saíram do programa (supino com halteres → máquina), mas ainda existem no histórico.
+for (const [id, nome] of [
+  ["supino-reto-halteres", "Supino reto com halteres"],
+  ["supino-inclinado-halteres", "Supino inclinado com halteres"],
+] as const) {
+  CATALOGO.set(id, { nome, grupoMuscular: "Peito", secundarios: PRESS_PEITO });
 }
 
 export function getExercicio(id: string): ExercicioCatalogo | undefined {

@@ -4,6 +4,15 @@ import { getExercicio, getSessaoCompleta, SESSOES, SLOTS } from "./exercicios";
 const total = (meso: number) => SESSOES.reduce((n, s) => n + getSessaoCompleta(s, meso).reduce((x, e) => x + e.series, 0), 0);
 
 describe("mesos 2 e 3", () => {
+  it("nenhum supino com halteres no programa; ids legados continuam resolvendo no histórico", () => {
+    for (const meso of [1, 2, 3, 4]) for (const s of SESSOES) {
+      expect(getSessaoCompleta(s, meso).map((e) => e.id).filter((id) => /^supino-.*-halteres$/.test(id))).toEqual([]);
+    }
+    for (const id of ["supino-reto-halteres", "supino-inclinado-halteres"]) {
+      expect(getExercicio(id)?.grupoMuscular).toBe("Peito");
+      expect(getExercicio(id)?.secundarios).toBeDefined();
+    }
+  });
   it("séries por sessão: meso 2 = 22/23/23/23/23, meso 3 = 23 em todas", () => {
     expect(SESSOES.map((s) => getSessaoCompleta(s, 2).reduce((n, e) => n + e.series, 0))).toEqual([22, 23, 23, 23, 23]);
     expect(SESSOES.map((s) => getSessaoCompleta(s, 3).reduce((n, e) => n + e.series, 0))).toEqual([23, 23, 23, 23, 23]);
