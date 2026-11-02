@@ -6,8 +6,9 @@ const total = (meso: number) => SESSOES.reduce((n, s) => n + getSessaoCompleta(s
 describe("mesos 2 e 3", () => {
   it("nenhum supino com halteres no programa; ids legados continuam resolvendo no histórico", () => {
     for (const meso of [1, 2, 3, 4]) for (const s of SESSOES) {
-      expect(getSessaoCompleta(s, meso).map((e) => e.id).filter((id) => /^supino-.*-halteres$/.test(id))).toEqual([]);
+      expect(getSessaoCompleta(s, meso).map((e) => e.id).filter((id) => /^supino-.*-halteres$|^triceps-.*halter/.test(id))).toEqual([]);
     }
+    expect(getExercicio("triceps-frances-halter")?.grupoMuscular).toBe("Tríceps");
     for (const id of ["supino-reto-halteres", "supino-inclinado-halteres"]) {
       expect(getExercicio(id)?.grupoMuscular).toBe("Peito");
       expect(getExercicio(id)?.secundarios).toBeDefined();

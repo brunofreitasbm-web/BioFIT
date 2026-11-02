@@ -66,7 +66,7 @@ const MESO2: Record<SessaoTreino, Lista> = {
     e("peck-deck", "Peito", 4, "10-15", "90 s"),
     e("crucifixo-polia-baixa", "Peito", 3, "10-15", "90 s", { nome: "Crucifixo na polia baixa (ascendente)" }),
     e("elevacao-lateral-banco-inclinado", "Deltoides", 4, "12-20", "60 s", { nome: "Elevação lateral no banco inclinado (de lado)", notas: "Carga registrada por halter" }),
-    e("triceps-frances-halter", "Tríceps", 4, "10-15", "60-90 s", { notas: "Unilateral" }),
+    e("triceps-overhead-polia-corda", "Tríceps", 4, "10-15", "60-90 s"),
   ],
   // 23
   D: [

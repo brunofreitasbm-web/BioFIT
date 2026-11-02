@@ -184,7 +184,7 @@ export const SLOTS: SlotPrograma[] = [
     meso2: v("elevacao-lateral-maquina", "Elevação lateral na máquina", "calibrar", "", "7KmaeJ4z66s") },
   { sessao: "C", ordem: 5, grupoMuscular: "Tríceps", series: 3, reps: "10-15", descanso: "60-90 s", testeFalha: true, composto: false, pesoCorporal: false,
     meso1: v("triceps-overhead-polia-corda", "Tríceps overhead na polia (corda)", "17", "Último 17×14", "mRozZKkGIfg"),
-    meso2: v("triceps-frances-halter", "Tríceps francês com halter", "calibrar", "", "IJ6J7EKprsc") },
+    meso2: v("triceps-barra-reta", "Tríceps barra reta", "calibrar", "", "er01XwtbP6g") },
 
   // ===== D — PULL =====
   { sessao: "D", ordem: 1, grupoMuscular: "Costas", series: 3, reps: "6-10", descanso: "2-3 min", testeFalha: false, composto: true, pesoCorporal: false,
@@ -342,6 +342,7 @@ for (const [id, nome] of [
 ] as const) {
   CATALOGO.set(id, { nome, grupoMuscular: "Peito", secundarios: PRESS_PEITO });
 }
+CATALOGO.set("triceps-frances-halter", { nome: "Tríceps francês com halter", grupoMuscular: "Tríceps" });
 
 export function getExercicio(id: string): ExercicioCatalogo | undefined {
   return CATALOGO.get(id);
